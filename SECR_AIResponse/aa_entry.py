@@ -78,8 +78,8 @@ def get_ai_responses(args) -> str:
 if __name__ == "__main__":  # manual test: python aa_entry.py "<json dictionary>"
     print(get_ai_responses(
         {
-            "input_csv": "SECR_AIResponse\tests\input_csv.csv",
-            "output_csv": "SECR_AIResponse\tests\output_csv.csv",
+            "input_csv": r"X:\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_AIResponse\tests\input_csv.csv",
+            "output_csv": r"X:\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_AIResponse\tests\output_csv.csv",
             "Agent_Project_ID": "356316e20dcb48658ce127",
             "Agent_ID": "63622",
             "ENV_Base_URI": "https://api.getodin.ai",
@@ -91,7 +91,7 @@ if __name__ == "__main__":  # manual test: python aa_entry.py "<json dictionary>
             "poll_interval_seconds": 40,
             "max_poll_attempts": 15,
             "debug": True,
-            "log_dir": "SECR_AIResponse\tests\logs",
+            "log_dir": r"X:\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_AIResponse\tests\logs",
             "secrets": {
                 "SECR_ODIN_API_KEY": SECR_ODIN_API_KEY,
                 "SECR_ODIN_API_SECRET": SECR_ODIN_API_SECRET,
