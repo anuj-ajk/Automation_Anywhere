@@ -1,1 +1,2811 @@
-{"triggers":[],"nodes":[{"uid":"9ff54e7a-8f38-4861-8dd3-c4c445c4a276","commandName":"Comment","packageName":"Comment","disabled":false,"attributes":[{"name":"comment","value":{"type":"STRING","string":"===================================================================="}}]},{"uid":"622282f1-5476-4274-88c8-cdb5be554876","commandName":"Comment","packageName":"Comment","disabled":false,"attributes":[{"name":"comment","value":{"type":"STRING","string":"Author # Anuj Kumar"}}]},{"uid":"a712846c-79a2-4364-84a1-7450c981bddc","commandName":"Comment","packageName":"Comment","disabled":false,"attributes":[{"name":"comment","value":{"type":"STRING","string":"Purpose # Main logic and all sub tasks have to be invoked here"}}]},{"uid":"b03c22c1-d00b-444e-a8da-19ea07ea556f","commandName":"Comment","packageName":"Comment","disabled":false,"attributes":[{"name":"comment","value":{"type":"STRING","string":"Notes # Only add sections. Change Error Handler bot location. Keep rest of the sections unaltered."}}]},{"uid":"c4245d05-2000-45a9-9d91-23adc24a1f7d","commandName":"Comment","packageName":"Comment","disabled":false,"attributes":[{"name":"comment","value":{"type":"STRING","string":"-------------------------------------------------------------------------------------------------"}}]},{"uid":"f884fc12-691c-4176-a8e2-a4310f478b9c","commandName":"Comment","packageName":"Comment","disabled":false,"attributes":[{"name":"comment","value":{"type":"STRING","string":"Change History"}}]},{"uid":"6dc203a3-fde0-424e-80cc-a0aac41a4bec","commandName":"Comment","packageName":"Comment","disabled":false,"attributes":[{"name":"comment","value":{"type":"STRING","string":"#Date         #Change"}}]},{"uid":"228046be-47d8-4d4c-b2aa-50e721bac349","commandName":"Comment","packageName":"Comment","disabled":false,"attributes":[{"name":"comment","value":{"type":"STRING","string":"===================================================================="}}]},{"uid":"a936087b-4b4e-4533-a2a5-09cf2051e808","commandName":"try","packageName":"ErrorHandler","children":[{"uid":"ba2c80e5-ce2e-4ec6-ac1c-251895114ffa","commandName":"step","packageName":"Step","children":[{"uid":"4ccae72f-1081-4180-bcd5-13376bf95534","commandName":"Comment","packageName":"Comment","disabled":false,"attributes":[{"name":"comment","value":{"type":"STRING","string":"Initialize variables"}}]},{"uid":"d0b0b3ee-96da-4880-8b43-3bf9e52602e3","commandName":"replace","packageName":"String","disabled":false,"attributes":[{"name":"sourceString","value":{"type":"STRING","expression":"$System:AATaskName$"}},{"name":"find","value":{"type":"STRING","string":"^(.*[\\\\\\/])"}},{"name":"isCaseSensitive","value":{"type":"STRING","string":"false"}},{"name":"isRegularExpression","value":{"type":"STRING","string":"true"}},{"name":"startIndex","value":{"type":"NUMBER","number":"1"}},{"name":"count","value":{"type":"NUMBER","number":"-1"}},{"name":"replaceWith","value":{"type":"STRING","string":""}}],"returnTo":{"type":"VARIABLE","variableName":"sTaskName"}},{"uid":"f9ca2de5-31b4-45e5-b9f6-5783983aabce","commandName":"assign","packageName":"String","disabled":false,"attributes":[{"name":"sourceString","value":{"type":"STRING","expression":"$dConfig{User}$"}}],"returnTo":{"type":"VARIABLE","variableName":"sUser"}},{"uid":"d7bede60-c55c-489b-9392-d8c08d9ae883","commandName":"assign","packageName":"String","disabled":false,"attributes":[{"name":"sourceString","value":{"type":"STRING","expression":"$dConfig{CorrelationId}$"}}],"returnTo":{"type":"VARIABLE","variableName":"sCorrelationId"}},{"uid":"0a8d9ce2-a9b6-4c87-8834-949c4b55edd5","commandName":"assign","packageName":"String","disabled":false,"attributes":[{"name":"sourceString","value":{"type":"STRING","string":""}}],"returnTo":{"type":"VARIABLE","variableName":"sErrorType"}},{"uid":"f2412a8e-d872-4dce-89d5-1a5852afb471","commandName":"get","packageName":"Dictionary","disabled":false,"attributes":[{"name":"sourceMap","value":{"type":"VARIABLE","variableName":"dConfig"}},{"name":"key","value":{"type":"STRING","string":"LocalFolders"}}],"returnTo":{"type":"VARIABLE","variableName":"dLocalFolders"}},{"uid":"dbbcece7-cbd8-4a71-aa54-e04a7bd45efb","commandName":"get","packageName":"Dictionary","disabled":false,"attributes":[{"name":"sourceMap","value":{"type":"VARIABLE","variableName":"dConfig"}},{"name":"key","value":{"type":"STRING","string":"ProcessConfig"}}],"returnTo":{"type":"VARIABLE","variableName":"dProcessConfig"}},{"uid":"041d927a-7add-4de6-b88d-a2f8fa9fcaf6","commandName":"log","packageName":"Logger","disabled":false,"attributes":[{"name":"logType","value":{"type":"STRING","string":"TRACE"}},{"name":"logMessage","value":{"type":"STRING","string":"Variables are initialized"}},{"name":"reference","value":{"type":"STRING","string":""}}]}],"disabled":false,"attributes":[{"name":"title","value":{"type":"STRING","string":"INITIAL ASSIGNMENTS"}}]},{"uid":"555c58dd-c534-4c50-86e2-250730aa3613","commandName":"step","packageName":"Step","children":[{"uid":"97c67e14-de9e-4567-99e8-7a12e44ba0ba","commandName":"assign","packageName":"String","disabled":false,"attributes":[{"name":"sourceString","value":{"type":"STRING","string":"40"}}],"returnTo":{"type":"VARIABLE","variableName":"ioBatchId"}},{"uid":"de255263-a4de-47e9-9361-c22f9bbe98d5","commandName":"assign","packageName":"String","disabled":false,"attributes":[{"name":"sourceString","value":{"type":"STRING","string":"esg-instance.cm18ojbg8cjx.eu-west-2.rds.amazonaws.com"}}],"returnTo":{"type":"VARIABLE","variableName":"sESGDBServerName"}},{"uid":"27a2bc45-1712-4196-901c-592d51ebd9e2","commandName":"assign","packageName":"String","disabled":false,"attributes":[{"name":"sourceString","value":{"type":"STRING","string":"esgdb"}}],"returnTo":{"type":"VARIABLE","variableName":"sDatabaseName"}},{"uid":"11bc57d0-9398-4c6f-b77e-8128c1e2ae98","commandName":"assign","packageName":"String","disabled":false,"attributes":[{"name":"sourceString","value":{"type":"STRING","string":"3306"}}],"returnTo":{"type":"VARIABLE","variableName":"sDBPortNumber"}},{"uid":"90ea6198-7fa6-48a7-8793-298373ec79bc","commandName":"assignToCV","packageName":"Credential","disabled":false,"attributes":[{"name":"stringVar","value":{"type":"STRING","string":"aa.admin"}}],"returnTo":{"type":"VARIABLE","variableName":"ESGMySQL_Username"}},{"uid":"cc50876e-f673-4304-8569-6acb2c200d18","commandName":"assignToCV","packageName":"Credential","disabled":false,"attributes":[{"name":"stringVar","value":{"type":"STRING","string":"u5Zo8yZWNG!KfX"}}],"returnTo":{"type":"VARIABLE","variableName":"ESGMySQL_Password"}}],"disabled":true,"attributes":[{"name":"title","value":{"type":"STRING","string":"Step for unit testing"}}]},{"uid":"4ead84db-46a7-4561-8059-9d3211b6fc84","commandName":"step","packageName":"Step","children":[{"uid":"6b9b94b9-e514-4a4f-a42c-48706c133e08","commandName":"get","packageName":"Dictionary","disabled":false,"attributes":[{"name":"sourceMap","value":{"type":"VARIABLE","variableName":"dProcessConfig"}},{"name":"key","value":{"type":"STRING","string":"ESGDBServerName"}}],"returnTo":{"type":"VARIABLE","variableName":"sESGDBServerName"}},{"uid":"99f27b69-9740-4481-8e97-216bd5444fdc","commandName":"get","packageName":"Dictionary","disabled":false,"attributes":[{"name":"sourceMap","value":{"type":"VARIABLE","variableName":"dProcessConfig"}},{"name":"key","value":{"type":"STRING","string":"DatabaseName"}}],"returnTo":{"type":"VARIABLE","variableName":"sDatabaseName"}},{"uid":"07c4cb80-0222-4282-8919-9e50860e93e5","commandName":"get","packageName":"Dictionary","disabled":false,"attributes":[{"name":"sourceMap","value":{"type":"VARIABLE","variableName":"dProcessConfig"}},{"name":"key","value":{"type":"STRING","string":"MySQL_Port"}}],"returnTo":{"type":"VARIABLE","variableName":"sDBPortNumber"}},{"uid":"fea824a3-faf4-4aaf-a1c5-97551d36b088","commandName":"assignToCV","packageName":"Credential","disabled":false,"attributes":[{"name":"stringVar","value":{"type":"CREDENTIAL","credential":{"name":"ESGDB MySQL","lockerName":"ESG Locker","attributeName":"Username"}}}],"returnTo":{"type":"VARIABLE","variableName":"ESGMySQL_Username"}},{"uid":"e2a1881e-9313-484b-b39b-fa5f4bcdc7f3","commandName":"assignToCV","packageName":"Credential","disabled":false,"attributes":[{"name":"stringVar","value":{"type":"CREDENTIAL","credential":{"name":"ESGDB MySQL","lockerName":"ESG Locker","attributeName":"Password"}}}],"returnTo":{"type":"VARIABLE","variableName":"ESGMySQL_Password"}},{"uid":"8c1f9a59-3f60-4b73-9402-804531f73e18","commandName":"log","packageName":"Logger","disabled":false,"attributes":[{"name":"logType","value":{"type":"STRING","string":"INFO"}},{"name":"logMessage","value":{"type":"STRING","string":"All the User Config Variables are initialized"}},{"name":"reference","value":{"type":"STRING","string":""}}]}],"disabled":false,"attributes":[{"name":"title","value":{"type":"STRING","string":"User Config Variable Assignments"}}]},{"uid":"c29cf8c5-0ca3-4a93-b4ca-c914b4477c21","commandName":"step","packageName":"Step","children":[{"uid":"e54e0a6d-059d-4ba1-bb80-27bc0be2b573","commandName":"assign","packageName":"File","disabled":false,"attributes":[{"name":"sourceFile","value":{"type":"FILE","string":"repository:///Automation%20Anywhere/Bots/Environmental%20Social%20and%20Governance/ESG%20Common%20Utility/Driver/mysql-connector-j-26.7.0.jar"}}],"returnTo":{"type":"VARIABLE","variableName":"fMySQLConnector"}},{"uid":"6562ac12-c79f-4a4e-bf02-9754d3d0c8c7","commandName":"connect","packageName":"Database","disabled":false,"attributes":[{"name":"connectionMode","value":{"type":"STRING","string":"USER"}},{"name":"databaseProvider","value":{"type":"STRING","string":"MYSQL"}},{"name":"server","value":{"type":"STRING","expression":"$sESGDBServerName$"}},{"name":"database","value":{"type":"STRING","expression":"$sDatabaseName$"}},{"name":"user","value":{"type":"CREDENTIAL","expression":"$ESGMySQL_Username$"}},{"name":"auth","value":{"type":"CREDENTIAL","expression":"$ESGMySQL_Password$"}},{"name":"port","value":{"type":"NUMBER","expression":"$sDBPortNumber.String:toNumber$"}},{"name":"isUserDefinedDriver","value":{"type":"BOOLEAN","boolean":true}},{"name":"filePath","value":{"type":"FILE","expression":"$fMySQLConnector$"}}],"returnTo":{"type":"SESSION","sessionName":{"type":"STRING","string":"ESG_Session"},"sessionTarget":"LOCAL"}},{"uid":"ff16cfc5-6242-4f00-af0c-a1c2678db16e","commandName":"assign","packageName":"Boolean","disabled":false,"attributes":[{"name":"source","value":{"type":"STRING","string":"constant"}},{"name":"userDefined","value":{"type":"STRING","string":"true"}}],"returnTo":{"type":"VARIABLE","variableName":"bDBConnection"}},{"uid":"b9f39893-20ea-4a85-8d2b-522881c07981","commandName":"log","packageName":"Logger","disabled":false,"attributes":[{"name":"logType","value":{"type":"STRING","string":"INFO"}},{"name":"logMessage","value":{"type":"STRING","expression":"$sDatabaseName$ Connected Successful"}},{"name":"reference","value":{"type":"STRING","string":""}}]},{"uid":"5789f673-5daa-44ea-ba39-e4d7db1a66e9","commandName":"exportToDataTable","packageName":"Database","disabled":false,"attributes":[{"name":"query","value":{"type":"STRING","expression":"SELECT FB.BatchId, FB. ReportId, R.ClientId, R.ReportStart, R.ReportEnd, BP.BusinessPartnerName, UF.CategorySelected, UF.FileId, UF.FileName, UF.IsDeleted, UF.IsValid \nFROM $sDatabaseName$.FileUploadBatch FB\nLEFT OUTER JOIN $sDatabaseName$.UploadedFile UF\nON UF.BatchId = FB.BatchId\nLEFT OUTER JOIN $sDatabaseName$.Report R\nON FB.ReportId = R.Id\nLEFT OUTER JOIN $sDatabaseName$.BusinessPartner BP\nON R.ClientId = BP.BusinessPartnerId\nLEFT OUTER JOIN $sDatabaseName$.RefReportType RT\nON R.ReportTypeId = RT.ReportTypeId\nWHERE FB.BatchId = $ioBatchId$ AND UF.IsDeleted = 0 AND UF.IsValid = 1 AND RT.Code = 'SECR' AND UF.FileName = 'Source: Daisy';"}},{"name":"session","value":{"type":"SESSION","sessionName":{"type":"STRING","string":"ESG_Session"}}}],"returnTo":{"type":"VARIABLE","variableName":"tBatchDetailsTable"}},{"uid":"c520ca30-9e14-4d67-a649-7df24d16fa18","commandName":"assign","packageName":"String","disabled":false,"attributes":[{"name":"sourceString","value":{"type":"STRING","expression":"$tBatchDetailsTable[0]{ReportId}$"}}],"returnTo":{"type":"VARIABLE","variableName":"sReportId"}},{"uid":"43b2ff9f-7a14-4643-93ac-74010892db23","commandName":"assign","packageName":"String","disabled":false,"attributes":[{"name":"sourceString","value":{"type":"STRING","expression":"$tBatchDetailsTable[0]{ReportStart}$"}}],"returnTo":{"type":"VARIABLE","variableName":"sReportStartDate"}},{"uid":"6d9857e1-1209-406c-9f11-b4ff4c9cab00","commandName":"assign","packageName":"String","disabled":false,"attributes":[{"name":"sourceString","value":{"type":"STRING","expression":"$tBatchDetailsTable[0]{ReportEnd}$"}}],"returnTo":{"type":"VARIABLE","variableName":"sReportEndDate"}},{"uid":"0adc8994-f8fa-4ec2-8a5e-3513be0d65cc","commandName":"assign","packageName":"String","disabled":false,"attributes":[{"name":"sourceString","value":{"type":"STRING","expression":"$tBatchDetailsTable[0]{BusinessPartnerName}$"}}],"returnTo":{"type":"VARIABLE","variableName":"sClientName"}}],"disabled":false,"attributes":[{"name":"title","value":{"type":"STRING","string":"Check for the Category for the sync by BatchId"}}]},{"uid":"71edb239-5d31-4c6e-9945-a741f0fd5cf8","commandName":"loop.commands.start","packageName":"Loop","children":[{"uid":"a78671d3-6e26-4d1f-9fbc-63beb55eb8fd","commandName":"assign","packageName":"String","disabled":false,"attributes":[{"name":"sourceString","value":{"type":"STRING","expression":"$rTableRow{\"FileId\"}$"}}],"returnTo":{"type":"VARIABLE","variableName":"sFileID"}},{"uid":"935e0fbc-a7b3-4d1c-ad40-e0cf37e7f765","commandName":"if","packageName":"If","children":[{"uid":"abe23e8c-ec05-403b-bf8e-5feb4779071f","commandName":"step","packageName":"Step","children":[{"uid":"2fdff970-b9f9-45dd-b9e4-f69bd7975772","commandName":"runTask","packageName":"TaskBot","disabled":false,"attributes":[{"name":"taskbot","value":{"type":"TASKBOT","taskbotInput":{"type":"DICTIONARY","dictionary":[{"key":"dConfig","value":{"type":"DICTIONARY","expression":"$dConfig$"}},{"key":"ioReportId","value":{"type":"STRING","expression":"$sReportId$"}},{"key":"ioFileId","value":{"type":"STRING","expression":"$sFileID$"}},{"key":"ioClientName","value":{"type":"STRING","expression":"$sClientName$"}},{"key":"ioReportStartDate","value":{"type":"STRING","expression":"$sReportStartDate$"}},{"key":"ioReportEndDate","value":{"type":"STRING","expression":"$sReportEndDate$"}}]},"taskbotFile":{"type":"FILE","string":"repository:///Automation%20Anywhere/Bots/Environmental%20Social%20and%20Governance/Streamlined%20Energy%20%26%20Carbon%20Reporting/Tasks/SubTasks/ST_Retrieve_and_Load_PortfolioData"}}},{"name":"repeatOption","value":{"type":"STRING","string":"DO_NOT_REPEAT"}},{"name":"delayNextRepetition","value":{"type":"BOOLEAN","boolean":false}},{"name":"continueOnError","value":{"type":"BOOLEAN","boolean":false}}],"returnTo":{"type":"VARIABLE","variableName":"dTaskOutput"}},{"uid":"7f8a850a-9c59-4abd-8c1b-34e1c1c7e1c9","commandName":"if","packageName":"If","children":[{"uid":"a3283ee2-a73c-4547-88ae-4583045dc8a7","commandName":"log","packageName":"Logger","disabled":false,"attributes":[{"name":"logType","value":{"type":"STRING","string":"ERROR"}},{"name":"logMessage","value":{"type":"STRING","expression":"Error Message: $dTaskOutput{sErrorMessage}$\nError Line Number: $dTaskOutput{nErrorLineNumber}.Number:toString$"}},{"name":"reference","value":{"type":"STRING","string":""}}]},{"uid":"1c35018b-bdde-40b3-952b-d24702f0296d","commandName":"assign","packageName":"String","disabled":false,"attributes":[{"name":"sourceString","value":{"type":"STRING","expression":"$dTaskOutput{sErrorType}$"}}],"returnTo":{"type":"VARIABLE","variableName":"sErrorType"}},{"uid":"0da6f2ff-7966-42e3-8cab-9cd843d68f7c","commandName":"throw","packageName":"ErrorHandler","disabled":true,"attributes":[{"name":"message","value":{"type":"STRING","expression":"$dTaskOutput{sErrorMessage}$"}},{"name":"exceptionType","value":{"type":"EXCEPTION","exceptionName":"BotException","packageName":"ErrorHandler"}}]}],"branches":[],"disabled":false,"attributes":[{"name":"condition","attributes":[{"name":"variable","value":{"type":"STRING","expression":"$dTaskOutput{sErrorMessage}$"}},{"name":"operator","value":{"type":"STRING","string":"NEQ"}},{"name":"value","value":{"type":"STRING","string":""}},{"name":"matchCase","value":{"type":"BOOLEAN","boolean":false}},{"name":"isIgnoreCarriage","value":{"type":"BOOLEAN","boolean":false}}],"value":{"type":"CONDITIONAL","conditionalName":"stringVariable","packageName":"String"}}]}],"disabled":false,"attributes":[{"name":"title","value":{"type":"STRING","string":"Sync Portfolio Data"}}]}],"branches":[],"disabled":false,"attributes":[{"attributes":[{"name":"variable","value":{"type":"STRING","expression":"$rTableRow{\"CategorySelected\"}$"}},{"name":"operator","value":{"type":"STRING","string":"EQ"}},{"name":"value","value":{"type":"STRING","string":"Portfolio"}},{"name":"matchCase","value":{"type":"BOOLEAN","boolean":false}},{"name":"isIgnoreCarriage","value":{"type":"BOOLEAN","boolean":false}}],"name":"condition","value":{"type":"CONDITIONAL","conditionalName":"stringVariable","packageName":"String"}}]},{"uid":"54e7d949-2b00-4ab7-b772-53a589af2ecc","commandName":"if","packageName":"If","children":[{"uid":"17e692e8-e96e-4523-9dfc-956b407c8fb2","commandName":"step","packageName":"Step","children":[{"uid":"03a4787b-d52c-4f5e-90a1-8c94b60b759c","commandName":"runTask","packageName":"TaskBot","disabled":false,"attributes":[{"name":"taskbot","value":{"type":"TASKBOT","taskbotInput":{"type":"DICTIONARY","dictionary":[{"key":"dConfig","value":{"type":"DICTIONARY","expression":"$dConfig$"}},{"key":"ioReportId","value":{"type":"STRING","expression":"$sReportId$"}},{"key":"ioFileId","value":{"type":"STRING","expression":"$sFileID$"}},{"key":"ioClientName","value":{"type":"STRING","expression":"$sClientName$"}},{"key":"ioReportStartDate","value":{"type":"STRING","expression":"$sReportStartDate$"}},{"key":"ioReportEndDate","value":{"type":"STRING","expression":"$sReportEndDate$"}}]},"taskbotFile":{"type":"FILE","string":"repository:///Automation%20Anywhere/Bots/Environmental%20Social%20and%20Governance/Streamlined%20Energy%20%26%20Carbon%20Reporting/Tasks/SubTasks/ST_Retrieve_and_Load_InvoicesData"}}},{"name":"repeatOption","value":{"type":"STRING","string":"DO_NOT_REPEAT"}},{"name":"delayNextRepetition","value":{"type":"BOOLEAN","boolean":false}},{"name":"continueOnError","value":{"type":"BOOLEAN","boolean":false}}],"returnTo":{"type":"VARIABLE","variableName":"dTaskOutput"}},{"uid":"521db247-4533-413e-95f5-bbf3d3b72725","commandName":"if","packageName":"If","children":[{"uid":"228868bd-b3f1-4716-9c6c-53b75732647a","commandName":"log","packageName":"Logger","disabled":false,"attributes":[{"name":"logType","value":{"type":"STRING","string":"ERROR"}},{"name":"logMessage","value":{"type":"STRING","expression":"Error Message: $dTaskOutput{sErrorMessage}$\nError Line Number: $dTaskOutput{nErrorLineNumber}.Number:toString$"}},{"name":"reference","value":{"type":"STRING","string":""}}]},{"uid":"33a77432-029a-43e0-b22f-9b1ec2312d82","commandName":"assign","packageName":"String","disabled":false,"attributes":[{"name":"sourceString","value":{"type":"STRING","expression":"$dTaskOutput{sErrorType}$"}}],"returnTo":{"type":"VARIABLE","variableName":"sErrorType"}},{"uid":"1e7f09bb-2d84-486c-89a6-08b114e6e51a","commandName":"throw","packageName":"ErrorHandler","disabled":true,"attributes":[{"name":"message","value":{"type":"STRING","expression":"$dTaskOutput{sErrorMessage}$"}},{"name":"exceptionType","value":{"type":"EXCEPTION","exceptionName":"BotException","packageName":"ErrorHandler"}}]}],"branches":[],"disabled":false,"attributes":[{"name":"condition","attributes":[{"name":"variable","value":{"type":"STRING","expression":"$dTaskOutput{sErrorMessage}$"}},{"name":"operator","value":{"type":"STRING","string":"NEQ"}},{"name":"value","value":{"type":"STRING","string":""}},{"name":"matchCase","value":{"type":"BOOLEAN","boolean":false}},{"name":"isIgnoreCarriage","value":{"type":"BOOLEAN","boolean":false}}],"value":{"type":"CONDITIONAL","conditionalName":"stringVariable","packageName":"String"}}]}],"disabled":false,"attributes":[{"name":"title","value":{"type":"STRING","string":"Sync Invoices Data"}}]}],"branches":[],"disabled":false,"attributes":[{"attributes":[{"name":"variable","value":{"type":"STRING","expression":"$rTableRow{\"CategorySelected\"}$"}},{"name":"operator","value":{"type":"STRING","string":"EQ"}},{"name":"value","value":{"type":"STRING","string":"Invoices"}},{"name":"matchCase","value":{"type":"BOOLEAN","boolean":false}},{"name":"isIgnoreCarriage","value":{"type":"BOOLEAN","boolean":false}}],"name":"condition","value":{"type":"CONDITIONAL","conditionalName":"stringVariable","packageName":"String"}}]},{"uid":"b2d75109-c722-41aa-bc0c-cc914967ca6e","commandName":"if","packageName":"If","children":[{"uid":"9c7ce68e-bcbe-4c3b-84fa-ffd7d714f6f5","commandName":"step","packageName":"Step","children":[{"uid":"e8175532-ab09-4634-8360-83e282fe9111","commandName":"runTask","packageName":"TaskBot","disabled":false,"attributes":[{"name":"taskbot","value":{"type":"TASKBOT","taskbotInput":{"type":"DICTIONARY","dictionary":[{"key":"dConfig","value":{"type":"DICTIONARY","expression":"$dConfig$"}},{"key":"ioReportId","value":{"type":"STRING","expression":"$sReportId$"}},{"key":"ioFileId","value":{"type":"STRING","expression":"$sFileID$"}},{"key":"ioClientName","value":{"type":"STRING","expression":"$sClientName$"}},{"key":"ioReportStartDate","value":{"type":"STRING","expression":"$sReportStartDate$"}},{"key":"ioReportEndDate","value":{"type":"STRING","expression":"$sReportEndDate$"}}]},"taskbotFile":{"type":"FILE","string":"repository:///Automation%20Anywhere/Bots/Environmental%20Social%20and%20Governance/Streamlined%20Energy%20%26%20Carbon%20Reporting/Tasks/SubTasks/ST_Retrieve_and_Load_HHData"}}},{"name":"repeatOption","value":{"type":"STRING","string":"DO_NOT_REPEAT"}},{"name":"delayNextRepetition","value":{"type":"BOOLEAN","boolean":false}},{"name":"continueOnError","value":{"type":"BOOLEAN","boolean":false}}],"returnTo":{"type":"VARIABLE","variableName":"dTaskOutput"}},{"uid":"f1ac0a52-b8f9-47fb-a19b-e02c9f0f481b","commandName":"if","packageName":"If","children":[{"uid":"d7679207-1695-4068-932d-1648a41d1bb7","commandName":"log","packageName":"Logger","disabled":false,"attributes":[{"name":"logType","value":{"type":"STRING","string":"ERROR"}},{"name":"logMessage","value":{"type":"STRING","expression":"Error Message: $dTaskOutput{sErrorMessage}$\nError Line Number: $dTaskOutput{nErrorLineNumber}.Number:toString$"}},{"name":"reference","value":{"type":"STRING","string":""}}]},{"uid":"79d2ef0e-56db-4b85-97b3-c972df2f1a6d","commandName":"assign","packageName":"String","disabled":false,"attributes":[{"name":"sourceString","value":{"type":"STRING","expression":"$dTaskOutput{sErrorType}$"}}],"returnTo":{"type":"VARIABLE","variableName":"sErrorType"}},{"uid":"78b1b6d4-63c4-4da2-a4fc-4ac98fed565b","commandName":"throw","packageName":"ErrorHandler","disabled":true,"attributes":[{"name":"message","value":{"type":"STRING","expression":"$dTaskOutput{sErrorMessage}$"}},{"name":"exceptionType","value":{"type":"EXCEPTION","exceptionName":"BotException","packageName":"ErrorHandler"}}]}],"branches":[],"disabled":false,"attributes":[{"name":"condition","attributes":[{"name":"variable","value":{"type":"STRING","expression":"$dTaskOutput{sErrorMessage}$"}},{"name":"operator","value":{"type":"STRING","string":"NEQ"}},{"name":"value","value":{"type":"STRING","string":""}},{"name":"matchCase","value":{"type":"BOOLEAN","boolean":false}},{"name":"isIgnoreCarriage","value":{"type":"BOOLEAN","boolean":false}}],"value":{"type":"CONDITIONAL","conditionalName":"stringVariable","packageName":"String"}}]}],"disabled":false,"attributes":[{"name":"title","value":{"type":"STRING","string":"Sync HHData"}}]}],"branches":[],"disabled":false,"attributes":[{"attributes":[{"name":"variable","value":{"type":"STRING","expression":"$rTableRow{\"CategorySelected\"}$"}},{"name":"operator","value":{"type":"STRING","string":"EQ"}},{"name":"value","value":{"type":"STRING","string":"Half Hourly Data"}},{"name":"matchCase","value":{"type":"BOOLEAN","boolean":false}},{"name":"isIgnoreCarriage","value":{"type":"BOOLEAN","boolean":false}}],"name":"condition","value":{"type":"CONDITIONAL","conditionalName":"stringVariable","packageName":"String"}}]}],"disabled":false,"attributes":[{"name":"loopType","value":{"type":"STRING","string":"ITERATOR"}},{"name":"iterator","returnTo":{"type":"VARIABLE","variableName":"rTableRow"},"attributes":[{"name":"sourceTable","value":{"type":"VARIABLE","variableName":"tBatchDetailsTable"}}],"value":{"type":"ITERATOR","iteratorName":"iteratorTableRow","packageName":"DataTable"}}]},{"uid":"fae36d55-85b3-409d-89b1-0b20d9eacd72","commandName":"step","packageName":"Step","children":[{"uid":"17c10b88-9955-43e7-9742-da83a1c283ac","commandName":"assign","packageName":"String","disabled":false,"attributes":[{"name":"sourceString","value":{"type":"STRING","expression":"$@gStatus_Success$"}}],"returnTo":{"type":"VARIABLE","variableName":"sBotStatus"}},{"uid":"f0c590c6-40bb-409b-b284-27037774da52","commandName":"disconnect","packageName":"Database","disabled":false,"attributes":[{"name":"dosaveData","value":{"type":"BOOLEAN","boolean":false}},{"name":"session","value":{"type":"SESSION","sessionName":{"type":"STRING","string":"ESG_Session"}}}]},{"uid":"6d8248e4-8407-4363-828e-932688a8ff82","commandName":"assign","packageName":"Boolean","disabled":false,"attributes":[{"name":"source","value":{"type":"STRING","string":"constant"}},{"name":"userDefined","value":{"type":"STRING","string":"false"}}],"returnTo":{"type":"VARIABLE","variableName":"bDBConnection"}}],"disabled":false,"attributes":[{"name":"title","value":{"type":"STRING","string":"CLEANUP & FINALIZE"}}]}],"branches":[{"uid":"b9f3ce48-6d9b-4e8e-b01e-b0f4cad49539","commandName":"catch","packageName":"ErrorHandler","children":[{"uid":"6bb8512f-6979-4583-b2ac-1c9f6d2a3bcd","commandName":"messageBox","packageName":"MessageBox","disabled":true,"attributes":[{"name":"title","value":{"type":"STRING","string":"Automation Anywhere Enterprise Client"}},{"name":"content","value":{"type":"STRING","expression":"$sErrorMessage$ at line $nErrorLineNumber.Number:toString$"}},{"name":"scrollLines","value":{"type":"NUMBER","number":"30"}},{"name":"closeMsgBox","value":{"type":"BOOLEAN","boolean":false}}]},{"uid":"ffa9ae6c-8772-4f48-9be1-f9d6e9dd86e6","commandName":"assign","packageName":"String","disabled":false,"attributes":[{"name":"sourceString","value":{"type":"STRING","expression":"$@gStatus_TechnicalException$"}}],"returnTo":{"type":"VARIABLE","variableName":"sBotStatus"}},{"uid":"594dee7f-5d13-4fc7-82ef-6adcc5abcc47","commandName":"if","packageName":"If","children":[{"uid":"385426b2-392d-482b-af77-848d578cf3a9","commandName":"assign","packageName":"String","disabled":false,"attributes":[{"name":"sourceString","value":{"type":"STRING","expression":"$sErrorType$"}}],"returnTo":{"type":"VARIABLE","variableName":"sBotStatus"}}],"branches":[],"disabled":false,"attributes":[{"name":"condition","attributes":[{"name":"variable","value":{"type":"STRING","expression":"$sErrorType$"}},{"name":"operator","value":{"type":"STRING","string":"NEQ"}},{"name":"value","value":{"type":"STRING","string":""}},{"name":"matchCase","value":{"type":"BOOLEAN","boolean":true}},{"name":"isIgnoreCarriage","value":{"type":"BOOLEAN","boolean":false}}],"value":{"type":"CONDITIONAL","conditionalName":"stringVariable","packageName":"String"}}]},{"uid":"79e78f81-7ed2-484b-8adf-1d53834e940b","commandName":"replace","packageName":"String","disabled":false,"attributes":[{"name":"sourceString","value":{"type":"STRING","expression":"$sErrorMessage$"}},{"name":"find","value":{"type":"STRING","string":"'"}},{"name":"isCaseSensitive","value":{"type":"STRING","string":"false"}},{"name":"isRegularExpression","value":{"type":"STRING","string":"false"}},{"name":"startIndex","value":{"type":"NUMBER","number":"1"}},{"name":"count","value":{"type":"NUMBER","number":"-1"}},{"name":"replaceWith","value":{"type":"STRING","string":" ''"}}],"returnTo":{"type":"VARIABLE","variableName":"sErrorMessage"}},{"uid":"52c84d69-d012-4cfe-9276-7febe55d25fa","commandName":"assign","packageName":"String","disabled":false,"attributes":[{"name":"sourceString","value":{"type":"STRING","expression":"$sErrorMessage$"}}],"returnTo":{"type":"VARIABLE","variableName":"sBotComments"}},{"uid":"a8daeac4-23d1-4510-a328-ffb525e5cd18","commandName":"log","packageName":"Logger","disabled":false,"attributes":[{"name":"logType","value":{"type":"STRING","string":"ERROR"}},{"name":"logMessage","value":{"type":"STRING","expression":"Error Message: $sErrorMessage$\nError Line Number: $nErrorLineNumber.Number:toString$"}},{"name":"reference","value":{"type":"STRING","string":""}}]},{"uid":"616c409a-7976-422c-a953-6459eda7a230","commandName":"runTask","packageName":"TaskBot","disabled":false,"attributes":[{"name":"taskbot","value":{"type":"TASKBOT","taskbotInput":{"type":"DICTIONARY","dictionary":[{"key":"dConfig","value":{"type":"DICTIONARY","expression":"$dConfig$"}},{"key":"sMessage","value":{"type":"STRING","expression":"$sErrorMessage$"}},{"key":"bCaptureScreenshot","value":{"type":"BOOLEAN","boolean":true}},{"key":"bSendEmail","value":{"type":"BOOLEAN","boolean":true}}]},"taskbotFile":{"type":"FILE","string":"repository:///Automation%20Anywhere/Bots/Reusable/Framework/ErrorHandler"}}},{"name":"repeatOption","value":{"type":"STRING","string":"DO_NOT_REPEAT"}},{"name":"delayNextRepetition","value":{"type":"BOOLEAN","boolean":false}},{"name":"continueOnError","value":{"type":"BOOLEAN","boolean":false}}]}],"disabled":false,"attributes":[{"name":"exceptionType","value":{"type":"EXCEPTION","exceptionName":"BotException","packageName":"ErrorHandler"}}],"returns":{"errorMessage":{"type":"VARIABLE","variableName":"sErrorMessage"},"errorLineNumber":{"type":"VARIABLE","variableName":"nErrorLineNumber"}}},{"uid":"1e3093c7-a999-4e5e-aec0-b4b6db955475","commandName":"finally","packageName":"ErrorHandler","children":[{"uid":"54fd1dce-e3f8-402f-beb6-335269b30dda","commandName":"if","packageName":"If","children":[{"uid":"398a4d51-0939-482d-abde-335b0102814f","commandName":"disconnect","packageName":"Database","disabled":false,"attributes":[{"name":"dosaveData","value":{"type":"BOOLEAN","boolean":false}},{"name":"session","value":{"type":"SESSION","sessionName":{"type":"STRING","string":"ESG_Session"}}}]}],"branches":[],"disabled":false,"attributes":[{"attributes":[{"name":"variable","value":{"type":"BOOLEAN","expression":"$bDBConnection$"}},{"name":"operator","value":{"type":"STRING","string":"EQ"}},{"name":"value","value":{"type":"BOOLEAN","boolean":true}}],"name":"condition","value":{"type":"CONDITIONAL","conditionalName":"booleanVariable","packageName":"Boolean"}}]}],"disabled":false}],"disabled":false}],"variables":[{"name":"sTaskName","description":"","type":"STRING","readOnly":false,"input":false,"output":true,"defaultValue":{"type":"STRING","string":""}},{"name":"dConfig","description":"","type":"DICTIONARY","readOnly":false,"input":true,"output":false,"subtype":"ANY","defaultValue":{"type":"DICTIONARY","dictionary":[]}},{"name":"dProcessConfig","description":"","type":"DICTIONARY","readOnly":false,"input":false,"output":false,"subtype":"ANY","defaultValue":{"type":"DICTIONARY","dictionary":[]}},{"name":"sErrorMessage","description":"","type":"STRING","readOnly":false,"input":false,"output":true,"defaultValue":{"type":"STRING","string":""}},{"name":"nErrorLineNumber","description":"","type":"NUMBER","readOnly":false,"input":false,"output":true,"defaultValue":{"type":"NUMBER","number":"0"}},{"name":"sUser","description":"","type":"STRING","readOnly":false,"input":false,"output":false,"defaultValue":{"type":"STRING","string":""}},{"name":"sBotStatus","description":"","type":"STRING","readOnly":false,"input":false,"output":true,"defaultValue":{"type":"STRING","string":""}},{"name":"sBotComments","description":"","type":"STRING","readOnly":false,"input":false,"output":true,"defaultValue":{"type":"STRING","string":""}},{"name":"sErrorType","description":"","type":"STRING","readOnly":false,"input":false,"output":true,"defaultValue":{"type":"STRING","string":""}},{"name":"dLocalFolders","description":"","type":"DICTIONARY","readOnly":false,"input":false,"output":false,"subtype":"STRING","defaultValue":{"type":"DICTIONARY","dictionary":[]}},{"name":"sCorrelationId","description":"","type":"STRING","readOnly":false,"input":false,"output":false,"defaultValue":{"type":"STRING","string":""}},{"name":"dTaskOutput","description":"","type":"DICTIONARY","readOnly":false,"input":false,"output":false,"subtype":"ANY","defaultValue":{"type":"DICTIONARY","dictionary":[]}},{"name":"ioBatchId","description":"","type":"STRING","readOnly":false,"input":true,"output":false,"defaultValue":{"type":"STRING","string":""}},{"name":"ESGMySQL_Username","description":"","type":"CREDENTIAL","readOnly":false,"input":false,"output":false,"defaultValue":{"type":"STRING","string":""}},{"name":"ESGMySQL_Password","description":"","type":"CREDENTIAL","readOnly":false,"input":false,"output":false,"defaultValue":{"type":"STRING","string":""}},{"name":"fMySQLConnector","description":"","type":"FILE","readOnly":false,"input":false,"output":false},{"name":"sESGDBServerName","description":"","type":"STRING","readOnly":false,"input":false,"output":false,"defaultValue":{"type":"STRING","string":""}},{"name":"sDatabaseName","description":"","type":"STRING","readOnly":false,"input":false,"output":false,"defaultValue":{"type":"STRING","string":""}},{"name":"sDBPortNumber","description":"","type":"STRING","readOnly":false,"input":false,"output":false,"defaultValue":{"type":"STRING","string":""}},{"name":"tBatchDetailsTable","description":"","type":"TABLE","readOnly":false,"input":false,"output":false,"defaultValue":{"type":"TABLE","table":{"schema":[{"type":"STRING"}],"rows":[{"values":[{"type":"STRING","string":""}]}]}}},{"name":"sReportStartDate","description":"","type":"STRING","readOnly":false,"input":false,"output":false,"defaultValue":{"type":"STRING","string":""}},{"name":"sReportEndDate","description":"","type":"STRING","readOnly":false,"input":false,"output":false,"defaultValue":{"type":"STRING","string":""}},{"name":"sClientName","description":"","type":"STRING","readOnly":false,"input":false,"output":false,"defaultValue":{"type":"STRING","string":""}},{"name":"sReportId","description":"","type":"STRING","readOnly":false,"input":false,"output":false,"defaultValue":{"type":"STRING","string":""}},{"name":"bDBConnection","description":"","type":"BOOLEAN","readOnly":false,"input":false,"output":false,"defaultValue":{"type":"BOOLEAN","boolean":false}},{"name":"sFileID","description":"","type":"STRING","readOnly":false,"input":false,"output":false,"defaultValue":{"type":"STRING","string":""}},{"name":"rTableRow","description":"","type":"RECORD","readOnly":false,"input":false,"output":false,"defaultValue":{"type":"RECORD","record":{"schema":[],"values":[]}}}],"packages":[{"name":"Boolean","version":"2.13.3","settingsAttributes":[]},{"name":"Comment","version":"2.17.0","settingsAttributes":[]},{"name":"Credential","version":"1.8.0","settingsAttributes":[]},{"name":"Database","version":"5.6.6","settingsAttributes":[]},{"name":"DataTable","version":"4.18.1","settingsAttributes":[]},{"name":"Dictionary","version":"3.16.2","settingsAttributes":[]},{"name":"ErrorHandler","version":"2.13.0-20241115-120032","settingsAttributes":[]},{"name":"File","version":"6.16.1","settingsAttributes":[]},{"name":"If","version":"3.8.0-20241115-115929","settingsAttributes":[]},{"name":"Logger","version":"1.1.0-20230124-104548","settingsAttributes":[]},{"name":"Loop","version":"3.10.0-20251030-061555","settingsAttributes":[]},{"name":"MessageBox","version":"3.8.1","settingsAttributes":[]},{"name":"Number","version":"3.11.5","settingsAttributes":[]},{"name":"Step","version":"2.7.0","settingsAttributes":[]},{"name":"String","version":"5.12.6","settingsAttributes":[]},{"name":"System","version":"3.18.2","settingsAttributes":[]},{"name":"TaskBot","version":"2.10.0-20241119-100739","settingsAttributes":[]}],"properties":{"botCodeVersion":"1","improvedNumberSupport":false,"timeout":"0s","automationPriority":"PRIORITY_MEDIUM","runInChildWindow":false,"runInChildWindowMode":"DESKTOP"},"workItemTemplateName":null}
+{
+    "triggers": [],
+    "nodes": [
+        {
+            "uid": "9ff54e7a-8f38-4861-8dd3-c4c445c4a276",
+            "commandName": "Comment",
+            "packageName": "Comment",
+            "disabled": false,
+            "attributes": [
+                {
+                    "name": "comment",
+                    "value": {
+                        "type": "STRING",
+                        "string": "===================================================================="
+                    }
+                }
+            ]
+        },
+        {
+            "uid": "622282f1-5476-4274-88c8-cdb5be554876",
+            "commandName": "Comment",
+            "packageName": "Comment",
+            "disabled": false,
+            "attributes": [
+                {
+                    "name": "comment",
+                    "value": {
+                        "type": "STRING",
+                        "string": "Author # Anuj Kumar"
+                    }
+                }
+            ]
+        },
+        {
+            "uid": "a712846c-79a2-4364-84a1-7450c981bddc",
+            "commandName": "Comment",
+            "packageName": "Comment",
+            "disabled": false,
+            "attributes": [
+                {
+                    "name": "comment",
+                    "value": {
+                        "type": "STRING",
+                        "string": "Purpose # Main logic and all sub tasks have to be invoked here"
+                    }
+                }
+            ]
+        },
+        {
+            "uid": "b03c22c1-d00b-444e-a8da-19ea07ea556f",
+            "commandName": "Comment",
+            "packageName": "Comment",
+            "disabled": false,
+            "attributes": [
+                {
+                    "name": "comment",
+                    "value": {
+                        "type": "STRING",
+                        "string": "Notes # Only add sections. Change Error Handler bot location. Keep rest of the sections unaltered."
+                    }
+                }
+            ]
+        },
+        {
+            "uid": "c4245d05-2000-45a9-9d91-23adc24a1f7d",
+            "commandName": "Comment",
+            "packageName": "Comment",
+            "disabled": false,
+            "attributes": [
+                {
+                    "name": "comment",
+                    "value": {
+                        "type": "STRING",
+                        "string": "-------------------------------------------------------------------------------------------------"
+                    }
+                }
+            ]
+        },
+        {
+            "uid": "f884fc12-691c-4176-a8e2-a4310f478b9c",
+            "commandName": "Comment",
+            "packageName": "Comment",
+            "disabled": false,
+            "attributes": [
+                {
+                    "name": "comment",
+                    "value": {
+                        "type": "STRING",
+                        "string": "Change History"
+                    }
+                }
+            ]
+        },
+        {
+            "uid": "6dc203a3-fde0-424e-80cc-a0aac41a4bec",
+            "commandName": "Comment",
+            "packageName": "Comment",
+            "disabled": false,
+            "attributes": [
+                {
+                    "name": "comment",
+                    "value": {
+                        "type": "STRING",
+                        "string": "#Date         #Change"
+                    }
+                }
+            ]
+        },
+        {
+            "uid": "228046be-47d8-4d4c-b2aa-50e721bac349",
+            "commandName": "Comment",
+            "packageName": "Comment",
+            "disabled": false,
+            "attributes": [
+                {
+                    "name": "comment",
+                    "value": {
+                        "type": "STRING",
+                        "string": "===================================================================="
+                    }
+                }
+            ]
+        },
+        {
+            "uid": "a936087b-4b4e-4533-a2a5-09cf2051e808",
+            "commandName": "try",
+            "packageName": "ErrorHandler",
+            "children": [
+                {
+                    "uid": "ba2c80e5-ce2e-4ec6-ac1c-251895114ffa",
+                    "commandName": "step",
+                    "packageName": "Step",
+                    "children": [
+                        {
+                            "uid": "4ccae72f-1081-4180-bcd5-13376bf95534",
+                            "commandName": "Comment",
+                            "packageName": "Comment",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "comment",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "Initialize variables"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "uid": "d0b0b3ee-96da-4880-8b43-3bf9e52602e3",
+                            "commandName": "replace",
+                            "packageName": "String",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "sourceString",
+                                    "value": {
+                                        "type": "STRING",
+                                        "expression": "$System:AATaskName$"
+                                    }
+                                },
+                                {
+                                    "name": "find",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "^(.*[\\\\\\/])"
+                                    }
+                                },
+                                {
+                                    "name": "isCaseSensitive",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "false"
+                                    }
+                                },
+                                {
+                                    "name": "isRegularExpression",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "true"
+                                    }
+                                },
+                                {
+                                    "name": "startIndex",
+                                    "value": {
+                                        "type": "NUMBER",
+                                        "number": "1"
+                                    }
+                                },
+                                {
+                                    "name": "count",
+                                    "value": {
+                                        "type": "NUMBER",
+                                        "number": "-1"
+                                    }
+                                },
+                                {
+                                    "name": "replaceWith",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": ""
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "sTaskName"
+                            }
+                        },
+                        {
+                            "uid": "f9ca2de5-31b4-45e5-b9f6-5783983aabce",
+                            "commandName": "assign",
+                            "packageName": "String",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "sourceString",
+                                    "value": {
+                                        "type": "STRING",
+                                        "expression": "$dConfig{User}$"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "sUser"
+                            }
+                        },
+                        {
+                            "uid": "d7bede60-c55c-489b-9392-d8c08d9ae883",
+                            "commandName": "assign",
+                            "packageName": "String",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "sourceString",
+                                    "value": {
+                                        "type": "STRING",
+                                        "expression": "$dConfig{CorrelationId}$"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "sCorrelationId"
+                            }
+                        },
+                        {
+                            "uid": "0a8d9ce2-a9b6-4c87-8834-949c4b55edd5",
+                            "commandName": "assign",
+                            "packageName": "String",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "sourceString",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": ""
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "sErrorType"
+                            }
+                        },
+                        {
+                            "uid": "f2412a8e-d872-4dce-89d5-1a5852afb471",
+                            "commandName": "get",
+                            "packageName": "Dictionary",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "sourceMap",
+                                    "value": {
+                                        "type": "VARIABLE",
+                                        "variableName": "dConfig"
+                                    }
+                                },
+                                {
+                                    "name": "key",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "LocalFolders"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "dLocalFolders"
+                            }
+                        },
+                        {
+                            "uid": "dbbcece7-cbd8-4a71-aa54-e04a7bd45efb",
+                            "commandName": "get",
+                            "packageName": "Dictionary",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "sourceMap",
+                                    "value": {
+                                        "type": "VARIABLE",
+                                        "variableName": "dConfig"
+                                    }
+                                },
+                                {
+                                    "name": "key",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "ProcessConfig"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "dProcessConfig"
+                            }
+                        },
+                        {
+                            "uid": "041d927a-7add-4de6-b88d-a2f8fa9fcaf6",
+                            "commandName": "log",
+                            "packageName": "Logger",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "logType",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "TRACE"
+                                    }
+                                },
+                                {
+                                    "name": "logMessage",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "Variables are initialized"
+                                    }
+                                },
+                                {
+                                    "name": "reference",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": ""
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "disabled": false,
+                    "attributes": [
+                        {
+                            "name": "title",
+                            "value": {
+                                "type": "STRING",
+                                "string": "INITIAL ASSIGNMENTS"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "uid": "555c58dd-c534-4c50-86e2-250730aa3613",
+                    "commandName": "step",
+                    "packageName": "Step",
+                    "children": [
+                        {
+                            "uid": "97c67e14-de9e-4567-99e8-7a12e44ba0ba",
+                            "commandName": "assign",
+                            "packageName": "String",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "sourceString",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "40"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "ioBatchId"
+                            }
+                        },
+                        {
+                            "uid": "de255263-a4de-47e9-9361-c22f9bbe98d5",
+                            "commandName": "assign",
+                            "packageName": "String",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "sourceString",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "esg-instance.cm18ojbg8cjx.eu-west-2.rds.amazonaws.com"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "sESGDBServerName"
+                            }
+                        },
+                        {
+                            "uid": "27a2bc45-1712-4196-901c-592d51ebd9e2",
+                            "commandName": "assign",
+                            "packageName": "String",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "sourceString",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "esgdb"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "sDatabaseName"
+                            }
+                        },
+                        {
+                            "uid": "11bc57d0-9398-4c6f-b77e-8128c1e2ae98",
+                            "commandName": "assign",
+                            "packageName": "String",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "sourceString",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "3306"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "sDBPortNumber"
+                            }
+                        },
+                        {
+                            "uid": "90ea6198-7fa6-48a7-8793-298373ec79bc",
+                            "commandName": "assignToCV",
+                            "packageName": "Credential",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "stringVar",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "aa.admin"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "ESGMySQL_Username"
+                            }
+                        },
+                        {
+                            "uid": "cc50876e-f673-4304-8569-6acb2c200d18",
+                            "commandName": "assignToCV",
+                            "packageName": "Credential",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "stringVar",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "u5Zo8yZWNG!KfX"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "ESGMySQL_Password"
+                            }
+                        }
+                    ],
+                    "disabled": true,
+                    "attributes": [
+                        {
+                            "name": "title",
+                            "value": {
+                                "type": "STRING",
+                                "string": "Step for unit testing"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "uid": "4ead84db-46a7-4561-8059-9d3211b6fc84",
+                    "commandName": "step",
+                    "packageName": "Step",
+                    "children": [
+                        {
+                            "uid": "6b9b94b9-e514-4a4f-a42c-48706c133e08",
+                            "commandName": "get",
+                            "packageName": "Dictionary",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "sourceMap",
+                                    "value": {
+                                        "type": "VARIABLE",
+                                        "variableName": "dProcessConfig"
+                                    }
+                                },
+                                {
+                                    "name": "key",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "ESGDBServerName"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "sESGDBServerName"
+                            }
+                        },
+                        {
+                            "uid": "99f27b69-9740-4481-8e97-216bd5444fdc",
+                            "commandName": "get",
+                            "packageName": "Dictionary",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "sourceMap",
+                                    "value": {
+                                        "type": "VARIABLE",
+                                        "variableName": "dProcessConfig"
+                                    }
+                                },
+                                {
+                                    "name": "key",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "DatabaseName"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "sDatabaseName"
+                            }
+                        },
+                        {
+                            "uid": "07c4cb80-0222-4282-8919-9e50860e93e5",
+                            "commandName": "get",
+                            "packageName": "Dictionary",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "sourceMap",
+                                    "value": {
+                                        "type": "VARIABLE",
+                                        "variableName": "dProcessConfig"
+                                    }
+                                },
+                                {
+                                    "name": "key",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "MySQL_Port"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "sDBPortNumber"
+                            }
+                        },
+                        {
+                            "uid": "fea824a3-faf4-4aaf-a1c5-97551d36b088",
+                            "commandName": "assignToCV",
+                            "packageName": "Credential",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "stringVar",
+                                    "value": {
+                                        "type": "CREDENTIAL",
+                                        "credential": {
+                                            "name": "ESGDB MySQL",
+                                            "lockerName": "ESG Locker",
+                                            "attributeName": "Username"
+                                        }
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "ESGMySQL_Username"
+                            }
+                        },
+                        {
+                            "uid": "e2a1881e-9313-484b-b39b-fa5f4bcdc7f3",
+                            "commandName": "assignToCV",
+                            "packageName": "Credential",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "stringVar",
+                                    "value": {
+                                        "type": "CREDENTIAL",
+                                        "credential": {
+                                            "name": "ESGDB MySQL",
+                                            "lockerName": "ESG Locker",
+                                            "attributeName": "Password"
+                                        }
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "ESGMySQL_Password"
+                            }
+                        },
+                        {
+                            "uid": "8c1f9a59-3f60-4b73-9402-804531f73e18",
+                            "commandName": "log",
+                            "packageName": "Logger",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "logType",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "INFO"
+                                    }
+                                },
+                                {
+                                    "name": "logMessage",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "All the User Config Variables are initialized"
+                                    }
+                                },
+                                {
+                                    "name": "reference",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": ""
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "disabled": false,
+                    "attributes": [
+                        {
+                            "name": "title",
+                            "value": {
+                                "type": "STRING",
+                                "string": "User Config Variable Assignments"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "uid": "c29cf8c5-0ca3-4a93-b4ca-c914b4477c21",
+                    "commandName": "step",
+                    "packageName": "Step",
+                    "children": [
+                        {
+                            "uid": "e54e0a6d-059d-4ba1-bb80-27bc0be2b573",
+                            "commandName": "assign",
+                            "packageName": "File",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "sourceFile",
+                                    "value": {
+                                        "type": "FILE",
+                                        "string": "repository:///Automation%20Anywhere/Bots/Environmental%20Social%20and%20Governance/ESG%20Common%20Utility/Driver/mysql-connector-j-26.7.0.jar"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "fMySQLConnector"
+                            }
+                        },
+                        {
+                            "uid": "6562ac12-c79f-4a4e-bf02-9754d3d0c8c7",
+                            "commandName": "connect",
+                            "packageName": "Database",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "connectionMode",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "USER"
+                                    }
+                                },
+                                {
+                                    "name": "databaseProvider",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "MYSQL"
+                                    }
+                                },
+                                {
+                                    "name": "server",
+                                    "value": {
+                                        "type": "STRING",
+                                        "expression": "$sESGDBServerName$"
+                                    }
+                                },
+                                {
+                                    "name": "database",
+                                    "value": {
+                                        "type": "STRING",
+                                        "expression": "$sDatabaseName$"
+                                    }
+                                },
+                                {
+                                    "name": "user",
+                                    "value": {
+                                        "type": "CREDENTIAL",
+                                        "expression": "$ESGMySQL_Username$"
+                                    }
+                                },
+                                {
+                                    "name": "auth",
+                                    "value": {
+                                        "type": "CREDENTIAL",
+                                        "expression": "$ESGMySQL_Password$"
+                                    }
+                                },
+                                {
+                                    "name": "port",
+                                    "value": {
+                                        "type": "NUMBER",
+                                        "expression": "$sDBPortNumber.String:toNumber$"
+                                    }
+                                },
+                                {
+                                    "name": "isUserDefinedDriver",
+                                    "value": {
+                                        "type": "BOOLEAN",
+                                        "boolean": true
+                                    }
+                                },
+                                {
+                                    "name": "filePath",
+                                    "value": {
+                                        "type": "FILE",
+                                        "expression": "$fMySQLConnector$"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "SESSION",
+                                "sessionName": {
+                                    "type": "STRING",
+                                    "string": "ESG_Session"
+                                },
+                                "sessionTarget": "LOCAL"
+                            }
+                        },
+                        {
+                            "uid": "ff16cfc5-6242-4f00-af0c-a1c2678db16e",
+                            "commandName": "assign",
+                            "packageName": "Boolean",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "source",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "constant"
+                                    }
+                                },
+                                {
+                                    "name": "userDefined",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "true"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "bDBConnection"
+                            }
+                        },
+                        {
+                            "uid": "b9f39893-20ea-4a85-8d2b-522881c07981",
+                            "commandName": "log",
+                            "packageName": "Logger",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "logType",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "INFO"
+                                    }
+                                },
+                                {
+                                    "name": "logMessage",
+                                    "value": {
+                                        "type": "STRING",
+                                        "expression": "$sDatabaseName$ Connected Successful"
+                                    }
+                                },
+                                {
+                                    "name": "reference",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": ""
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "uid": "5789f673-5daa-44ea-ba39-e4d7db1a66e9",
+                            "commandName": "exportToDataTable",
+                            "packageName": "Database",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "query",
+                                    "value": {
+                                        "type": "STRING",
+                                        "expression": "SELECT FB.BatchId, FB. ReportId, R.ClientId, R.ReportStart, R.ReportEnd, BP.BusinessPartnerName, UF.CategorySelected, UF.FileId, UF.FileName, UF.IsDeleted, UF.IsValid \nFROM $sDatabaseName$.FileUploadBatch FB\nLEFT OUTER JOIN $sDatabaseName$.UploadedFile UF\nON UF.BatchId = FB.BatchId\nLEFT OUTER JOIN $sDatabaseName$.Report R\nON FB.ReportId = R.Id\nLEFT OUTER JOIN $sDatabaseName$.BusinessPartner BP\nON R.ClientId = BP.BusinessPartnerId\nLEFT OUTER JOIN $sDatabaseName$.RefReportType RT\nON R.ReportTypeId = RT.ReportTypeId\nWHERE FB.BatchId = $ioBatchId$ AND UF.IsDeleted = 0 AND UF.IsValid = 1 AND RT.Code = 'SECR' AND UF.FileName = 'Source: Daisy';"
+                                    }
+                                },
+                                {
+                                    "name": "session",
+                                    "value": {
+                                        "type": "SESSION",
+                                        "sessionName": {
+                                            "type": "STRING",
+                                            "string": "ESG_Session"
+                                        }
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "tBatchDetailsTable"
+                            }
+                        },
+                        {
+                            "uid": "c520ca30-9e14-4d67-a649-7df24d16fa18",
+                            "commandName": "assign",
+                            "packageName": "String",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "sourceString",
+                                    "value": {
+                                        "type": "STRING",
+                                        "expression": "$tBatchDetailsTable[0]{ReportId}$"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "sReportId"
+                            }
+                        },
+                        {
+                            "uid": "43b2ff9f-7a14-4643-93ac-74010892db23",
+                            "commandName": "assign",
+                            "packageName": "String",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "sourceString",
+                                    "value": {
+                                        "type": "STRING",
+                                        "expression": "$tBatchDetailsTable[0]{ReportStart}$"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "sReportStartDate"
+                            }
+                        },
+                        {
+                            "uid": "6d9857e1-1209-406c-9f11-b4ff4c9cab00",
+                            "commandName": "assign",
+                            "packageName": "String",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "sourceString",
+                                    "value": {
+                                        "type": "STRING",
+                                        "expression": "$tBatchDetailsTable[0]{ReportEnd}$"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "sReportEndDate"
+                            }
+                        },
+                        {
+                            "uid": "0adc8994-f8fa-4ec2-8a5e-3513be0d65cc",
+                            "commandName": "assign",
+                            "packageName": "String",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "sourceString",
+                                    "value": {
+                                        "type": "STRING",
+                                        "expression": "$tBatchDetailsTable[0]{BusinessPartnerName}$"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "sClientName"
+                            }
+                        }
+                    ],
+                    "disabled": false,
+                    "attributes": [
+                        {
+                            "name": "title",
+                            "value": {
+                                "type": "STRING",
+                                "string": "Check for the Category for the sync by BatchId"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "uid": "71edb239-5d31-4c6e-9945-a741f0fd5cf8",
+                    "commandName": "loop.commands.start",
+                    "packageName": "Loop",
+                    "children": [
+                        {
+                            "uid": "a78671d3-6e26-4d1f-9fbc-63beb55eb8fd",
+                            "commandName": "assign",
+                            "packageName": "String",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "sourceString",
+                                    "value": {
+                                        "type": "STRING",
+                                        "expression": "$rTableRow{\"FileId\"}$"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "sFileID"
+                            }
+                        },
+                        {
+                            "uid": "935e0fbc-a7b3-4d1c-ad40-e0cf37e7f765",
+                            "commandName": "if",
+                            "packageName": "If",
+                            "children": [
+                                {
+                                    "uid": "abe23e8c-ec05-403b-bf8e-5feb4779071f",
+                                    "commandName": "step",
+                                    "packageName": "Step",
+                                    "children": [
+                                        {
+                                            "uid": "2fdff970-b9f9-45dd-b9e4-f69bd7975772",
+                                            "commandName": "runTask",
+                                            "packageName": "TaskBot",
+                                            "disabled": false,
+                                            "attributes": [
+                                                {
+                                                    "name": "taskbot",
+                                                    "value": {
+                                                        "type": "TASKBOT",
+                                                        "taskbotInput": {
+                                                            "type": "DICTIONARY",
+                                                            "dictionary": [
+                                                                {
+                                                                    "key": "dConfig",
+                                                                    "value": {
+                                                                        "type": "DICTIONARY",
+                                                                        "expression": "$dConfig$"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "key": "ioReportId",
+                                                                    "value": {
+                                                                        "type": "STRING",
+                                                                        "expression": "$sReportId$"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "key": "ioFileId",
+                                                                    "value": {
+                                                                        "type": "STRING",
+                                                                        "expression": "$sFileID$"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "key": "ioClientName",
+                                                                    "value": {
+                                                                        "type": "STRING",
+                                                                        "expression": "$sClientName$"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "key": "ioReportStartDate",
+                                                                    "value": {
+                                                                        "type": "STRING",
+                                                                        "expression": "$sReportStartDate$"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "key": "ioReportEndDate",
+                                                                    "value": {
+                                                                        "type": "STRING",
+                                                                        "expression": "$sReportEndDate$"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        },
+                                                        "taskbotFile": {
+                                                            "type": "FILE",
+                                                            "string": "repository:///Automation%20Anywhere/Bots/Environmental%20Social%20and%20Governance/Streamlined%20Energy%20%26%20Carbon%20Reporting/Tasks/SubTasks/ST_Retrieve_and_Load_PortfolioData"
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "name": "repeatOption",
+                                                    "value": {
+                                                        "type": "STRING",
+                                                        "string": "DO_NOT_REPEAT"
+                                                    }
+                                                },
+                                                {
+                                                    "name": "delayNextRepetition",
+                                                    "value": {
+                                                        "type": "BOOLEAN",
+                                                        "boolean": false
+                                                    }
+                                                },
+                                                {
+                                                    "name": "continueOnError",
+                                                    "value": {
+                                                        "type": "BOOLEAN",
+                                                        "boolean": false
+                                                    }
+                                                }
+                                            ],
+                                            "returnTo": {
+                                                "type": "VARIABLE",
+                                                "variableName": "dTaskOutput"
+                                            }
+                                        },
+                                        {
+                                            "uid": "7f8a850a-9c59-4abd-8c1b-34e1c1c7e1c9",
+                                            "commandName": "if",
+                                            "packageName": "If",
+                                            "children": [
+                                                {
+                                                    "uid": "a3283ee2-a73c-4547-88ae-4583045dc8a7",
+                                                    "commandName": "log",
+                                                    "packageName": "Logger",
+                                                    "disabled": false,
+                                                    "attributes": [
+                                                        {
+                                                            "name": "logType",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": "ERROR"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "logMessage",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "expression": "Error Message: $dTaskOutput{sErrorMessage}$\nError Line Number: $dTaskOutput{nErrorLineNumber}.Number:toString$"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "reference",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": ""
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "uid": "1c35018b-bdde-40b3-952b-d24702f0296d",
+                                                    "commandName": "assign",
+                                                    "packageName": "String",
+                                                    "disabled": false,
+                                                    "attributes": [
+                                                        {
+                                                            "name": "sourceString",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "expression": "$dTaskOutput{sErrorType}$"
+                                                            }
+                                                        }
+                                                    ],
+                                                    "returnTo": {
+                                                        "type": "VARIABLE",
+                                                        "variableName": "sErrorType"
+                                                    }
+                                                },
+                                                {
+                                                    "uid": "0da6f2ff-7966-42e3-8cab-9cd843d68f7c",
+                                                    "commandName": "throw",
+                                                    "packageName": "ErrorHandler",
+                                                    "disabled": true,
+                                                    "attributes": [
+                                                        {
+                                                            "name": "message",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "expression": "$dTaskOutput{sErrorMessage}$"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "exceptionType",
+                                                            "value": {
+                                                                "type": "EXCEPTION",
+                                                                "exceptionName": "BotException",
+                                                                "packageName": "ErrorHandler"
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "branches": [],
+                                            "disabled": false,
+                                            "attributes": [
+                                                {
+                                                    "name": "condition",
+                                                    "attributes": [
+                                                        {
+                                                            "name": "variable",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "expression": "$dTaskOutput{sErrorMessage}$"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "operator",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": "NEQ"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "value",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": ""
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "matchCase",
+                                                            "value": {
+                                                                "type": "BOOLEAN",
+                                                                "boolean": false
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "isIgnoreCarriage",
+                                                            "value": {
+                                                                "type": "BOOLEAN",
+                                                                "boolean": false
+                                                            }
+                                                        }
+                                                    ],
+                                                    "value": {
+                                                        "type": "CONDITIONAL",
+                                                        "conditionalName": "stringVariable",
+                                                        "packageName": "String"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "disabled": false,
+                                    "attributes": [
+                                        {
+                                            "name": "title",
+                                            "value": {
+                                                "type": "STRING",
+                                                "string": "Sync Portfolio Data"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ],
+                            "branches": [],
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "attributes": [
+                                        {
+                                            "name": "variable",
+                                            "value": {
+                                                "type": "STRING",
+                                                "expression": "$rTableRow{\"CategorySelected\"}$"
+                                            }
+                                        },
+                                        {
+                                            "name": "operator",
+                                            "value": {
+                                                "type": "STRING",
+                                                "string": "EQ"
+                                            }
+                                        },
+                                        {
+                                            "name": "value",
+                                            "value": {
+                                                "type": "STRING",
+                                                "string": "Portfolio"
+                                            }
+                                        },
+                                        {
+                                            "name": "matchCase",
+                                            "value": {
+                                                "type": "BOOLEAN",
+                                                "boolean": false
+                                            }
+                                        },
+                                        {
+                                            "name": "isIgnoreCarriage",
+                                            "value": {
+                                                "type": "BOOLEAN",
+                                                "boolean": false
+                                            }
+                                        }
+                                    ],
+                                    "name": "condition",
+                                    "value": {
+                                        "type": "CONDITIONAL",
+                                        "conditionalName": "stringVariable",
+                                        "packageName": "String"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "uid": "54e7d949-2b00-4ab7-b772-53a589af2ecc",
+                            "commandName": "if",
+                            "packageName": "If",
+                            "children": [
+                                {
+                                    "uid": "17e692e8-e96e-4523-9dfc-956b407c8fb2",
+                                    "commandName": "step",
+                                    "packageName": "Step",
+                                    "children": [
+                                        {
+                                            "uid": "03a4787b-d52c-4f5e-90a1-8c94b60b759c",
+                                            "commandName": "runTask",
+                                            "packageName": "TaskBot",
+                                            "disabled": false,
+                                            "attributes": [
+                                                {
+                                                    "name": "taskbot",
+                                                    "value": {
+                                                        "type": "TASKBOT",
+                                                        "taskbotInput": {
+                                                            "type": "DICTIONARY",
+                                                            "dictionary": [
+                                                                {
+                                                                    "key": "dConfig",
+                                                                    "value": {
+                                                                        "type": "DICTIONARY",
+                                                                        "expression": "$dConfig$"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "key": "ioReportId",
+                                                                    "value": {
+                                                                        "type": "STRING",
+                                                                        "expression": "$sReportId$"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "key": "ioFileId",
+                                                                    "value": {
+                                                                        "type": "STRING",
+                                                                        "expression": "$sFileID$"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "key": "ioClientName",
+                                                                    "value": {
+                                                                        "type": "STRING",
+                                                                        "expression": "$sClientName$"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "key": "ioReportStartDate",
+                                                                    "value": {
+                                                                        "type": "STRING",
+                                                                        "expression": "$sReportStartDate$"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "key": "ioReportEndDate",
+                                                                    "value": {
+                                                                        "type": "STRING",
+                                                                        "expression": "$sReportEndDate$"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        },
+                                                        "taskbotFile": {
+                                                            "type": "FILE",
+                                                            "string": "repository:///Automation%20Anywhere/Bots/Environmental%20Social%20and%20Governance/Streamlined%20Energy%20%26%20Carbon%20Reporting/Tasks/SubTasks/ST_Retrieve_and_Load_InvoicesData"
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "name": "repeatOption",
+                                                    "value": {
+                                                        "type": "STRING",
+                                                        "string": "DO_NOT_REPEAT"
+                                                    }
+                                                },
+                                                {
+                                                    "name": "delayNextRepetition",
+                                                    "value": {
+                                                        "type": "BOOLEAN",
+                                                        "boolean": false
+                                                    }
+                                                },
+                                                {
+                                                    "name": "continueOnError",
+                                                    "value": {
+                                                        "type": "BOOLEAN",
+                                                        "boolean": false
+                                                    }
+                                                }
+                                            ],
+                                            "returnTo": {
+                                                "type": "VARIABLE",
+                                                "variableName": "dTaskOutput"
+                                            }
+                                        },
+                                        {
+                                            "uid": "521db247-4533-413e-95f5-bbf3d3b72725",
+                                            "commandName": "if",
+                                            "packageName": "If",
+                                            "children": [
+                                                {
+                                                    "uid": "228868bd-b3f1-4716-9c6c-53b75732647a",
+                                                    "commandName": "log",
+                                                    "packageName": "Logger",
+                                                    "disabled": false,
+                                                    "attributes": [
+                                                        {
+                                                            "name": "logType",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": "ERROR"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "logMessage",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "expression": "Error Message: $dTaskOutput{sErrorMessage}$\nError Line Number: $dTaskOutput{nErrorLineNumber}.Number:toString$"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "reference",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": ""
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "uid": "33a77432-029a-43e0-b22f-9b1ec2312d82",
+                                                    "commandName": "assign",
+                                                    "packageName": "String",
+                                                    "disabled": false,
+                                                    "attributes": [
+                                                        {
+                                                            "name": "sourceString",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "expression": "$dTaskOutput{sErrorType}$"
+                                                            }
+                                                        }
+                                                    ],
+                                                    "returnTo": {
+                                                        "type": "VARIABLE",
+                                                        "variableName": "sErrorType"
+                                                    }
+                                                },
+                                                {
+                                                    "uid": "1e7f09bb-2d84-486c-89a6-08b114e6e51a",
+                                                    "commandName": "throw",
+                                                    "packageName": "ErrorHandler",
+                                                    "disabled": true,
+                                                    "attributes": [
+                                                        {
+                                                            "name": "message",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "expression": "$dTaskOutput{sErrorMessage}$"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "exceptionType",
+                                                            "value": {
+                                                                "type": "EXCEPTION",
+                                                                "exceptionName": "BotException",
+                                                                "packageName": "ErrorHandler"
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "branches": [],
+                                            "disabled": false,
+                                            "attributes": [
+                                                {
+                                                    "name": "condition",
+                                                    "attributes": [
+                                                        {
+                                                            "name": "variable",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "expression": "$dTaskOutput{sErrorMessage}$"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "operator",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": "NEQ"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "value",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": ""
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "matchCase",
+                                                            "value": {
+                                                                "type": "BOOLEAN",
+                                                                "boolean": false
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "isIgnoreCarriage",
+                                                            "value": {
+                                                                "type": "BOOLEAN",
+                                                                "boolean": false
+                                                            }
+                                                        }
+                                                    ],
+                                                    "value": {
+                                                        "type": "CONDITIONAL",
+                                                        "conditionalName": "stringVariable",
+                                                        "packageName": "String"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "disabled": false,
+                                    "attributes": [
+                                        {
+                                            "name": "title",
+                                            "value": {
+                                                "type": "STRING",
+                                                "string": "Sync Invoices Data"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ],
+                            "branches": [],
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "attributes": [
+                                        {
+                                            "name": "variable",
+                                            "value": {
+                                                "type": "STRING",
+                                                "expression": "$rTableRow{\"CategorySelected\"}$"
+                                            }
+                                        },
+                                        {
+                                            "name": "operator",
+                                            "value": {
+                                                "type": "STRING",
+                                                "string": "EQ"
+                                            }
+                                        },
+                                        {
+                                            "name": "value",
+                                            "value": {
+                                                "type": "STRING",
+                                                "string": "Invoices"
+                                            }
+                                        },
+                                        {
+                                            "name": "matchCase",
+                                            "value": {
+                                                "type": "BOOLEAN",
+                                                "boolean": false
+                                            }
+                                        },
+                                        {
+                                            "name": "isIgnoreCarriage",
+                                            "value": {
+                                                "type": "BOOLEAN",
+                                                "boolean": false
+                                            }
+                                        }
+                                    ],
+                                    "name": "condition",
+                                    "value": {
+                                        "type": "CONDITIONAL",
+                                        "conditionalName": "stringVariable",
+                                        "packageName": "String"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "uid": "b2d75109-c722-41aa-bc0c-cc914967ca6e",
+                            "commandName": "if",
+                            "packageName": "If",
+                            "children": [
+                                {
+                                    "uid": "9c7ce68e-bcbe-4c3b-84fa-ffd7d714f6f5",
+                                    "commandName": "step",
+                                    "packageName": "Step",
+                                    "children": [
+                                        {
+                                            "uid": "e8175532-ab09-4634-8360-83e282fe9111",
+                                            "commandName": "runTask",
+                                            "packageName": "TaskBot",
+                                            "disabled": false,
+                                            "attributes": [
+                                                {
+                                                    "name": "taskbot",
+                                                    "value": {
+                                                        "type": "TASKBOT",
+                                                        "taskbotInput": {
+                                                            "type": "DICTIONARY",
+                                                            "dictionary": [
+                                                                {
+                                                                    "key": "dConfig",
+                                                                    "value": {
+                                                                        "type": "DICTIONARY",
+                                                                        "expression": "$dConfig$"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "key": "ioReportId",
+                                                                    "value": {
+                                                                        "type": "STRING",
+                                                                        "expression": "$sReportId$"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "key": "ioFileId",
+                                                                    "value": {
+                                                                        "type": "STRING",
+                                                                        "expression": "$sFileID$"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "key": "ioClientName",
+                                                                    "value": {
+                                                                        "type": "STRING",
+                                                                        "expression": "$sClientName$"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "key": "ioReportStartDate",
+                                                                    "value": {
+                                                                        "type": "STRING",
+                                                                        "expression": "$sReportStartDate$"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "key": "ioReportEndDate",
+                                                                    "value": {
+                                                                        "type": "STRING",
+                                                                        "expression": "$sReportEndDate$"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        },
+                                                        "taskbotFile": {
+                                                            "type": "FILE",
+                                                            "string": "repository:///Automation%20Anywhere/Bots/Environmental%20Social%20and%20Governance/Streamlined%20Energy%20%26%20Carbon%20Reporting/Tasks/SubTasks/ST_Retrieve_and_Load_HHData"
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "name": "repeatOption",
+                                                    "value": {
+                                                        "type": "STRING",
+                                                        "string": "DO_NOT_REPEAT"
+                                                    }
+                                                },
+                                                {
+                                                    "name": "delayNextRepetition",
+                                                    "value": {
+                                                        "type": "BOOLEAN",
+                                                        "boolean": false
+                                                    }
+                                                },
+                                                {
+                                                    "name": "continueOnError",
+                                                    "value": {
+                                                        "type": "BOOLEAN",
+                                                        "boolean": false
+                                                    }
+                                                }
+                                            ],
+                                            "returnTo": {
+                                                "type": "VARIABLE",
+                                                "variableName": "dTaskOutput"
+                                            }
+                                        },
+                                        {
+                                            "uid": "f1ac0a52-b8f9-47fb-a19b-e02c9f0f481b",
+                                            "commandName": "if",
+                                            "packageName": "If",
+                                            "children": [
+                                                {
+                                                    "uid": "d7679207-1695-4068-932d-1648a41d1bb7",
+                                                    "commandName": "log",
+                                                    "packageName": "Logger",
+                                                    "disabled": false,
+                                                    "attributes": [
+                                                        {
+                                                            "name": "logType",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": "ERROR"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "logMessage",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "expression": "Error Message: $dTaskOutput{sErrorMessage}$\nError Line Number: $dTaskOutput{nErrorLineNumber}.Number:toString$"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "reference",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": ""
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "uid": "79d2ef0e-56db-4b85-97b3-c972df2f1a6d",
+                                                    "commandName": "assign",
+                                                    "packageName": "String",
+                                                    "disabled": false,
+                                                    "attributes": [
+                                                        {
+                                                            "name": "sourceString",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "expression": "$dTaskOutput{sErrorType}$"
+                                                            }
+                                                        }
+                                                    ],
+                                                    "returnTo": {
+                                                        "type": "VARIABLE",
+                                                        "variableName": "sErrorType"
+                                                    }
+                                                },
+                                                {
+                                                    "uid": "78b1b6d4-63c4-4da2-a4fc-4ac98fed565b",
+                                                    "commandName": "throw",
+                                                    "packageName": "ErrorHandler",
+                                                    "disabled": true,
+                                                    "attributes": [
+                                                        {
+                                                            "name": "message",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "expression": "$dTaskOutput{sErrorMessage}$"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "exceptionType",
+                                                            "value": {
+                                                                "type": "EXCEPTION",
+                                                                "exceptionName": "BotException",
+                                                                "packageName": "ErrorHandler"
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "branches": [],
+                                            "disabled": false,
+                                            "attributes": [
+                                                {
+                                                    "name": "condition",
+                                                    "attributes": [
+                                                        {
+                                                            "name": "variable",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "expression": "$dTaskOutput{sErrorMessage}$"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "operator",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": "NEQ"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "value",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": ""
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "matchCase",
+                                                            "value": {
+                                                                "type": "BOOLEAN",
+                                                                "boolean": false
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "isIgnoreCarriage",
+                                                            "value": {
+                                                                "type": "BOOLEAN",
+                                                                "boolean": false
+                                                            }
+                                                        }
+                                                    ],
+                                                    "value": {
+                                                        "type": "CONDITIONAL",
+                                                        "conditionalName": "stringVariable",
+                                                        "packageName": "String"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "disabled": false,
+                                    "attributes": [
+                                        {
+                                            "name": "title",
+                                            "value": {
+                                                "type": "STRING",
+                                                "string": "Sync HHData"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ],
+                            "branches": [],
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "attributes": [
+                                        {
+                                            "name": "variable",
+                                            "value": {
+                                                "type": "STRING",
+                                                "expression": "$rTableRow{\"CategorySelected\"}$"
+                                            }
+                                        },
+                                        {
+                                            "name": "operator",
+                                            "value": {
+                                                "type": "STRING",
+                                                "string": "EQ"
+                                            }
+                                        },
+                                        {
+                                            "name": "value",
+                                            "value": {
+                                                "type": "STRING",
+                                                "string": "Half Hourly Data"
+                                            }
+                                        },
+                                        {
+                                            "name": "matchCase",
+                                            "value": {
+                                                "type": "BOOLEAN",
+                                                "boolean": false
+                                            }
+                                        },
+                                        {
+                                            "name": "isIgnoreCarriage",
+                                            "value": {
+                                                "type": "BOOLEAN",
+                                                "boolean": false
+                                            }
+                                        }
+                                    ],
+                                    "name": "condition",
+                                    "value": {
+                                        "type": "CONDITIONAL",
+                                        "conditionalName": "stringVariable",
+                                        "packageName": "String"
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "disabled": false,
+                    "attributes": [
+                        {
+                            "name": "loopType",
+                            "value": {
+                                "type": "STRING",
+                                "string": "ITERATOR"
+                            }
+                        },
+                        {
+                            "name": "iterator",
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "rTableRow"
+                            },
+                            "attributes": [
+                                {
+                                    "name": "sourceTable",
+                                    "value": {
+                                        "type": "VARIABLE",
+                                        "variableName": "tBatchDetailsTable"
+                                    }
+                                }
+                            ],
+                            "value": {
+                                "type": "ITERATOR",
+                                "iteratorName": "iteratorTableRow",
+                                "packageName": "DataTable"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "uid": "fae36d55-85b3-409d-89b1-0b20d9eacd72",
+                    "commandName": "step",
+                    "packageName": "Step",
+                    "children": [
+                        {
+                            "uid": "17c10b88-9955-43e7-9742-da83a1c283ac",
+                            "commandName": "assign",
+                            "packageName": "String",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "sourceString",
+                                    "value": {
+                                        "type": "STRING",
+                                        "expression": "$@gStatus_Success$"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "sBotStatus"
+                            }
+                        },
+                        {
+                            "uid": "f0c590c6-40bb-409b-b284-27037774da52",
+                            "commandName": "disconnect",
+                            "packageName": "Database",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "dosaveData",
+                                    "value": {
+                                        "type": "BOOLEAN",
+                                        "boolean": false
+                                    }
+                                },
+                                {
+                                    "name": "session",
+                                    "value": {
+                                        "type": "SESSION",
+                                        "sessionName": {
+                                            "type": "STRING",
+                                            "string": "ESG_Session"
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "uid": "6d8248e4-8407-4363-828e-932688a8ff82",
+                            "commandName": "assign",
+                            "packageName": "Boolean",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "source",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "constant"
+                                    }
+                                },
+                                {
+                                    "name": "userDefined",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "false"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "bDBConnection"
+                            }
+                        }
+                    ],
+                    "disabled": false,
+                    "attributes": [
+                        {
+                            "name": "title",
+                            "value": {
+                                "type": "STRING",
+                                "string": "CLEANUP & FINALIZE"
+                            }
+                        }
+                    ]
+                }
+            ],
+            "branches": [
+                {
+                    "uid": "b9f3ce48-6d9b-4e8e-b01e-b0f4cad49539",
+                    "commandName": "catch",
+                    "packageName": "ErrorHandler",
+                    "children": [
+                        {
+                            "uid": "6bb8512f-6979-4583-b2ac-1c9f6d2a3bcd",
+                            "commandName": "messageBox",
+                            "packageName": "MessageBox",
+                            "disabled": true,
+                            "attributes": [
+                                {
+                                    "name": "title",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "Automation Anywhere Enterprise Client"
+                                    }
+                                },
+                                {
+                                    "name": "content",
+                                    "value": {
+                                        "type": "STRING",
+                                        "expression": "$sErrorMessage$ at line $nErrorLineNumber.Number:toString$"
+                                    }
+                                },
+                                {
+                                    "name": "scrollLines",
+                                    "value": {
+                                        "type": "NUMBER",
+                                        "number": "30"
+                                    }
+                                },
+                                {
+                                    "name": "closeMsgBox",
+                                    "value": {
+                                        "type": "BOOLEAN",
+                                        "boolean": false
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "uid": "ffa9ae6c-8772-4f48-9be1-f9d6e9dd86e6",
+                            "commandName": "assign",
+                            "packageName": "String",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "sourceString",
+                                    "value": {
+                                        "type": "STRING",
+                                        "expression": "$@gStatus_TechnicalException$"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "sBotStatus"
+                            }
+                        },
+                        {
+                            "uid": "594dee7f-5d13-4fc7-82ef-6adcc5abcc47",
+                            "commandName": "if",
+                            "packageName": "If",
+                            "children": [
+                                {
+                                    "uid": "385426b2-392d-482b-af77-848d578cf3a9",
+                                    "commandName": "assign",
+                                    "packageName": "String",
+                                    "disabled": false,
+                                    "attributes": [
+                                        {
+                                            "name": "sourceString",
+                                            "value": {
+                                                "type": "STRING",
+                                                "expression": "$sErrorType$"
+                                            }
+                                        }
+                                    ],
+                                    "returnTo": {
+                                        "type": "VARIABLE",
+                                        "variableName": "sBotStatus"
+                                    }
+                                }
+                            ],
+                            "branches": [],
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "condition",
+                                    "attributes": [
+                                        {
+                                            "name": "variable",
+                                            "value": {
+                                                "type": "STRING",
+                                                "expression": "$sErrorType$"
+                                            }
+                                        },
+                                        {
+                                            "name": "operator",
+                                            "value": {
+                                                "type": "STRING",
+                                                "string": "NEQ"
+                                            }
+                                        },
+                                        {
+                                            "name": "value",
+                                            "value": {
+                                                "type": "STRING",
+                                                "string": ""
+                                            }
+                                        },
+                                        {
+                                            "name": "matchCase",
+                                            "value": {
+                                                "type": "BOOLEAN",
+                                                "boolean": true
+                                            }
+                                        },
+                                        {
+                                            "name": "isIgnoreCarriage",
+                                            "value": {
+                                                "type": "BOOLEAN",
+                                                "boolean": false
+                                            }
+                                        }
+                                    ],
+                                    "value": {
+                                        "type": "CONDITIONAL",
+                                        "conditionalName": "stringVariable",
+                                        "packageName": "String"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "uid": "79e78f81-7ed2-484b-8adf-1d53834e940b",
+                            "commandName": "replace",
+                            "packageName": "String",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "sourceString",
+                                    "value": {
+                                        "type": "STRING",
+                                        "expression": "$sErrorMessage$"
+                                    }
+                                },
+                                {
+                                    "name": "find",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "'"
+                                    }
+                                },
+                                {
+                                    "name": "isCaseSensitive",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "false"
+                                    }
+                                },
+                                {
+                                    "name": "isRegularExpression",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "false"
+                                    }
+                                },
+                                {
+                                    "name": "startIndex",
+                                    "value": {
+                                        "type": "NUMBER",
+                                        "number": "1"
+                                    }
+                                },
+                                {
+                                    "name": "count",
+                                    "value": {
+                                        "type": "NUMBER",
+                                        "number": "-1"
+                                    }
+                                },
+                                {
+                                    "name": "replaceWith",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": " ''"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "sErrorMessage"
+                            }
+                        },
+                        {
+                            "uid": "52c84d69-d012-4cfe-9276-7febe55d25fa",
+                            "commandName": "assign",
+                            "packageName": "String",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "sourceString",
+                                    "value": {
+                                        "type": "STRING",
+                                        "expression": "$sErrorMessage$"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "sBotComments"
+                            }
+                        },
+                        {
+                            "uid": "a8daeac4-23d1-4510-a328-ffb525e5cd18",
+                            "commandName": "log",
+                            "packageName": "Logger",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "logType",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "ERROR"
+                                    }
+                                },
+                                {
+                                    "name": "logMessage",
+                                    "value": {
+                                        "type": "STRING",
+                                        "expression": "Error Message: $sErrorMessage$\nError Line Number: $nErrorLineNumber.Number:toString$"
+                                    }
+                                },
+                                {
+                                    "name": "reference",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": ""
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "uid": "616c409a-7976-422c-a953-6459eda7a230",
+                            "commandName": "runTask",
+                            "packageName": "TaskBot",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "taskbot",
+                                    "value": {
+                                        "type": "TASKBOT",
+                                        "taskbotInput": {
+                                            "type": "DICTIONARY",
+                                            "dictionary": [
+                                                {
+                                                    "key": "dConfig",
+                                                    "value": {
+                                                        "type": "DICTIONARY",
+                                                        "expression": "$dConfig$"
+                                                    }
+                                                },
+                                                {
+                                                    "key": "sMessage",
+                                                    "value": {
+                                                        "type": "STRING",
+                                                        "expression": "$sErrorMessage$"
+                                                    }
+                                                },
+                                                {
+                                                    "key": "bCaptureScreenshot",
+                                                    "value": {
+                                                        "type": "BOOLEAN",
+                                                        "boolean": true
+                                                    }
+                                                },
+                                                {
+                                                    "key": "bSendEmail",
+                                                    "value": {
+                                                        "type": "BOOLEAN",
+                                                        "boolean": true
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "taskbotFile": {
+                                            "type": "FILE",
+                                            "string": "repository:///Automation%20Anywhere/Bots/Reusable/Framework/ErrorHandler"
+                                        }
+                                    }
+                                },
+                                {
+                                    "name": "repeatOption",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "DO_NOT_REPEAT"
+                                    }
+                                },
+                                {
+                                    "name": "delayNextRepetition",
+                                    "value": {
+                                        "type": "BOOLEAN",
+                                        "boolean": false
+                                    }
+                                },
+                                {
+                                    "name": "continueOnError",
+                                    "value": {
+                                        "type": "BOOLEAN",
+                                        "boolean": false
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "disabled": false,
+                    "attributes": [
+                        {
+                            "name": "exceptionType",
+                            "value": {
+                                "type": "EXCEPTION",
+                                "exceptionName": "BotException",
+                                "packageName": "ErrorHandler"
+                            }
+                        }
+                    ],
+                    "returns": {
+                        "errorMessage": {
+                            "type": "VARIABLE",
+                            "variableName": "sErrorMessage"
+                        },
+                        "errorLineNumber": {
+                            "type": "VARIABLE",
+                            "variableName": "nErrorLineNumber"
+                        }
+                    }
+                },
+                {
+                    "uid": "1e3093c7-a999-4e5e-aec0-b4b6db955475",
+                    "commandName": "finally",
+                    "packageName": "ErrorHandler",
+                    "children": [
+                        {
+                            "uid": "54fd1dce-e3f8-402f-beb6-335269b30dda",
+                            "commandName": "if",
+                            "packageName": "If",
+                            "children": [
+                                {
+                                    "uid": "398a4d51-0939-482d-abde-335b0102814f",
+                                    "commandName": "disconnect",
+                                    "packageName": "Database",
+                                    "disabled": false,
+                                    "attributes": [
+                                        {
+                                            "name": "dosaveData",
+                                            "value": {
+                                                "type": "BOOLEAN",
+                                                "boolean": false
+                                            }
+                                        },
+                                        {
+                                            "name": "session",
+                                            "value": {
+                                                "type": "SESSION",
+                                                "sessionName": {
+                                                    "type": "STRING",
+                                                    "string": "ESG_Session"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ],
+                            "branches": [],
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "attributes": [
+                                        {
+                                            "name": "variable",
+                                            "value": {
+                                                "type": "BOOLEAN",
+                                                "expression": "$bDBConnection$"
+                                            }
+                                        },
+                                        {
+                                            "name": "operator",
+                                            "value": {
+                                                "type": "STRING",
+                                                "string": "EQ"
+                                            }
+                                        },
+                                        {
+                                            "name": "value",
+                                            "value": {
+                                                "type": "BOOLEAN",
+                                                "boolean": true
+                                            }
+                                        }
+                                    ],
+                                    "name": "condition",
+                                    "value": {
+                                        "type": "CONDITIONAL",
+                                        "conditionalName": "booleanVariable",
+                                        "packageName": "Boolean"
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "disabled": false
+                }
+            ],
+            "disabled": false
+        }
+    ],
+    "variables": [
+        {
+            "name": "sTaskName",
+            "description": "",
+            "type": "STRING",
+            "readOnly": false,
+            "input": false,
+            "output": true,
+            "defaultValue": {
+                "type": "STRING",
+                "string": ""
+            }
+        },
+        {
+            "name": "dConfig",
+            "description": "",
+            "type": "DICTIONARY",
+            "readOnly": false,
+            "input": true,
+            "output": false,
+            "subtype": "ANY",
+            "defaultValue": {
+                "type": "DICTIONARY",
+                "dictionary": []
+            }
+        },
+        {
+            "name": "dProcessConfig",
+            "description": "",
+            "type": "DICTIONARY",
+            "readOnly": false,
+            "input": false,
+            "output": false,
+            "subtype": "ANY",
+            "defaultValue": {
+                "type": "DICTIONARY",
+                "dictionary": []
+            }
+        },
+        {
+            "name": "sErrorMessage",
+            "description": "",
+            "type": "STRING",
+            "readOnly": false,
+            "input": false,
+            "output": true,
+            "defaultValue": {
+                "type": "STRING",
+                "string": ""
+            }
+        },
+        {
+            "name": "nErrorLineNumber",
+            "description": "",
+            "type": "NUMBER",
+            "readOnly": false,
+            "input": false,
+            "output": true,
+            "defaultValue": {
+                "type": "NUMBER",
+                "number": "0"
+            }
+        },
+        {
+            "name": "sUser",
+            "description": "",
+            "type": "STRING",
+            "readOnly": false,
+            "input": false,
+            "output": false,
+            "defaultValue": {
+                "type": "STRING",
+                "string": ""
+            }
+        },
+        {
+            "name": "sBotStatus",
+            "description": "",
+            "type": "STRING",
+            "readOnly": false,
+            "input": false,
+            "output": true,
+            "defaultValue": {
+                "type": "STRING",
+                "string": ""
+            }
+        },
+        {
+            "name": "sBotComments",
+            "description": "",
+            "type": "STRING",
+            "readOnly": false,
+            "input": false,
+            "output": true,
+            "defaultValue": {
+                "type": "STRING",
+                "string": ""
+            }
+        },
+        {
+            "name": "sErrorType",
+            "description": "",
+            "type": "STRING",
+            "readOnly": false,
+            "input": false,
+            "output": true,
+            "defaultValue": {
+                "type": "STRING",
+                "string": ""
+            }
+        },
+        {
+            "name": "dLocalFolders",
+            "description": "",
+            "type": "DICTIONARY",
+            "readOnly": false,
+            "input": false,
+            "output": false,
+            "subtype": "STRING",
+            "defaultValue": {
+                "type": "DICTIONARY",
+                "dictionary": []
+            }
+        },
+        {
+            "name": "sCorrelationId",
+            "description": "",
+            "type": "STRING",
+            "readOnly": false,
+            "input": false,
+            "output": false,
+            "defaultValue": {
+                "type": "STRING",
+                "string": ""
+            }
+        },
+        {
+            "name": "dTaskOutput",
+            "description": "",
+            "type": "DICTIONARY",
+            "readOnly": false,
+            "input": false,
+            "output": false,
+            "subtype": "ANY",
+            "defaultValue": {
+                "type": "DICTIONARY",
+                "dictionary": []
+            }
+        },
+        {
+            "name": "ioBatchId",
+            "description": "",
+            "type": "STRING",
+            "readOnly": false,
+            "input": true,
+            "output": false,
+            "defaultValue": {
+                "type": "STRING",
+                "string": ""
+            }
+        },
+        {
+            "name": "ESGMySQL_Username",
+            "description": "",
+            "type": "CREDENTIAL",
+            "readOnly": false,
+            "input": false,
+            "output": false,
+            "defaultValue": {
+                "type": "STRING",
+                "string": ""
+            }
+        },
+        {
+            "name": "ESGMySQL_Password",
+            "description": "",
+            "type": "CREDENTIAL",
+            "readOnly": false,
+            "input": false,
+            "output": false,
+            "defaultValue": {
+                "type": "STRING",
+                "string": ""
+            }
+        },
+        {
+            "name": "fMySQLConnector",
+            "description": "",
+            "type": "FILE",
+            "readOnly": false,
+            "input": false,
+            "output": false
+        },
+        {
+            "name": "sESGDBServerName",
+            "description": "",
+            "type": "STRING",
+            "readOnly": false,
+            "input": false,
+            "output": false,
+            "defaultValue": {
+                "type": "STRING",
+                "string": ""
+            }
+        },
+        {
+            "name": "sDatabaseName",
+            "description": "",
+            "type": "STRING",
+            "readOnly": false,
+            "input": false,
+            "output": false,
+            "defaultValue": {
+                "type": "STRING",
+                "string": ""
+            }
+        },
+        {
+            "name": "sDBPortNumber",
+            "description": "",
+            "type": "STRING",
+            "readOnly": false,
+            "input": false,
+            "output": false,
+            "defaultValue": {
+                "type": "STRING",
+                "string": ""
+            }
+        },
+        {
+            "name": "tBatchDetailsTable",
+            "description": "",
+            "type": "TABLE",
+            "readOnly": false,
+            "input": false,
+            "output": false,
+            "defaultValue": {
+                "type": "TABLE",
+                "table": {
+                    "schema": [
+                        {
+                            "type": "STRING"
+                        }
+                    ],
+                    "rows": [
+                        {
+                            "values": [
+                                {
+                                    "type": "STRING",
+                                    "string": ""
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "sReportStartDate",
+            "description": "",
+            "type": "STRING",
+            "readOnly": false,
+            "input": false,
+            "output": false,
+            "defaultValue": {
+                "type": "STRING",
+                "string": ""
+            }
+        },
+        {
+            "name": "sReportEndDate",
+            "description": "",
+            "type": "STRING",
+            "readOnly": false,
+            "input": false,
+            "output": false,
+            "defaultValue": {
+                "type": "STRING",
+                "string": ""
+            }
+        },
+        {
+            "name": "sClientName",
+            "description": "",
+            "type": "STRING",
+            "readOnly": false,
+            "input": false,
+            "output": false,
+            "defaultValue": {
+                "type": "STRING",
+                "string": ""
+            }
+        },
+        {
+            "name": "sReportId",
+            "description": "",
+            "type": "STRING",
+            "readOnly": false,
+            "input": false,
+            "output": false,
+            "defaultValue": {
+                "type": "STRING",
+                "string": ""
+            }
+        },
+        {
+            "name": "bDBConnection",
+            "description": "",
+            "type": "BOOLEAN",
+            "readOnly": false,
+            "input": false,
+            "output": false,
+            "defaultValue": {
+                "type": "BOOLEAN",
+                "boolean": false
+            }
+        },
+        {
+            "name": "sFileID",
+            "description": "",
+            "type": "STRING",
+            "readOnly": false,
+            "input": false,
+            "output": false,
+            "defaultValue": {
+                "type": "STRING",
+                "string": ""
+            }
+        },
+        {
+            "name": "rTableRow",
+            "description": "",
+            "type": "RECORD",
+            "readOnly": false,
+            "input": false,
+            "output": false,
+            "defaultValue": {
+                "type": "RECORD",
+                "record": {
+                    "schema": [],
+                    "values": []
+                }
+            }
+        }
+    ],
+    "packages": [
+        {
+            "name": "Boolean",
+            "version": "2.13.3",
+            "settingsAttributes": []
+        },
+        {
+            "name": "Comment",
+            "version": "2.17.0",
+            "settingsAttributes": []
+        },
+        {
+            "name": "Credential",
+            "version": "1.8.0",
+            "settingsAttributes": []
+        },
+        {
+            "name": "Database",
+            "version": "5.6.6",
+            "settingsAttributes": []
+        },
+        {
+            "name": "DataTable",
+            "version": "4.18.1",
+            "settingsAttributes": []
+        },
+        {
+            "name": "Dictionary",
+            "version": "3.16.2",
+            "settingsAttributes": []
+        },
+        {
+            "name": "ErrorHandler",
+            "version": "2.13.0-20241115-120032",
+            "settingsAttributes": []
+        },
+        {
+            "name": "File",
+            "version": "6.16.1",
+            "settingsAttributes": []
+        },
+        {
+            "name": "If",
+            "version": "3.8.0-20241115-115929",
+            "settingsAttributes": []
+        },
+        {
+            "name": "Logger",
+            "version": "1.1.0-20230124-104548",
+            "settingsAttributes": []
+        },
+        {
+            "name": "Loop",
+            "version": "3.10.0-20251030-061555",
+            "settingsAttributes": []
+        },
+        {
+            "name": "MessageBox",
+            "version": "3.8.1",
+            "settingsAttributes": []
+        },
+        {
+            "name": "Number",
+            "version": "3.11.5",
+            "settingsAttributes": []
+        },
+        {
+            "name": "Step",
+            "version": "2.7.0",
+            "settingsAttributes": []
+        },
+        {
+            "name": "String",
+            "version": "5.12.6",
+            "settingsAttributes": []
+        },
+        {
+            "name": "System",
+            "version": "3.18.2",
+            "settingsAttributes": []
+        },
+        {
+            "name": "TaskBot",
+            "version": "2.10.0-20241119-100739",
+            "settingsAttributes": []
+        }
+    ],
+    "properties": {
+        "botCodeVersion": "1",
+        "improvedNumberSupport": false,
+        "timeout": "0s",
+        "automationPriority": "PRIORITY_MEDIUM",
+        "runInChildWindow": false,
+        "runInChildWindowMode": "DESKTOP"
+    },
+    "workItemTemplateName": null
+}
