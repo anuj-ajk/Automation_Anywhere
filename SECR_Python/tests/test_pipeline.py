@@ -45,12 +45,20 @@ class FakeSession:
     def move_batch_files(self, *a):
         return 0
 
+    def batch_status_exists(self, code):
+        return code in self.db.batch_codes
+
     def set_batch_status(self, batch_id, code):
         with self.db.lock:
             self.db.batch_status[batch_id] = code
 
     def add_recognized_category(self, file_id, name):
         pass
+
+    def delete_staging_rows(self, table, file_id):
+        with self.db.lock:
+            self.db.deleted.append((table, file_id))
+        return 0
 
     def bulk_insert(self, table, columns, rows, chunk_size=1000):
         rows = list(rows)
@@ -88,6 +96,8 @@ class FakeDb:
         self.lock = threading.Lock()
         self.status, self.history, self.batch_status = {}, {}, {}
         self.inserted, self.named_locks = {}, set()
+        self.deleted = []
+        self.batch_codes = {"COMPLETE", "PROCESSING", "PARTIAL_FAILURE"}
 
     @contextlib.contextmanager
     def session(self):
@@ -156,13 +166,13 @@ def _workbook(path: Path) -> Path:
     return path
 
 
-def _row(batch, file_id, name="data.xlsx", category=None):
+def _row(batch, file_id, name="data.xlsx", category=None, status=None):
     return {"BatchId": batch, "ReportId": 5, "BusinessPartnerName": "ACME", "ReportStart": "2024-04-01",
             "ReportEnd": "2025-03-31", "FileId": file_id, "FileName": name, "StoragePath": f"k/{name}",
-            "CategorySelected": category}
+            "CategorySelected": category, "StatusCode": status}
 
 
-def _build(tmp: Path, batches, files_per_batch=4):
+def _build(tmp: Path, batches, files_per_batch=4, skip_statuses=("COMPLETED", "DATA_NOT_AVAILABLE")):
     import requests_stub  # noqa: F401  (patches secr.normalize.download_link)
 
     db = FakeDb(batches)
@@ -172,7 +182,8 @@ def _build(tmp: Path, batches, files_per_batch=4):
                               FakeAI(str(_metrics_csv(tmp / "metrics.csv"))), loader,
                               poll_interval=0, max_poll_attempts=5)
     daisy = DaisyFlow(db, FakeSources(), loader)
-    return db, BatchProcessor(db, normalize, daisy, tmp / "work", files_per_batch, False)
+    return db, BatchProcessor(db, normalize, daisy, tmp / "work", files_per_batch, False,
+                              skip_statuses=skip_statuses)
 
 
 # ---------------------------------------------------------------- tests
@@ -257,7 +268,7 @@ def test_one_bad_file_does_not_fail_the_batch(tmp_path):
     result = processor.process("9")
     assert result.state == "COMPLETED_WITH_FILE_ERRORS"
     assert db.status["1"] == st.COMPLETED and db.status["2"] == st.FAILED
-    assert db.batch_status["9"] == st.BATCH_COMPLETE
+    assert db.batch_status["9"] == st.BATCH_PARTIAL_FAILURE
 
 
 if __name__ == "__main__":
@@ -269,3 +280,76 @@ if __name__ == "__main__":
                 args = [Path(d)] if fn.__code__.co_argcount else []
                 fn(*args)
                 print("ok", name)
+
+
+def test_error_inside_procedure_names_the_procedure(tmp_path):
+    from secr.loader import DAISY_SPECS, LoadError, StagingLoader
+    from secr.logging_setup import get_logger
+
+    class Session:
+        def delete_staging_rows(self, table, file_id):
+            return 0
+
+        def bulk_insert(self, table, columns, rows, chunk):
+            return len(list(rows))
+
+        def call_proc(self, name, args, n_out):
+            raise RuntimeError("(1136, \"Column count doesn't match value count at row 1\")")
+
+    spec = DAISY_SPECS["invoices"]
+    raw = tmp_path / "inv.csv"
+    raw.write_text(",".join(c for c, _ in spec.columns if c != "FileId") + "\n" +
+                   ",".join("x" for c, _ in spec.columns if c != "FileId") + "\n", encoding="utf-8")
+    loader = StagingLoader("tester", False, 10, 1000, get_logger())
+    try:
+        loader.load(Session(), spec, raw, tmp_path, "48", "2")
+    except LoadError as exc:
+        assert "inside stored procedure LoadInvoiceData" in str(exc) and "1136" in str(exc)
+    else:
+        raise AssertionError("LoadError expected")
+
+
+def test_rerun_processes_only_files_not_completed(tmp_path):
+    rows = [_row("40", 1, status="COMPLETED"), _row("40", 2, status="FAILED"),
+            _row("40", 3, name="Source: Daisy", category="Portfolio", status="DATA_NOT_AVAILABLE"),
+            _row("40", 4, status="PARTIAL_FAILURE"), _row("40", 5, status=None)]
+    db, processor = _build(tmp_path, {"40": rows})
+    result = processor.process("40")
+    assert sorted(db.history) == ["2", "4", "5"]                  # only these were worked on
+    by_id = {f.file_id: f for f in result.files}
+    assert by_id["1"].detail == "skipped: already COMPLETED" and by_id["3"].status == "DATA_NOT_AVAILABLE"
+    assert len(result.files) == 5 and result.state == "SUCCESS"
+    assert db.batch_status["40"] == "COMPLETE"
+
+
+def test_rerun_of_completed_batch_does_nothing(tmp_path):
+    db, processor = _build(tmp_path, {"40": [_row("40", 1, status="COMPLETED")]})
+    result = processor.process("40")
+    assert result.state == "ALREADY_COMPLETED" and db.history == {} and db.inserted == {}
+    assert db.batch_status["40"] == "COMPLETE"
+
+
+def test_force_processes_completed_files_again(tmp_path):
+    db, processor = _build(tmp_path, {"40": [_row("40", 1, status="COMPLETED")]}, skip_statuses=())
+    assert processor.process("40").state == "SUCCESS" and "1" in db.history
+
+
+def test_staging_rows_cleared_once_per_file_and_table(tmp_path):
+    db, processor = _build(tmp_path, {"40": [_row("40", 1), _row("40", 2)]})
+    processor.process("40")
+    # the workbook has 2 sheets, both loading Staging_Metrics: each file clears that table once
+    assert sorted(db.deleted) == [("Staging_Metrics", "1"), ("Staging_Metrics", "2")]
+
+
+def test_batch_status_partial_failure_with_fallback(tmp_path):
+    batches = {"40": [_row("40", 1), _row("40", 2, name="Source: Daisy", category="Unknown")],
+               "41": [_row("41", 3)]}
+    db, processor = _build(tmp_path, batches)
+    assert processor.process("40").state == "COMPLETED_WITH_FILE_ERRORS"
+    assert processor.process("41").state == "SUCCESS"
+    assert db.batch_status == {"40": "PARTIAL_FAILURE", "41": "COMPLETE"}
+
+    db.batch_codes.discard("PARTIAL_FAILURE")          # code not in RefBatchStatus -> fall back
+    db.batch_status.clear()
+    processor.process("40")
+    assert db.batch_status["40"] == "COMPLETE"

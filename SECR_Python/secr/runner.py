@@ -19,7 +19,10 @@ from .notifier import Notifier
 from .orchestrator import exit_code, run_batches, summarize
 
 
-def apply_overrides(cfg: AppConfig, max_batches: int | None = None, max_files: int | None = None) -> None:
+def apply_overrides(cfg: AppConfig, max_batches: int | None = None, max_files: int | None = None,
+                    force: bool = False) -> None:
+    if force:  # process every file of the batch again, also those already completed
+        cfg.run.skip_completed_files = False
     if max_batches:
         cfg.run.max_parallel_batches = int(max_batches)
     if max_files:
@@ -38,7 +41,8 @@ def build(cfg: AppConfig, debug: bool = False) -> tuple[BatchProcessor, EsgDb, N
     notifier = Notifier(cfg.notify, log)
     db = EsgDb(cfg.db, cfg.run.max_db_connections)
     loader = StagingLoader(cfg.run.created_by, cfg.run.serialize_staging_loads,
-                           cfg.run.staging_lock_timeout_seconds, cfg.run.insert_chunk_size, log)
+                           cfg.run.staging_lock_timeout_seconds, cfg.run.insert_chunk_size, log,
+                           clear_staging=cfg.run.clear_staging_before_load)
 
     # Created separately so a Daisy-only setup does not need S3/Odin settings and vice versa.
     normalize = daisy = None
@@ -59,7 +63,9 @@ def build(cfg: AppConfig, debug: bool = False) -> tuple[BatchProcessor, EsgDb, N
 
     log.info("Flows enabled: Normalize=%s, Daisy=%s", normalize is not None, daisy is not None)
     processor = BatchProcessor(db, normalize, daisy, cfg.run.work_dir,
-                               cfg.run.max_parallel_files_per_batch, cfg.run.keep_work_files, notifier)
+                               cfg.run.max_parallel_files_per_batch, cfg.run.keep_work_files, notifier,
+                               skip_statuses=cfg.run.completed_statuses if cfg.run.skip_completed_files else (),
+                               status_on_file_errors=cfg.run.batch_status_on_file_errors)
     return processor, db, notifier, log_file
 
 
@@ -76,6 +82,8 @@ def _log_settings(cfg: AppConfig, log) -> None:
              r.max_parallel_batches, r.max_parallel_files_per_batch, r.max_db_connections)
     log.info("Work folder %s (keep files: %s), serialize staging loads: %s, created by: %s",
              r.work_dir, r.keep_work_files, r.serialize_staging_loads, r.created_by)
+    log.info("Rerun: skip files already in %s: %s; clear earlier staging rows before load: %s",
+             "/".join(r.completed_statuses), r.skip_completed_files, r.clear_staging_before_load)
     log.info("Odin polling: every %ss, up to %d attempts; source environment: %s",
              cfg.odin.poll_interval_seconds, cfg.odin.max_poll_attempts, cfg.sources.environment)
     log.info("Secrets: %s", ", ".join(f"{v}={'set' if os.environ.get(v) else 'NOT SET'}" for v in _SECRET_VARS))

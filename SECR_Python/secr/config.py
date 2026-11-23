@@ -80,6 +80,13 @@ class RunConfig:
     staging_lock_timeout_seconds: int = 900
     insert_chunk_size: int = 1000
     pending_batches_query: str = ""
+    # Rerun: files already in one of completed_statuses are not processed again (force / --force overrides).
+    skip_completed_files: bool = True
+    completed_statuses: tuple = ("COMPLETED", "DATA_NOT_AVAILABLE")
+    # Delete this FileId's rows from the staging table before loading it again (no duplicates on rerun).
+    clear_staging_before_load: bool = True
+    # FileUploadBatch status when some files failed (COMPLETE is used if this code is not in RefBatchStatus).
+    batch_status_on_file_errors: str = "PARTIAL_FAILURE"
 
 
 @dataclass
@@ -174,6 +181,11 @@ def load_config(path: str | Path) -> AppConfig:
         staging_lock_timeout_seconds=int(r.get("staging_lock_timeout_seconds", 900)),
         insert_chunk_size=int(r.get("insert_chunk_size", 1000)),
         pending_batches_query=r.get("pending_batches_query", "") or "",
+        skip_completed_files=bool(r.get("skip_completed_files", True)),
+        completed_statuses=tuple(str(c).strip().upper() for c in
+                                 (r.get("completed_statuses") or ("COMPLETED", "DATA_NOT_AVAILABLE"))),
+        clear_staging_before_load=bool(r.get("clear_staging_before_load", True)),
+        batch_status_on_file_errors=str(r.get("batch_status_on_file_errors") or "PARTIAL_FAILURE").strip().upper(),
     )
 
     n = _section(raw, "notify")

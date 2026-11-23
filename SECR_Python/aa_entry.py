@@ -14,6 +14,7 @@ Input dictionary keys (AA "Dictionary of String" is fine - every value may be te
     max_batches   optional  batches in parallel (default from config, normally 10)
     max_files     optional  files per batch in parallel (default from config, normally 4)
     debug         optional  "true" for verbose logging
+    force         optional  "true" to process every file again, also those already COMPLETED
     secrets       optional  dictionary of the SECR_* / AWS_* environment variables, if the bot
                             reads them from the Credential Vault instead of the machine environment
 
@@ -124,7 +125,8 @@ def run_batches(args) -> str:
 
         config_path = Path(args.get("config_path") or HERE / "config.yaml")
         cfg = load_config(config_path)
-        apply_overrides(cfg, _as_int(args.get("max_batches")), _as_int(args.get("max_files")))
+        apply_overrides(cfg, _as_int(args.get("max_batches")), _as_int(args.get("max_files")),
+                        force=_as_bool(args.get("force", "false")))
         processor, _db, notifier, log_file = build(cfg, debug=_as_bool(args.get("debug", "false")))
 
         from secr.logging_setup import get_logger

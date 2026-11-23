@@ -26,9 +26,10 @@ MAX_DESCRIPTION = 2000
 _BATCH_FILES_SQL = """
 SELECT FB.BatchId, FB.ReportId, R.ClientId, R.ReportStart, R.ReportEnd,
        BP.BusinessPartnerName, UF.CategorySelected, UF.FileId, UF.FileName,
-       UF.StoragePath, UF.FileVersion
+       UF.StoragePath, UF.FileVersion, PS.Code AS StatusCode
 FROM FileUploadBatch FB
 JOIN UploadedFile UF          ON UF.BatchId = FB.BatchId
+LEFT JOIN RefFileProcessingStatus PS ON PS.FileProcessingStatusId = UF.ProcessingStatusId
 LEFT JOIN Report R            ON FB.ReportId = R.Id
 LEFT JOIN BusinessPartner BP  ON R.ClientId = BP.BusinessPartnerId
 LEFT JOIN RefReportType RT    ON R.ReportTypeId = RT.ReportTypeId
@@ -135,13 +136,17 @@ class EsgSession:
         )
         return self.execute(sql, (to_code, _clip(description), batch_id, from_code))
 
+    def batch_status_exists(self, code: str) -> bool:
+        return bool(self.query("SELECT 1 FROM RefBatchStatus WHERE Code = %s", (code,)))
+
     def set_batch_status(self, batch_id: str, code: str) -> None:
+        # Look the code up first: with a sub-select, an unknown code would silently set BatchStatusId to NULL.
+        rows = self.query("SELECT BatchStatusId FROM RefBatchStatus WHERE Code = %s", (code,))
+        if not rows:
+            raise ValueError(f"Batch status code '{code}' does not exist in RefBatchStatus")
         LOG.debug("Setting batch %s status to %s", batch_id, code)
-        self.execute(
-            "UPDATE FileUploadBatch SET BatchStatusId = "
-            "(SELECT b.BatchStatusId FROM RefBatchStatus b WHERE b.Code = %s) WHERE BatchId = %s",
-            (code, batch_id),
-        )
+        self.execute("UPDATE FileUploadBatch SET BatchStatusId = %s WHERE BatchId = %s",
+                     (rows[0]["BatchStatusId"], batch_id))
 
     def add_recognized_category(self, file_id: str, category_name: str) -> None:
         """Append to UploadedFile.CategoryRecognized (comma list, no duplicates)."""
@@ -159,6 +164,10 @@ class EsgSession:
         )
 
     # ---------- loading ----------
+    def delete_staging_rows(self, table: str, file_id: str) -> int:
+        """Remove rows a previous (failed) run left in the staging table for this file."""
+        return self.execute(f"DELETE FROM {_quote_ident(table)} WHERE FileId = %s", (file_id,))
+
     def bulk_insert(
         self, table: str, columns: Sequence[str], rows: Iterable[Sequence[Any]], chunk_size: int = 1000
     ) -> int:

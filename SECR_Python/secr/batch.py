@@ -21,7 +21,9 @@ from .normalize import NormalizeFlow
 
 class BatchProcessor:
     def __init__(self, db: EsgDb, normalize: NormalizeFlow | None, daisy: DaisyFlow | None,
-                 work_root, files_per_batch: int, keep_work_files: bool, notifier=None):
+                 work_root, files_per_batch: int, keep_work_files: bool, notifier=None,
+                 skip_statuses=st.DEFAULT_COMPLETED_STATUSES,
+                 status_on_file_errors: str = st.BATCH_PARTIAL_FAILURE):
         self.db = db
         self.normalize = normalize
         self.daisy = daisy
@@ -29,6 +31,23 @@ class BatchProcessor:
         self.files_per_batch = files_per_batch
         self.keep_work_files = keep_work_files
         self.notifier = notifier
+        # Rerun of a batch: files already in one of these statuses are not processed again.
+        self.skip_statuses = {str(s).upper() for s in (skip_statuses or ())}
+        # Batch status when some files failed; falls back to COMPLETE if the code is not in RefBatchStatus.
+        self.status_on_file_errors = (status_on_file_errors or st.BATCH_COMPLETE).strip().upper()
+
+    def _finish_batch_status(self, batch_id: str, state: str, log) -> None:
+        code = st.BATCH_COMPLETE
+        if state != "SUCCESS" and self.status_on_file_errors != st.BATCH_COMPLETE:
+            with self.db.session() as s:
+                if s.batch_status_exists(self.status_on_file_errors):
+                    code = self.status_on_file_errors
+                else:
+                    log.warning("Batch status %s is not in RefBatchStatus; using %s instead",
+                                self.status_on_file_errors, st.BATCH_COMPLETE)
+        with self.db.session() as s:
+            s.set_batch_status(batch_id, code)
+        log.info("Batch status set to %s", code)
 
     def process(self, batch_id: str) -> BatchResult:
         with log_context(batch_id=batch_id):
@@ -88,6 +107,31 @@ class BatchProcessor:
             def is_daisy(r) -> bool:
                 return (r.get("FileName") or "").strip() == st.DAISY_FILE_NAME
 
+            skipped: list[FileOutcome] = []
+            if self.skip_statuses:
+                todo = []
+                for r in rows:
+                    code = str(r.get("StatusCode") or "").upper()
+                    if code in self.skip_statuses:
+                        name = str(r.get("FileName") or "")
+                        flow = "daisy" if is_daisy(r) else "normalize"
+                        if flow == "daisy":
+                            name = f"{st.DAISY_FILE_NAME} ({r.get('CategorySelected')})"
+                        skipped.append(FileOutcome(str(r["FileId"]), name, flow, code,
+                                                   f"skipped: already {code}"))
+                        log.info("File %s (%s) is already %s; skipped", r["FileId"], name, code)
+                    else:
+                        todo.append(r)
+                if skipped:
+                    log.info("Rerun: %d file(s) already completed are skipped, %d file(s) to process",
+                             len(skipped), len(todo))
+                rows = todo
+            if not rows:
+                log.info("Every file of this batch is already completed; nothing to do")
+                with self.db.session() as s:
+                    s.set_batch_status(batch_id, st.BATCH_COMPLETE)
+                return BatchResult(batch_id, "ALREADY_COMPLETED", skipped)
+
             daisy_rows = [r for r in rows if is_daisy(r)]
             upload_rows = [r for r in rows if not is_daisy(r)]
             log.info("Client %s, report %s (%s to %s): %d uploaded file(s), %d Daisy file(s)",
@@ -107,14 +151,12 @@ class BatchProcessor:
             with ThreadPoolExecutor(max_workers=workers, thread_name_prefix=f"b{batch_id}-file") as pool:
                 futures = [pool.submit(fn, ctx, row, log) for fn, row in jobs]
                 outcomes: list[FileOutcome] = [f.result() for f in futures]
+            outcomes = skipped + outcomes
 
             log.info("All files done: %d OK, %d with errors", sum(o.ok for o in outcomes),
                      sum(not o.ok for o in outcomes))
-            with self.db.session() as s:
-                s.set_batch_status(batch_id, st.BATCH_COMPLETE)
-            log.info("Batch status set to %s", st.BATCH_COMPLETE)
-
             state = "SUCCESS" if all(o.ok for o in outcomes) else "COMPLETED_WITH_FILE_ERRORS"
+            self._finish_batch_status(batch_id, state, log)
             for o in outcomes:
                 (log.info if o.ok else log.warning)("File %s [%s] %s -> %s %s", o.file_id, o.flow,
                                                    o.file_name, o.status, o.detail)

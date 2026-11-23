@@ -34,6 +34,7 @@ python -m secr --config config.yaml run --batch-ids 40 41 42 43
 python -m secr --config config.yaml run --batch-file batches.txt
 python -m secr --config config.yaml run --pending            # uses run.pending_batches_query
 python -m secr --config config.yaml run --batch-ids 40 --max-batches 1 --max-files 1 --debug
+python -m secr --config config.yaml run --batch-ids 40 --force       # also redo files already COMPLETED
 ```
 
 Exit code: `0` all files OK, `2` some files failed (batch still completed), `1` at least one batch failed.
@@ -60,6 +61,7 @@ Dictionary keys (all values may be text):
 | `max_batches` | no | `10` | batches processed at the same time |
 | `max_files` | no | `4` | files of one batch processed at the same time |
 | `debug` | no | `true` | verbose log |
+| `force` | no | `true` | process every file again, also those already `COMPLETED` (see "Running a batch again") |
 | `secrets` | no | dictionary | `SECR_*` / `AWS_*` values, if the bot takes them from the Credential Vault instead of the machine's environment variables |
 
 The function never throws; it always returns JSON:
@@ -81,6 +83,35 @@ Notes:
 * The call blocks until every batch is finished (AI polling can take ~10 min per file), so give the
   AA work item / bot a long enough timeout.
 * Run one `run_batches` call per bot run; it already processes the batches in parallel.
+
+## Running a batch again
+
+* **Only unfinished files are processed.** When a batch runs again, files already in `COMPLETED` or
+  `DATA_NOT_AVAILABLE` are skipped. They still show in the result with `detail = "skipped: already COMPLETED"`.
+  All other files are processed again:
+  * `FAILED`, `PARTIAL_FAILURE` and `FAILED_WHILE_NORMALIZATION`;
+  * files left in `PARSING` / `NORMALIZING` by a run that stopped;
+  * new files.
+
+  If every file is already done, the batch state is `ALREADY_COMPLETED` and nothing is loaded.
+  Use `--force` (CLI) or `force: true` (AA) to process every file again.
+* **No duplicate staging rows.** Before a file is loaded into a staging table, the rows that an earlier run
+  left in that table for the same `FileId` are deleted. This happens once per file and table in a run, so
+  two sheets of one file that load into the same table do not delete each other's rows.
+* **Settings** (all optional), under `run:` in `config.yaml`:
+  * `skip_completed_files: true`
+  * `completed_statuses: [COMPLETED, DATA_NOT_AVAILABLE]`
+  * `clear_staging_before_load: true`
+* **Batch status:**
+  * every file OK → `COMPLETE`;
+  * some files failed → `PARTIAL_FAILURE` (setting `batch_status_on_file_errors`).
+
+  If `PARTIAL_FAILURE` is not in `RefBatchStatus`, the batch gets `COMPLETE` and a warning is logged.
+  Set `batch_status_on_file_errors: COMPLETE` to keep the bot's behaviour. A batch status code is always looked
+  up first, so an unknown code never sets `BatchStatusId` to NULL.
+* **Note on `PARTIAL_FAILURE`:** the whole file is processed again, including the sheets that already loaded.
+  Whether this creates duplicates in the final tables depends on the `Load*` procedures (whether they replace
+  or append the file's rows).
 
 ## Logging
 
@@ -158,6 +189,7 @@ Status codes written to `UploadedFile` and `FileUploadBatch` are the same as in 
 | Invoices in PROD | read `PROD_PORTFOLIO_EM_QUERY.txt` | reads `PROD_INVOICE_EM_QUERY.txt` (file must be created) |
 | Unknown Daisy category | silently skipped | file set to `FAILED` |
 | Batch `COMPLETE` | set before the Daisy sync ran | set after all files of the batch finished |
+| Batch with failed files | `COMPLETE` | `PARTIAL_FAILURE` if that code exists in `RefBatchStatus`, else `COMPLETE` |
 | SQL | values pasted into SQL, quotes escaped by hand | parameterised queries everywhere |
 | AI answered without any CSV link | counted as success | counted as failed for that sheet |
 | A sheet failed in AI but the rest loaded | final status `COMPLETED` | final status `PARTIAL_FAILURE` |

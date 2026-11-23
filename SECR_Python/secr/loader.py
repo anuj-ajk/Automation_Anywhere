@@ -7,6 +7,7 @@ The CSV -> table column mappings are copied from the bots' "Database: Insert in 
 from __future__ import annotations
 
 import csv
+import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Sequence
@@ -168,12 +169,18 @@ class LoadResult:
 
 
 class StagingLoader:
-    def __init__(self, created_by: str, serialize: bool, lock_timeout: int, chunk_size: int, log):
+    def __init__(self, created_by: str, serialize: bool, lock_timeout: int, chunk_size: int, log,
+                 clear_staging: bool = True):
         self.created_by = created_by
         self.serialize = serialize
         self.lock_timeout = lock_timeout
         self.chunk_size = chunk_size
         self.log = log
+        self.clear_staging = clear_staging
+        # (file_id, table) pairs already cleared in this run: the sheets of one file that share a staging
+        # table must not delete each other's rows, only what an earlier run left behind.
+        self._cleared: set[tuple[str, str]] = set()
+        self._cleared_lock = threading.Lock()
 
     def load(
         self, session: EsgSession, spec: LoadSpec, raw_csv: Path, work_dir: Path, file_id: str, report_id: str
@@ -200,12 +207,35 @@ class StagingLoader:
                 return self._insert_and_call(session, spec, columns, rows, args)
         return self._insert_and_call(session, spec, columns, rows, args)
 
+    def _clear_previous_rows(self, session, table: str, file_id: str) -> None:
+        if not self.clear_staging:
+            return
+        with self._cleared_lock:
+            if (file_id, table) in self._cleared:
+                return
+            self._cleared.add((file_id, table))
+        deleted = session.delete_staging_rows(table, file_id)
+        if deleted:
+            self.log.warning("Deleted %d row(s) left in %s for FileId %s by an earlier run", deleted, table, file_id)
+        else:
+            self.log.info("No earlier rows in %s for FileId %s", table, file_id)
+
     def _insert_and_call(self, session, spec, columns, rows, args) -> LoadResult:
+        self._clear_previous_rows(session, spec.staging_table, str(args["file_id"]))
         inserted = session.bulk_insert(spec.staging_table, columns, rows, self.chunk_size)
         self.log.info("Inserted %d row(s) into %s", inserted, spec.staging_table)
         messages = []
         for proc in spec.procs:
-            outs = session.call_proc(proc.name, [args[a] for a in proc.in_args], proc.n_out)
+            in_values = [args[a] for a in proc.in_args]
+            try:
+                outs = session.call_proc(proc.name, in_values, proc.n_out)
+            except Exception as exc:
+                # A MySQL error raised while the procedure runs (e.g. 1136 "Column count doesn't match")
+                # comes from the procedure's own SQL, not from this bulk insert.
+                self.log.error("Stored procedure %s(%s) failed inside MySQL: %s. The %d row(s) just inserted "
+                               "into %s for FileId %s are still there.", proc.name,
+                               ", ".join(map(str, in_values)), exc, inserted, spec.staging_table, args["file_id"])
+                raise LoadError(f"Error inside stored procedure {proc.name}: {exc}") from exc
             message = str(outs[0] or "")
             status = str(outs[1] or "") if proc.has_status and len(outs) > 1 else ""
             self.log.info("%s -> message=%r%s", proc.name, message, f", status={status!r}" if status else "")

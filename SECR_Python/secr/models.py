@@ -34,7 +34,7 @@ class FileOutcome:
 @dataclass
 class BatchResult:
     batch_id: str
-    state: str                      # SUCCESS / COMPLETED_WITH_FILE_ERRORS / FAILED / NO_FILES / SKIPPED
+    state: str  # SUCCESS / COMPLETED_WITH_FILE_ERRORS / FAILED / NO_FILES / SKIPPED / ALREADY_COMPLETED
     files: list[FileOutcome] = field(default_factory=list)
     error: str = ""
     seconds: float = 0.0

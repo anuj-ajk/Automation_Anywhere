@@ -13,9 +13,13 @@ DATA_NOT_AVAILABLE = "DATA_NOT_AVAILABLE"
 
 # FileUploadBatch.BatchStatusId
 BATCH_COMPLETE = "COMPLETE"
+BATCH_PARTIAL_FAILURE = "PARTIAL_FAILURE"  # used when some files failed, if it exists in RefBatchStatus
 
 # File outcomes that count as "fine" for the batch summary.
 OK_FILE_STATUSES = {COMPLETED, DATA_NOT_AVAILABLE}
+
+# Files already in one of these statuses are skipped when a batch is run again (run.skip_completed_files).
+DEFAULT_COMPLETED_STATUSES = (COMPLETED, DATA_NOT_AVAILABLE)
 
 DAISY_FILE_NAME = "Source: Daisy"
 
