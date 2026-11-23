@@ -692,26 +692,24 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    if sys.argv[1:] == ["--manual-test"]:  # same dictionary the AA bot passes; edit the values to test
-        print(insert_data_into_db(
-            {
-                "csv_path": str(HERE / "tests" / "Portfolio_ESG_Normalized_Data.csv"),
-                "input_folder": str(HERE / "tests" / "work"),
-                "file_id": "77",
-                "report_id": "5",
-                "category": "",                      # empty: taken from the file name
-                "ESGDBServerName": os.environ.get("ESGDBServerName", ""),
-                "DatabaseName": "esgdb",
-                "MySQL_Port": 3306,
-                "created_by": "",                    # empty: Windows user
-                "dry_run": True,                     # set False to really load into the database
-                "debug": True,
-                "log_dir": str(HERE / "tests" / "logs"),
-                "secrets": {
-                    "SECR_DB_USER": SECR_DB_USER,
-                    "SECR_DB_PASSWORD": SECR_DB_PASSWORD,
-                },
-            }
-        ))
-    else:
-        sys.exit(main())
+ # same dictionary the AA bot passes; edit the values to test
+    print(insert_data_into_db(
+        {
+            "csv_path": str(HERE / "tests" / "Portfolio_ESG_Normalized_Data.csv"),
+            "input_folder": str(HERE / "tests" / "work"),
+            "file_id": "77",
+            "report_id": "5",
+            "category": "",                      # empty: taken from the file name
+            "ESGDBServerName": os.environ.get("ESGDBServerName", ""),
+            "DatabaseName": "esgdb",
+            "MySQL_Port": 3306,
+            "created_by": "",                    # empty: Windows user
+            "dry_run": True,                     # set False to really load into the database
+            "debug": True,
+            "log_dir": str(HERE / "tests" / "logs"),
+            "secrets": {
+                "SECR_DB_USER": SECR_DB_USER,
+                "SECR_DB_PASSWORD": SECR_DB_PASSWORD,
+            },
+        }
+    ))
