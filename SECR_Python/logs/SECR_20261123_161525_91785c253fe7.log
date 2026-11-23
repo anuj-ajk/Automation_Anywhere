@@ -1,0 +1,63 @@
+2026-11-23 16:15:25,466 INFO    [run 91785c253fe7] [MainThread] [secr] Log file: \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\logs\SECR_20261123_161525_91785c253fe7.log (level DEBUG)
+2026-11-23 16:15:25,636 INFO    [run 91785c253fe7] [MainThread] [secr.runner] Python 3.14.10 on MAN-RDS-V10 (pid 23384)
+2026-11-23 16:15:25,646 INFO    [run 91785c253fe7] [MainThread] [secr.runner] Parallelism: 10 batch(es) x 4 file(s) per batch, max 60 DB connection(s)
+2026-11-23 16:15:25,658 INFO    [run 91785c253fe7] [MainThread] [secr.runner] Work folder C:\Users\ANUJ~1.KUM\AppData\Local\Temp\3\SECR_work (keep files: False), serialize staging loads: True, created by: anuj.kumar
+2026-11-23 16:15:25,663 INFO    [run 91785c253fe7] [MainThread] [secr.runner] Rerun: skip files already in COMPLETED/DATA_NOT_AVAILABLE: True; clear earlier staging rows before load: True
+2026-11-23 16:15:25,664 INFO    [run 91785c253fe7] [MainThread] [secr.runner] Odin polling: every 40s, up to 15 attempts; source environment: DEV
+2026-11-23 16:15:25,665 INFO    [run 91785c253fe7] [MainThread] [secr.runner] Secrets: SECR_DB_USER=set, SECR_DB_PASSWORD=set, SECR_S3_BUCKET=set, AWS_ACCESS_KEY_ID=set, AWS_SECRET_ACCESS_KEY=set, SECR_ODIN_API_KEY=set, SECR_ODIN_API_SECRET=set, SECR_EM_CONNECTION_STRING=set, SECR_NAV_CONNECTION_STRING=set
+2026-11-23 16:15:25,666 INFO    [run 91785c253fe7] [MainThread] [secr.db] ESG DB esg-instance.cm18ojbg8cjx.eu-west-2.rds.amazonaws.com:3306/esgdb, max 60 connection(s)
+2026-11-23 16:15:27,798 INFO    [run 91785c253fe7] [MainThread] [secr.storage] S3 storage ready: bucket appsmith-client-docs-ins-main-raw, region eu-west-2
+2026-11-23 16:15:27,803 INFO    [run 91785c253fe7] [MainThread] [secr.ai_client] Odin AI client ready: https://api.getodin.ai, project 356316e20dcb48658ce127, agent 63622
+2026-11-23 16:15:27,804 INFO    [run 91785c253fe7] [MainThread] [secr.source_systems] Source systems ready: environment DEV, EM query folder \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\queries, EM configured, NAV configured
+2026-11-23 16:15:27,805 INFO    [run 91785c253fe7] [MainThread] [secr.runner] Flows enabled: Normalize=True, Daisy=True
+2026-11-23 16:15:27,805 INFO    [run 91785c253fe7] [MainThread] [secr.aa_entry] Called from Automation Anywhere: config \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\config.yaml, batch ids 52, max_batches=10, max_files=4, debug=True, secrets passed: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, SECR_DB_PASSWORD, SECR_DB_USER, SECR_EM_CONNECTION_STRING, SECR_NAV_CONNECTION_STRING, SECR_ODIN_API_KEY, SECR_ODIN_API_SECRET, SECR_S3_BUCKET
+2026-11-23 16:15:27,806 INFO    [run 91785c253fe7] [MainThread] [secr.runner] Run started for 1 batch id(s): 52
+2026-11-23 16:15:27,809 DEBUG   [run 91785c253fe7] [MainThread] [secr.runner] E-mail 'SECR normalizer started' not sent (notifications disabled)
+2026-11-23 16:15:27,809 INFO    [run 91785c253fe7] [MainThread] [secr.orchestrator] Processing 1 batch(es), up to 1 in parallel
+2026-11-23 16:15:27,811 INFO    [run 91785c253fe7] [batch_0] [secr.batch] [batch 52] Batch started
+2026-11-23 16:15:28,342 DEBUG   [run 91785c253fe7] [batch_0] [secr.db] [batch 52] DB connection opened (1/60 in use)
+2026-11-23 16:15:28,343 DEBUG   [run 91785c253fe7] [batch_0] [secr.batch] [batch 52] Trying DB lock secr_batch_52
+2026-11-23 16:15:28,360 DEBUG   [run 91785c253fe7] [batch_0] [secr.db] [batch 52] SQL query (0.02s, 1 row(s)): SELECT GET_LOCK(%s, %s) AS got | params=('secr_batch_52', 0)
+2026-11-23 16:15:28,361 DEBUG   [run 91785c253fe7] [batch_0] [secr.db] [batch 52] Got DB lock secr_batch_52 after 0.0s
+2026-11-23 16:15:28,366 DEBUG   [run 91785c253fe7] [batch_0] [secr.batch] [batch 52] Got DB lock secr_batch_52; work folder C:\Users\ANUJ~1.KUM\AppData\Local\Temp\3\SECR_work\b52_161527811934
+2026-11-23 16:15:28,367 INFO    [run 91785c253fe7] [batch_0] [secr.batch] [batch 52] Read batch files from ESG DB - started
+2026-11-23 16:15:28,464 DEBUG   [run 91785c253fe7] [batch_0] [secr.db] [batch 52] DB connection opened (2/60 in use)
+2026-11-23 16:15:28,488 DEBUG   [run 91785c253fe7] [batch_0] [secr.db] [batch 52] SQL query (0.02s, 1 row(s)): SELECT FB.BatchId, FB.ReportId, R.ClientId, R.ReportStart, R.ReportEnd, BP.BusinessPartnerName, UF.CategorySelected, UF.FileId, UF.FileName, UF.StoragePath, UF. | params=('52',)
+2026-11-23 16:15:28,489 INFO    [run 91785c253fe7] [batch_0] [secr.batch] [batch 52] Read batch files from ESG DB - done in 0.1s
+2026-11-23 16:15:28,490 INFO    [run 91785c253fe7] [batch_0] [secr.batch] [batch 52] 1 valid SECR file row(s) found
+2026-11-23 16:15:28,491 DEBUG   [run 91785c253fe7] [batch_0] [secr.batch] [batch 52]   FileId=77 Category=Auto-Detect FileName=Inspired ESG_SECR_DSF_Acorn Mobility_FY25_V1_20261103_161448552.xlsx StoragePath=B&M/Heron Foods Limited/SECR/FY24-25 Annual-2/Inspired ESG_SECR_DSF_Acorn Mobility_FY25_V1_20261103_161448552.xlsx
+2026-11-23 16:15:28,492 INFO    [run 91785c253fe7] [batch_0] [secr.batch] [batch 52] Client Heron Foods, report 5 (2024-04-01 to 2025-03-31): 1 uploaded file(s), 0 Daisy file(s)
+2026-11-23 16:15:28,493 INFO    [run 91785c253fe7] [batch_0] [secr.batch] [batch 52] Processing 1 file(s), up to 1 in parallel
+2026-11-23 16:15:28,494 INFO    [run 91785c253fe7] [b52-file_0] [secr.normalize] [batch 52][file 77] Normalize started for 'Inspired ESG_SECR_DSF_Acorn Mobility_FY25_V1_20261103_161448552.xlsx' (category selected: Auto-Detect)
+2026-11-23 16:15:28,495 INFO    [run 91785c253fe7] [b52-file_0] [secr.normalize] [batch 52][file 77] Status -> PARSING
+2026-11-23 16:15:28,577 DEBUG   [run 91785c253fe7] [b52-file_0] [secr.db] [batch 52][file 77] DB connection opened (2/60 in use)
+2026-11-23 16:15:28,604 DEBUG   [run 91785c253fe7] [b52-file_0] [secr.db] [batch 52][file 77] SQL execute (0.03s, 1 row(s) affected): UPDATE UploadedFile SET ProcessingStatusId = (SELECT s.FileProcessingStatusId FROM RefFileProcessingStatus s WHERE s.Code = %s) WHERE FileId = %s | params=('PARSING', '77')
+2026-11-23 16:15:28,606 INFO    [run 91785c253fe7] [b52-file_0] [secr.normalize] [batch 52][file 77] Step 1/4 download from S3 - started
+2026-11-23 16:15:28,607 INFO    [run 91785c253fe7] [b52-file_0] [secr.storage] [batch 52][file 77] Downloading s3://appsmith-client-docs-ins-main-raw/B&M/Heron Foods Limited/SECR/FY24-25 Annual-2/Inspired ESG_SECR_DSF_Acorn Mobility_FY25_V1_20261103_161448552.xlsx
+2026-11-23 16:15:28,897 INFO    [run 91785c253fe7] [b52-file_0] [secr.storage] [batch 52][file 77] Downloaded s3://appsmith-client-docs-ins-main-raw/B&M/Heron Foods Limited/SECR/FY24-25 Annual-2/Inspired ESG_SECR_DSF_Acorn Mobility_FY25_V1_20261103_161448552.xlsx -> Inspired ESG_SECR_DSF_Acorn Mobility_FY2.xlsx (3906198 bytes, 0.3s)
+2026-11-23 16:15:28,898 INFO    [run 91785c253fe7] [b52-file_0] [secr.normalize] [batch 52][file 77] Step 1/4 download from S3 - done in 0.3s
+2026-11-23 16:15:28,898 INFO    [run 91785c253fe7] [b52-file_0] [secr.normalize] [batch 52][file 77] Downloaded B&M/Heron Foods Limited/SECR/FY24-25 Annual-2/Inspired ESG_SECR_DSF_Acorn Mobility_FY25_V1_20261103_161448552.xlsx (3906198 bytes)
+2026-11-23 16:15:28,899 INFO    [run 91785c253fe7] [b52-file_0] [secr.normalize] [batch 52][file 77] Step 2/4 split workbook into sheets - started
+2026-11-23 16:15:34,736 INFO    [run 91785c253fe7] [b52-file_0] [secr.excel_split] [batch 52][file 77] Workbook Inspired ESG_SECR_DSF_Acorn Mobility_FY2.xlsx has 12 sheet(s): START, INSTRUCTIONS & GLOSSARY, PORTFOLIO, LANDLORD DATA, TRANSPORT, OTHER FUELS, METRICS, ENERGY EFFICIENCY NARRATIVE, OM QA Actions, ORIGINAL PORTFOLIO, PORTFOLIO COMPARISON, LOOKUP
+2026-11-23 16:15:34,737 INFO    [run 91785c253fe7] [b52-file_0] [secr.excel_split] [batch 52][file 77] Sheet 'START' skipped (instruction / lookup sheet)
+2026-11-23 16:15:34,739 INFO    [run 91785c253fe7] [b52-file_0] [secr.excel_split] [batch 52][file 77] Sheet 'INSTRUCTIONS & GLOSSARY' skipped (instruction / lookup sheet)
+2026-11-23 16:15:36,683 INFO    [run 91785c253fe7] [b52-file_0] [secr.excel_split] [batch 52][file 77] Sheet 'PORTFOLIO' -> Sheet_PORTFOLIO.xlsx (5002 row(s))
+2026-11-23 16:15:37,884 INFO    [run 91785c253fe7] [b52-file_0] [secr.excel_split] [batch 52][file 77] Sheet 'LANDLORD DATA' -> Sheet_LANDLORD DATA.xlsx (5002 row(s))
+2026-11-23 16:15:38,102 INFO    [run 91785c253fe7] [b52-file_0] [secr.excel_split] [batch 52][file 77] Sheet 'TRANSPORT' -> Sheet_TRANSPORT.xlsx (252 row(s))
+2026-11-23 16:15:38,234 INFO    [run 91785c253fe7] [b52-file_0] [secr.excel_split] [batch 52][file 77] Sheet 'OTHER FUELS' -> Sheet_OTHER FUELS.xlsx (252 row(s))
+2026-11-23 16:15:38,319 INFO    [run 91785c253fe7] [b52-file_0] [secr.excel_split] [batch 52][file 77] Sheet 'METRICS' -> Sheet_METRICS.xlsx (511 row(s))
+2026-11-23 16:15:38,347 INFO    [run 91785c253fe7] [b52-file_0] [secr.excel_split] [batch 52][file 77] Sheet 'ENERGY EFFICIENCY NARRATIVE' -> Sheet_ENERGY EFFICIENCY NARRATIVE.xlsx (19 row(s))
+2026-11-23 16:15:38,348 INFO    [run 91785c253fe7] [b52-file_0] [secr.excel_split] [batch 52][file 77] Sheet 'OM QA Actions' skipped (instruction / lookup sheet)
+2026-11-23 16:15:38,348 INFO    [run 91785c253fe7] [b52-file_0] [secr.excel_split] [batch 52][file 77] Sheet 'ORIGINAL PORTFOLIO' skipped (instruction / lookup sheet)
+2026-11-23 16:15:38,349 INFO    [run 91785c253fe7] [b52-file_0] [secr.excel_split] [batch 52][file 77] Sheet 'PORTFOLIO COMPARISON' skipped (instruction / lookup sheet)
+2026-11-23 16:15:38,350 INFO    [run 91785c253fe7] [b52-file_0] [secr.excel_split] [batch 52][file 77] Sheet 'LOOKUP' skipped (instruction / lookup sheet)
+2026-11-23 16:15:38,354 INFO    [run 91785c253fe7] [b52-file_0] [secr.normalize] [batch 52][file 77] Step 2/4 split workbook into sheets - done in 9.5s
+2026-11-23 16:15:38,360 INFO    [run 91785c253fe7] [b52-file_0] [secr.normalize] [batch 52][file 77] Status -> PARSED
+2026-11-23 16:15:38,463 DEBUG   [run 91785c253fe7] [b52-file_0] [secr.db] [batch 52][file 77] DB connection opened (2/60 in use)
+2026-11-23 16:15:38,503 DEBUG   [run 91785c253fe7] [b52-file_0] [secr.db] [batch 52][file 77] SQL execute (0.03s, 1 row(s) affected): UPDATE UploadedFile SET ProcessingStatusId = (SELECT s.FileProcessingStatusId FROM RefFileProcessingStatus s WHERE s.Code = %s) WHERE FileId = %s | params=('PARSED', '77')
+2026-11-23 16:15:38,505 INFO    [run 91785c253fe7] [b52-file_0] [secr.normalize] [batch 52][file 77] 6 sheet(s) to normalize: PORTFOLIO, LANDLORD DATA, TRANSPORT, OTHER FUELS, METRICS, ENERGY EFFICIENCY NARRATIVE
+2026-11-23 16:15:38,510 INFO    [run 91785c253fe7] [b52-file_0] [secr.normalize] [batch 52][file 77] Step 3/4 AI normalization (submit + poll) - started
+2026-11-23 16:15:38,511 INFO    [run 91785c253fe7] [b52-file_0] [secr.normalize] [batch 52][file 77] Submitting sheet 'PORTFOLIO' (Sheet_PORTFOLIO.xlsx) to the AI agent
+2026-11-23 16:16:15,700 DEBUG   [run 91785c253fe7] [b52-file_0] [secr.ai_client] [batch 52][file 77] Odin POST /chat/create -> HTTP 200 in 37.2s
+2026-11-23 16:16:15,701 INFO    [run 91785c253fe7] [b52-file_0] [secr.ai_client] [batch 52][file 77] Chat 9a898036defb44ca89014d created for Sheet_PORTFOLIO.xlsx
+2026-11-23 16:16:15,703 INFO    [run 91785c253fe7] [b52-file_0] [secr.ai_client] [batch 52][file 77] Uploading Sheet_PORTFOLIO.xlsx (58723 bytes) to chat 9a898036defb44ca89014d
