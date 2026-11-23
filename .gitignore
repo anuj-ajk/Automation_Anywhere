@@ -1,2 +1,36 @@
 
 AAPackage/Automation Anywhere/Bots/Environmental Social and Governance/ESG Common Utility/Tasks/SubTasks/AWS S3 File Management
+
+# --- Secrets and local credentials (never commit) ---
+.env
+.env.*
+*.env
+secrets.*
+credentials.*
+*.pem
+*.key
+*.pfx
+*.p12
+**/*_local_config*
+**/*ConnectionString*.txt
+
+# --- Local unit-test copies of bots (may hold hard-coded test credentials) ---
+**/*_UnitTest
+**/*_UnitTest.*
+**/UnitTest/
+
+# --- Bot run artifacts ---
+*.log
+**/Logs/
+**/Output/
+**/Input/
+__pycache__/
+*.pyc
+
+# --- OS / editor ---
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/
+~$*

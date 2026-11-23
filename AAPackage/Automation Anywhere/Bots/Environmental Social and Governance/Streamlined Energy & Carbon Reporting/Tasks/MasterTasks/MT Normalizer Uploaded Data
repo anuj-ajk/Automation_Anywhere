@@ -1454,6 +1454,32 @@
                                     }
                                 }
                             ]
+                        },
+                        {
+                            "uid": "86ff0d21-81b9-4dd2-b6a0-c932e62f163a",
+                            "commandName": "assign",
+                            "packageName": "Boolean",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "source",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "constant"
+                                    }
+                                },
+                                {
+                                    "name": "userDefined",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "true"
+                                    }
+                                }
+                            ],
+                            "returnTo": {
+                                "type": "VARIABLE",
+                                "variableName": "bLoggerStarted"
+                            }
                         }
                     ],
                     "disabled": false,
@@ -1974,7 +2000,7 @@
                                     "name": "comment",
                                     "value": {
                                         "type": "STRING",
-                                        "string": "Main task execution"
+                                        "string": "Main task execution - Normalize raw data"
                                     }
                                 }
                             ]
@@ -1996,7 +2022,7 @@
                                     "name": "logMessage",
                                     "value": {
                                         "type": "STRING",
-                                        "string": "Start executing main task (core logic)"
+                                        "string": "Start executing main task: Normalize raw data"
                                     }
                                 },
                                 {
@@ -2084,186 +2110,39 @@
                             ]
                         },
                         {
-                            "uid": "e979cd7e-62f5-4d55-8511-9c796c68458e",
-                            "commandName": "runTask",
-                            "packageName": "TaskBot",
-                            "disabled": false,
-                            "attributes": [
-                                {
-                                    "name": "taskbot",
-                                    "value": {
-                                        "type": "TASKBOT",
-                                        "taskbotInput": {
-                                            "type": "DICTIONARY",
-                                            "dictionary": [
-                                                {
-                                                    "key": "dConfig",
-                                                    "value": {
-                                                        "type": "DICTIONARY",
-                                                        "expression": "$dConfig$"
-                                                    }
-                                                },
-                                                {
-                                                    "key": "ioBatchId",
-                                                    "value": {
-                                                        "type": "STRING",
-                                                        "expression": "$ioBatchId$"
-                                                    }
-                                                }
-                                            ]
-                                        },
-                                        "taskbotFile": {
-                                            "type": "FILE",
-                                            "string": "repository:///Automation%20Anywhere/Bots/Environmental%20Social%20and%20Governance/Streamlined%20Energy%20%26%20Carbon%20Reporting/Tasks/SubTasks/MainTask_Normalize_RawData"
-                                        }
-                                    }
-                                },
-                                {
-                                    "name": "repeatOption",
-                                    "value": {
-                                        "type": "STRING",
-                                        "string": "DO_NOT_REPEAT"
-                                    }
-                                },
-                                {
-                                    "name": "delayNextRepetition",
-                                    "value": {
-                                        "type": "BOOLEAN",
-                                        "boolean": false
-                                    }
-                                },
-                                {
-                                    "name": "continueOnError",
-                                    "value": {
-                                        "type": "BOOLEAN",
-                                        "boolean": false
-                                    }
-                                }
-                            ],
-                            "returnTo": {
-                                "type": "VARIABLE",
-                                "variableName": "dTaskOutput"
-                            }
-                        },
-                        {
-                            "uid": "30da59d0-c789-4bc3-9341-4b38fc966be9",
-                            "commandName": "log",
-                            "packageName": "Logger",
-                            "disabled": false,
-                            "attributes": [
-                                {
-                                    "name": "logType",
-                                    "value": {
-                                        "type": "STRING",
-                                        "string": "TRACE"
-                                    }
-                                },
-                                {
-                                    "name": "logMessage",
-                                    "value": {
-                                        "type": "STRING",
-                                        "string": "Main task execution is complete"
-                                    }
-                                },
-                                {
-                                    "name": "reference",
-                                    "value": {
-                                        "type": "STRING",
-                                        "string": ""
-                                    }
-                                }
-                            ]
-                        }
-                    ],
-                    "disabled": false,
-                    "attributes": [
-                        {
-                            "name": "title",
-                            "value": {
-                                "type": "STRING",
-                                "string": "Task call - Main Task Normalizer"
-                            }
-                        }
-                    ]
-                },
-                {
-                    "uid": "d7f3cbd5-f317-4f7b-b28a-9d7dc87b62a8",
-                    "commandName": "step",
-                    "packageName": "Step",
-                    "children": [
-                        {
-                            "uid": "3347df27-71b2-43b4-bc3e-4283fa171535",
-                            "commandName": "Comment",
-                            "packageName": "Comment",
-                            "disabled": false,
-                            "attributes": [
-                                {
-                                    "name": "comment",
-                                    "value": {
-                                        "type": "STRING",
-                                        "string": "Main task execution"
-                                    }
-                                }
-                            ]
-                        },
-                        {
-                            "uid": "cd58ed60-1b1e-4d50-8208-5860a572c430",
-                            "commandName": "log",
-                            "packageName": "Logger",
-                            "disabled": false,
-                            "attributes": [
-                                {
-                                    "name": "logType",
-                                    "value": {
-                                        "type": "STRING",
-                                        "string": "INFO"
-                                    }
-                                },
-                                {
-                                    "name": "logMessage",
-                                    "value": {
-                                        "type": "STRING",
-                                        "string": "Start executing main task (core logic)"
-                                    }
-                                },
-                                {
-                                    "name": "reference",
-                                    "value": {
-                                        "type": "STRING",
-                                        "string": ""
-                                    }
-                                }
-                            ]
-                        },
-                        {
-                            "uid": "28b7dd9f-0e62-40c7-b58c-7b2aa93ddea2",
+                            "uid": "8ad99e1d-5623-4ed6-9900-0eba4b14fdd7",
                             "commandName": "if",
                             "packageName": "If",
                             "children": [
                                 {
-                                    "uid": "b7ddcac1-b6b2-4855-b32a-93d5ef84c5f1",
-                                    "commandName": "assign",
-                                    "packageName": "String",
+                                    "uid": "ed1760e4-7536-4e6d-a669-c60a006b79cb",
+                                    "commandName": "throw",
+                                    "packageName": "ErrorHandler",
                                     "disabled": false,
                                     "attributes": [
                                         {
-                                            "name": "sourceString",
+                                            "name": "message",
                                             "value": {
                                                 "type": "STRING",
-                                                "expression": "$workItem{BatchID}$"
+                                                "expression": "No BatchID received: both the ioBatchId input and the work item BatchID are empty"
+                                            }
+                                        },
+                                        {
+                                            "name": "exceptionType",
+                                            "value": {
+                                                "type": "EXCEPTION",
+                                                "exceptionName": "BotException",
+                                                "packageName": "ErrorHandler"
                                             }
                                         }
-                                    ],
-                                    "returnTo": {
-                                        "type": "VARIABLE",
-                                        "variableName": "ioBatchId"
-                                    }
+                                    ]
                                 }
                             ],
                             "branches": [],
                             "disabled": false,
                             "attributes": [
                                 {
+                                    "name": "condition",
                                     "attributes": [
                                         {
                                             "name": "variable",
@@ -2301,7 +2180,6 @@
                                             }
                                         }
                                     ],
-                                    "name": "condition",
                                     "value": {
                                         "type": "CONDITIONAL",
                                         "conditionalName": "stringVariable",
@@ -2311,69 +2189,398 @@
                             ]
                         },
                         {
-                            "uid": "20142879-3b63-4ea1-bbe3-64899c079838",
-                            "commandName": "runTask",
-                            "packageName": "TaskBot",
+                            "uid": "527a67f1-9ea1-49bc-ba8d-de309a767956",
+                            "commandName": "assign",
+                            "packageName": "String",
                             "disabled": false,
                             "attributes": [
                                 {
-                                    "name": "taskbot",
-                                    "value": {
-                                        "type": "TASKBOT",
-                                        "taskbotInput": {
-                                            "type": "DICTIONARY",
-                                            "dictionary": [
-                                                {
-                                                    "key": "dConfig",
-                                                    "value": {
-                                                        "type": "DICTIONARY",
-                                                        "expression": "$dConfig$"
-                                                    }
-                                                },
-                                                {
-                                                    "key": "ioBatchId",
-                                                    "value": {
-                                                        "type": "STRING",
-                                                        "expression": "$ioBatchId$"
-                                                    }
-                                                }
-                                            ]
-                                        },
-                                        "taskbotFile": {
-                                            "type": "FILE",
-                                            "string": "repository:///Automation%20Anywhere/Bots/Environmental%20Social%20and%20Governance/Streamlined%20Energy%20%26%20Carbon%20Reporting/Tasks/SubTasks/MainTask_Retrive_Data_Daisy_EM"
-                                        }
-                                    }
-                                },
-                                {
-                                    "name": "repeatOption",
+                                    "name": "sourceString",
                                     "value": {
                                         "type": "STRING",
-                                        "string": "DO_NOT_REPEAT"
-                                    }
-                                },
-                                {
-                                    "name": "delayNextRepetition",
-                                    "value": {
-                                        "type": "BOOLEAN",
-                                        "boolean": false
-                                    }
-                                },
-                                {
-                                    "name": "continueOnError",
-                                    "value": {
-                                        "type": "BOOLEAN",
-                                        "boolean": false
+                                        "expression": ""
                                     }
                                 }
                             ],
                             "returnTo": {
                                 "type": "VARIABLE",
-                                "variableName": "dTaskOutput"
+                                "variableName": "sMainTaskErrors"
                             }
                         },
                         {
-                            "uid": "93ff0123-8167-47c5-8f3e-277199ffbc25",
+                            "uid": "5a37571c-0b04-4a9b-9a0b-de9c2a7da828",
+                            "commandName": "try",
+                            "packageName": "ErrorHandler",
+                            "children": [
+                                {
+                                    "uid": "e979cd7e-62f5-4d55-8511-9c796c68458e",
+                                    "commandName": "runTask",
+                                    "packageName": "TaskBot",
+                                    "disabled": false,
+                                    "attributes": [
+                                        {
+                                            "name": "taskbot",
+                                            "value": {
+                                                "type": "TASKBOT",
+                                                "taskbotInput": {
+                                                    "type": "DICTIONARY",
+                                                    "dictionary": [
+                                                        {
+                                                            "key": "dConfig",
+                                                            "value": {
+                                                                "type": "DICTIONARY",
+                                                                "expression": "$dConfig$"
+                                                            }
+                                                        },
+                                                        {
+                                                            "key": "ioBatchId",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "expression": "$ioBatchId$"
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                "taskbotFile": {
+                                                    "type": "FILE",
+                                                    "string": "repository:///Automation%20Anywhere/Bots/Environmental%20Social%20and%20Governance/Streamlined%20Energy%20%26%20Carbon%20Reporting/Tasks/SubTasks/MainTask_Normalize_RawData"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "name": "repeatOption",
+                                            "value": {
+                                                "type": "STRING",
+                                                "string": "DO_NOT_REPEAT"
+                                            }
+                                        },
+                                        {
+                                            "name": "delayNextRepetition",
+                                            "value": {
+                                                "type": "BOOLEAN",
+                                                "boolean": false
+                                            }
+                                        },
+                                        {
+                                            "name": "continueOnError",
+                                            "value": {
+                                                "type": "BOOLEAN",
+                                                "boolean": false
+                                            }
+                                        }
+                                    ],
+                                    "returnTo": {
+                                        "type": "VARIABLE",
+                                        "variableName": "dTaskOutput"
+                                    }
+                                },
+                                {
+                                    "uid": "2b2397d4-0f01-48ee-a571-ec0b8cf47e81",
+                                    "commandName": "if",
+                                    "packageName": "If",
+                                    "children": [
+                                        {
+                                            "uid": "5965bff6-5ae1-4193-ab2a-d33cfd18874f",
+                                            "commandName": "throw",
+                                            "packageName": "ErrorHandler",
+                                            "disabled": false,
+                                            "attributes": [
+                                                {
+                                                    "name": "message",
+                                                    "value": {
+                                                        "type": "STRING",
+                                                        "expression": "$dTaskOutput{sErrorMessage}$ (subtask $dTaskOutput{sTaskName}$, line $dTaskOutput{nErrorLineNumber}.Number:toString$)"
+                                                    }
+                                                },
+                                                {
+                                                    "name": "exceptionType",
+                                                    "value": {
+                                                        "type": "EXCEPTION",
+                                                        "exceptionName": "BotException",
+                                                        "packageName": "ErrorHandler"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "branches": [],
+                                    "disabled": false,
+                                    "attributes": [
+                                        {
+                                            "name": "condition",
+                                            "attributes": [
+                                                {
+                                                    "name": "variable",
+                                                    "value": {
+                                                        "type": "STRING",
+                                                        "expression": "$dTaskOutput{sErrorMessage}$"
+                                                    }
+                                                },
+                                                {
+                                                    "name": "operator",
+                                                    "value": {
+                                                        "type": "STRING",
+                                                        "string": "NEQ"
+                                                    }
+                                                },
+                                                {
+                                                    "name": "value",
+                                                    "value": {
+                                                        "type": "STRING",
+                                                        "string": ""
+                                                    }
+                                                },
+                                                {
+                                                    "name": "matchCase",
+                                                    "value": {
+                                                        "type": "BOOLEAN",
+                                                        "boolean": false
+                                                    }
+                                                },
+                                                {
+                                                    "name": "isIgnoreCarriage",
+                                                    "value": {
+                                                        "type": "BOOLEAN",
+                                                        "boolean": false
+                                                    }
+                                                }
+                                            ],
+                                            "value": {
+                                                "type": "CONDITIONAL",
+                                                "conditionalName": "stringVariable",
+                                                "packageName": "String"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "uid": "30da59d0-c789-4bc3-9341-4b38fc966be9",
+                                    "commandName": "log",
+                                    "packageName": "Logger",
+                                    "disabled": false,
+                                    "attributes": [
+                                        {
+                                            "name": "logType",
+                                            "value": {
+                                                "type": "STRING",
+                                                "string": "TRACE"
+                                            }
+                                        },
+                                        {
+                                            "name": "logMessage",
+                                            "value": {
+                                                "type": "STRING",
+                                                "string": "Main task Normalize raw data is complete"
+                                            }
+                                        },
+                                        {
+                                            "name": "reference",
+                                            "value": {
+                                                "type": "STRING",
+                                                "string": ""
+                                            }
+                                        }
+                                    ]
+                                }
+                            ],
+                            "branches": [
+                                {
+                                    "uid": "23461130-e504-4f3f-b1d4-20c9c5a71b6b",
+                                    "commandName": "catch",
+                                    "packageName": "ErrorHandler",
+                                    "children": [
+                                        {
+                                            "uid": "6b2c7f10-d7f4-472d-ada1-9ea879b53fd0",
+                                            "commandName": "log",
+                                            "packageName": "Logger",
+                                            "disabled": false,
+                                            "attributes": [
+                                                {
+                                                    "name": "logType",
+                                                    "value": {
+                                                        "type": "STRING",
+                                                        "string": "ERROR"
+                                                    }
+                                                },
+                                                {
+                                                    "name": "logMessage",
+                                                    "value": {
+                                                        "type": "STRING",
+                                                        "expression": "Normalize raw data: $sStepErrorMessage$"
+                                                    }
+                                                },
+                                                {
+                                                    "name": "reference",
+                                                    "value": {
+                                                        "type": "STRING",
+                                                        "string": ""
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "uid": "fb731c4d-37f5-48d7-8634-dacb2fa93746",
+                                            "commandName": "if",
+                                            "packageName": "If",
+                                            "children": [
+                                                {
+                                                    "uid": "22c6143c-ea2c-4ee5-94ea-b19848bd7266",
+                                                    "commandName": "assign",
+                                                    "packageName": "String",
+                                                    "disabled": false,
+                                                    "attributes": [
+                                                        {
+                                                            "name": "sourceString",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "expression": "Normalize raw data: $sStepErrorMessage$"
+                                                            }
+                                                        }
+                                                    ],
+                                                    "returnTo": {
+                                                        "type": "VARIABLE",
+                                                        "variableName": "sMainTaskErrors"
+                                                    }
+                                                }
+                                            ],
+                                            "branches": [
+                                                {
+                                                    "uid": "4d083e7c-825f-424d-8e88-9937ba3aa26b",
+                                                    "commandName": "else",
+                                                    "packageName": "If",
+                                                    "children": [
+                                                        {
+                                                            "uid": "29962265-c75e-445d-a9e7-59824d14e1e6",
+                                                            "commandName": "assign",
+                                                            "packageName": "String",
+                                                            "disabled": false,
+                                                            "attributes": [
+                                                                {
+                                                                    "name": "sourceString",
+                                                                    "value": {
+                                                                        "type": "STRING",
+                                                                        "expression": "$sMainTaskErrors$$String:Enter$Normalize raw data: $sStepErrorMessage$"
+                                                                    }
+                                                                }
+                                                            ],
+                                                            "returnTo": {
+                                                                "type": "VARIABLE",
+                                                                "variableName": "sMainTaskErrors"
+                                                            }
+                                                        }
+                                                    ],
+                                                    "disabled": false
+                                                }
+                                            ],
+                                            "disabled": false,
+                                            "attributes": [
+                                                {
+                                                    "name": "condition",
+                                                    "attributes": [
+                                                        {
+                                                            "name": "variable",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "expression": "$sMainTaskErrors$"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "operator",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": "EQ"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "value",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": ""
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "matchCase",
+                                                            "value": {
+                                                                "type": "BOOLEAN",
+                                                                "boolean": false
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "isIgnoreCarriage",
+                                                            "value": {
+                                                                "type": "BOOLEAN",
+                                                                "boolean": false
+                                                            }
+                                                        }
+                                                    ],
+                                                    "value": {
+                                                        "type": "CONDITIONAL",
+                                                        "conditionalName": "stringVariable",
+                                                        "packageName": "String"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "disabled": false,
+                                    "attributes": [
+                                        {
+                                            "name": "exceptionType",
+                                            "value": {
+                                                "type": "EXCEPTION",
+                                                "exceptionName": "BotException",
+                                                "packageName": "ErrorHandler"
+                                            }
+                                        }
+                                    ],
+                                    "returns": {
+                                        "errorMessage": {
+                                            "type": "VARIABLE",
+                                            "variableName": "sStepErrorMessage"
+                                        },
+                                        "errorLineNumber": {
+                                            "type": "VARIABLE",
+                                            "variableName": "nStepErrorLineNumber"
+                                        }
+                                    }
+                                }
+                            ],
+                            "disabled": false
+                        }
+                    ],
+                    "disabled": false,
+                    "attributes": [
+                        {
+                            "name": "title",
+                            "value": {
+                                "type": "STRING",
+                                "string": "Task call - Main Task Normalizer"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "uid": "d7f3cbd5-f317-4f7b-b28a-9d7dc87b62a8",
+                    "commandName": "step",
+                    "packageName": "Step",
+                    "children": [
+                        {
+                            "uid": "3347df27-71b2-43b4-bc3e-4283fa171535",
+                            "commandName": "Comment",
+                            "packageName": "Comment",
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "comment",
+                                    "value": {
+                                        "type": "STRING",
+                                        "string": "Main task execution - Daisy EM sync (independent of Normalize: runs even if Normalize failed)"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "uid": "cd58ed60-1b1e-4d50-8208-5860a572c430",
                             "commandName": "log",
                             "packageName": "Logger",
                             "disabled": false,
@@ -2382,14 +2589,14 @@
                                     "name": "logType",
                                     "value": {
                                         "type": "STRING",
-                                        "string": "TRACE"
+                                        "string": "INFO"
                                     }
                                 },
                                 {
                                     "name": "logMessage",
                                     "value": {
                                         "type": "STRING",
-                                        "string": "Main task execution is complete"
+                                        "string": "Start executing main task: Daisy EM sync"
                                     }
                                 },
                                 {
@@ -2400,6 +2607,346 @@
                                     }
                                 }
                             ]
+                        },
+                        {
+                            "uid": "0423b574-b2e3-4547-95e7-f37875daa0b2",
+                            "commandName": "try",
+                            "packageName": "ErrorHandler",
+                            "children": [
+                                {
+                                    "uid": "20142879-3b63-4ea1-bbe3-64899c079838",
+                                    "commandName": "runTask",
+                                    "packageName": "TaskBot",
+                                    "disabled": false,
+                                    "attributes": [
+                                        {
+                                            "name": "taskbot",
+                                            "value": {
+                                                "type": "TASKBOT",
+                                                "taskbotInput": {
+                                                    "type": "DICTIONARY",
+                                                    "dictionary": [
+                                                        {
+                                                            "key": "dConfig",
+                                                            "value": {
+                                                                "type": "DICTIONARY",
+                                                                "expression": "$dConfig$"
+                                                            }
+                                                        },
+                                                        {
+                                                            "key": "ioBatchId",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "expression": "$ioBatchId$"
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                "taskbotFile": {
+                                                    "type": "FILE",
+                                                    "string": "repository:///Automation%20Anywhere/Bots/Environmental%20Social%20and%20Governance/Streamlined%20Energy%20%26%20Carbon%20Reporting/Tasks/SubTasks/MainTask_Retrive_Data_Daisy_EM"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "name": "repeatOption",
+                                            "value": {
+                                                "type": "STRING",
+                                                "string": "DO_NOT_REPEAT"
+                                            }
+                                        },
+                                        {
+                                            "name": "delayNextRepetition",
+                                            "value": {
+                                                "type": "BOOLEAN",
+                                                "boolean": false
+                                            }
+                                        },
+                                        {
+                                            "name": "continueOnError",
+                                            "value": {
+                                                "type": "BOOLEAN",
+                                                "boolean": false
+                                            }
+                                        }
+                                    ],
+                                    "returnTo": {
+                                        "type": "VARIABLE",
+                                        "variableName": "dTaskOutput"
+                                    }
+                                },
+                                {
+                                    "uid": "541f2cf6-9ba7-4a5f-87f5-ad0f69430651",
+                                    "commandName": "if",
+                                    "packageName": "If",
+                                    "children": [
+                                        {
+                                            "uid": "ff03786e-c426-414d-8303-63aaef75cd66",
+                                            "commandName": "throw",
+                                            "packageName": "ErrorHandler",
+                                            "disabled": false,
+                                            "attributes": [
+                                                {
+                                                    "name": "message",
+                                                    "value": {
+                                                        "type": "STRING",
+                                                        "expression": "$dTaskOutput{sErrorMessage}$ (subtask $dTaskOutput{sTaskName}$, line $dTaskOutput{nErrorLineNumber}.Number:toString$)"
+                                                    }
+                                                },
+                                                {
+                                                    "name": "exceptionType",
+                                                    "value": {
+                                                        "type": "EXCEPTION",
+                                                        "exceptionName": "BotException",
+                                                        "packageName": "ErrorHandler"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "branches": [],
+                                    "disabled": false,
+                                    "attributes": [
+                                        {
+                                            "name": "condition",
+                                            "attributes": [
+                                                {
+                                                    "name": "variable",
+                                                    "value": {
+                                                        "type": "STRING",
+                                                        "expression": "$dTaskOutput{sErrorMessage}$"
+                                                    }
+                                                },
+                                                {
+                                                    "name": "operator",
+                                                    "value": {
+                                                        "type": "STRING",
+                                                        "string": "NEQ"
+                                                    }
+                                                },
+                                                {
+                                                    "name": "value",
+                                                    "value": {
+                                                        "type": "STRING",
+                                                        "string": ""
+                                                    }
+                                                },
+                                                {
+                                                    "name": "matchCase",
+                                                    "value": {
+                                                        "type": "BOOLEAN",
+                                                        "boolean": false
+                                                    }
+                                                },
+                                                {
+                                                    "name": "isIgnoreCarriage",
+                                                    "value": {
+                                                        "type": "BOOLEAN",
+                                                        "boolean": false
+                                                    }
+                                                }
+                                            ],
+                                            "value": {
+                                                "type": "CONDITIONAL",
+                                                "conditionalName": "stringVariable",
+                                                "packageName": "String"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "uid": "93ff0123-8167-47c5-8f3e-277199ffbc25",
+                                    "commandName": "log",
+                                    "packageName": "Logger",
+                                    "disabled": false,
+                                    "attributes": [
+                                        {
+                                            "name": "logType",
+                                            "value": {
+                                                "type": "STRING",
+                                                "string": "TRACE"
+                                            }
+                                        },
+                                        {
+                                            "name": "logMessage",
+                                            "value": {
+                                                "type": "STRING",
+                                                "string": "Main task Daisy EM sync is complete"
+                                            }
+                                        },
+                                        {
+                                            "name": "reference",
+                                            "value": {
+                                                "type": "STRING",
+                                                "string": ""
+                                            }
+                                        }
+                                    ]
+                                }
+                            ],
+                            "branches": [
+                                {
+                                    "uid": "b28ebbf0-877c-4eea-a46b-79b1a43f46b2",
+                                    "commandName": "catch",
+                                    "packageName": "ErrorHandler",
+                                    "children": [
+                                        {
+                                            "uid": "33e1542a-89e1-4076-ab61-02734f899269",
+                                            "commandName": "log",
+                                            "packageName": "Logger",
+                                            "disabled": false,
+                                            "attributes": [
+                                                {
+                                                    "name": "logType",
+                                                    "value": {
+                                                        "type": "STRING",
+                                                        "string": "ERROR"
+                                                    }
+                                                },
+                                                {
+                                                    "name": "logMessage",
+                                                    "value": {
+                                                        "type": "STRING",
+                                                        "expression": "Daisy EM sync: $sStepErrorMessage$"
+                                                    }
+                                                },
+                                                {
+                                                    "name": "reference",
+                                                    "value": {
+                                                        "type": "STRING",
+                                                        "string": ""
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "uid": "c00126e4-5014-4761-ab28-1362e167b618",
+                                            "commandName": "if",
+                                            "packageName": "If",
+                                            "children": [
+                                                {
+                                                    "uid": "192cb766-4486-4f52-b9b5-932b360d4644",
+                                                    "commandName": "assign",
+                                                    "packageName": "String",
+                                                    "disabled": false,
+                                                    "attributes": [
+                                                        {
+                                                            "name": "sourceString",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "expression": "Daisy EM sync: $sStepErrorMessage$"
+                                                            }
+                                                        }
+                                                    ],
+                                                    "returnTo": {
+                                                        "type": "VARIABLE",
+                                                        "variableName": "sMainTaskErrors"
+                                                    }
+                                                }
+                                            ],
+                                            "branches": [
+                                                {
+                                                    "uid": "4ad1da55-9b89-4cb0-a2d2-8ffb55a77e33",
+                                                    "commandName": "else",
+                                                    "packageName": "If",
+                                                    "children": [
+                                                        {
+                                                            "uid": "504b30c1-55bb-4a42-b473-1c8b6ac9ad00",
+                                                            "commandName": "assign",
+                                                            "packageName": "String",
+                                                            "disabled": false,
+                                                            "attributes": [
+                                                                {
+                                                                    "name": "sourceString",
+                                                                    "value": {
+                                                                        "type": "STRING",
+                                                                        "expression": "$sMainTaskErrors$$String:Enter$Daisy EM sync: $sStepErrorMessage$"
+                                                                    }
+                                                                }
+                                                            ],
+                                                            "returnTo": {
+                                                                "type": "VARIABLE",
+                                                                "variableName": "sMainTaskErrors"
+                                                            }
+                                                        }
+                                                    ],
+                                                    "disabled": false
+                                                }
+                                            ],
+                                            "disabled": false,
+                                            "attributes": [
+                                                {
+                                                    "name": "condition",
+                                                    "attributes": [
+                                                        {
+                                                            "name": "variable",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "expression": "$sMainTaskErrors$"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "operator",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": "EQ"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "value",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": ""
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "matchCase",
+                                                            "value": {
+                                                                "type": "BOOLEAN",
+                                                                "boolean": false
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "isIgnoreCarriage",
+                                                            "value": {
+                                                                "type": "BOOLEAN",
+                                                                "boolean": false
+                                                            }
+                                                        }
+                                                    ],
+                                                    "value": {
+                                                        "type": "CONDITIONAL",
+                                                        "conditionalName": "stringVariable",
+                                                        "packageName": "String"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "disabled": false,
+                                    "attributes": [
+                                        {
+                                            "name": "exceptionType",
+                                            "value": {
+                                                "type": "EXCEPTION",
+                                                "exceptionName": "BotException",
+                                                "packageName": "ErrorHandler"
+                                            }
+                                        }
+                                    ],
+                                    "returns": {
+                                        "errorMessage": {
+                                            "type": "VARIABLE",
+                                            "variableName": "sStepErrorMessage"
+                                        },
+                                        "errorLineNumber": {
+                                            "type": "VARIABLE",
+                                            "variableName": "nStepErrorLineNumber"
+                                        }
+                                    }
+                                }
+                            ],
+                            "disabled": false
                         }
                     ],
                     "disabled": false,
@@ -2410,6 +2957,102 @@
                                 "type": "STRING",
                                 "string": "Task call - Main Task Daisy Sync"
                             }
+                        }
+                    ]
+                },
+                {
+                    "uid": "9eb51150-dd8c-4d17-bb39-498dd8ae5221",
+                    "commandName": "step",
+                    "packageName": "Step",
+                    "disabled": false,
+                    "attributes": [
+                        {
+                            "name": "title",
+                            "value": {
+                                "type": "STRING",
+                                "string": "Check main task results"
+                            }
+                        }
+                    ],
+                    "children": [
+                        {
+                            "uid": "07386ed6-f989-4793-9806-2c63807ca713",
+                            "commandName": "if",
+                            "packageName": "If",
+                            "children": [
+                                {
+                                    "uid": "3a022f46-22d3-4120-b67f-71edd882f24f",
+                                    "commandName": "throw",
+                                    "packageName": "ErrorHandler",
+                                    "disabled": false,
+                                    "attributes": [
+                                        {
+                                            "name": "message",
+                                            "value": {
+                                                "type": "STRING",
+                                                "expression": "One or more main tasks failed:$String:Enter$$sMainTaskErrors$"
+                                            }
+                                        },
+                                        {
+                                            "name": "exceptionType",
+                                            "value": {
+                                                "type": "EXCEPTION",
+                                                "exceptionName": "BotException",
+                                                "packageName": "ErrorHandler"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ],
+                            "branches": [],
+                            "disabled": false,
+                            "attributes": [
+                                {
+                                    "name": "condition",
+                                    "attributes": [
+                                        {
+                                            "name": "variable",
+                                            "value": {
+                                                "type": "STRING",
+                                                "expression": "$sMainTaskErrors$"
+                                            }
+                                        },
+                                        {
+                                            "name": "operator",
+                                            "value": {
+                                                "type": "STRING",
+                                                "string": "NEQ"
+                                            }
+                                        },
+                                        {
+                                            "name": "value",
+                                            "value": {
+                                                "type": "STRING",
+                                                "string": ""
+                                            }
+                                        },
+                                        {
+                                            "name": "matchCase",
+                                            "value": {
+                                                "type": "BOOLEAN",
+                                                "boolean": false
+                                            }
+                                        },
+                                        {
+                                            "name": "isIgnoreCarriage",
+                                            "value": {
+                                                "type": "BOOLEAN",
+                                                "boolean": false
+                                            }
+                                        }
+                                    ],
+                                    "value": {
+                                        "type": "CONDITIONAL",
+                                        "conditionalName": "stringVariable",
+                                        "packageName": "String"
+                                    }
+                                }
+                            ]
                         }
                     ]
                 }
@@ -2464,30 +3107,72 @@
                             ]
                         },
                         {
-                            "uid": "aaf428e2-9c3e-43a2-8ef0-6b2b605bc2dc",
-                            "commandName": "log",
-                            "packageName": "Logger",
+                            "uid": "873ca77c-e005-403a-8449-92cc1e31f1d9",
+                            "commandName": "if",
+                            "packageName": "If",
+                            "children": [
+                                {
+                                    "uid": "aaf428e2-9c3e-43a2-8ef0-6b2b605bc2dc",
+                                    "commandName": "log",
+                                    "packageName": "Logger",
+                                    "disabled": false,
+                                    "attributes": [
+                                        {
+                                            "name": "logType",
+                                            "value": {
+                                                "type": "STRING",
+                                                "string": "ERROR"
+                                            }
+                                        },
+                                        {
+                                            "name": "logMessage",
+                                            "value": {
+                                                "type": "STRING",
+                                                "expression": "Error Line Number: $nErrorLineNumber.Number:toString$\nError Message: $sErrorMessage$"
+                                            }
+                                        },
+                                        {
+                                            "name": "reference",
+                                            "value": {
+                                                "type": "STRING",
+                                                "string": ""
+                                            }
+                                        }
+                                    ]
+                                }
+                            ],
+                            "branches": [],
                             "disabled": false,
                             "attributes": [
                                 {
-                                    "name": "logType",
+                                    "name": "condition",
+                                    "attributes": [
+                                        {
+                                            "name": "variable",
+                                            "value": {
+                                                "type": "BOOLEAN",
+                                                "expression": "$bLoggerStarted$"
+                                            }
+                                        },
+                                        {
+                                            "name": "operator",
+                                            "value": {
+                                                "type": "STRING",
+                                                "string": "EQ"
+                                            }
+                                        },
+                                        {
+                                            "name": "value",
+                                            "value": {
+                                                "type": "BOOLEAN",
+                                                "boolean": true
+                                            }
+                                        }
+                                    ],
                                     "value": {
-                                        "type": "STRING",
-                                        "string": "ERROR"
-                                    }
-                                },
-                                {
-                                    "name": "logMessage",
-                                    "value": {
-                                        "type": "STRING",
-                                        "expression": "Error Line Number: $nErrorLineNumber.Number:toString$\nError Message: $sErrorMessage$"
-                                    }
-                                },
-                                {
-                                    "name": "reference",
-                                    "value": {
-                                        "type": "STRING",
-                                        "string": ""
+                                        "type": "CONDITIONAL",
+                                        "conditionalName": "booleanVariable",
+                                        "packageName": "Boolean"
                                     }
                                 }
                             ]
@@ -2586,33 +3271,10 @@
                     "packageName": "ErrorHandler",
                     "children": [
                         {
-                            "uid": "6562723d-79b9-4e20-8358-5209cbcf234e",
+                            "uid": "90684f7e-2546-46bb-bbe9-c440c08af5ce",
                             "commandName": "try",
                             "packageName": "ErrorHandler",
                             "children": [
-                                {
-                                    "uid": "0f4d6b71-4a21-4a49-b517-e736b56156a4",
-                                    "commandName": "step",
-                                    "packageName": "Step",
-                                    "children": [
-                                        {
-                                            "uid": "259c7928-7830-451e-af28-4d3cf1ead194",
-                                            "commandName": "end",
-                                            "packageName": "Logger",
-                                            "disabled": false
-                                        }
-                                    ],
-                                    "disabled": false,
-                                    "attributes": [
-                                        {
-                                            "name": "title",
-                                            "value": {
-                                                "type": "STRING",
-                                                "string": "Release Log"
-                                            }
-                                        }
-                                    ]
-                                },
                                 {
                                     "uid": "ddb4e967-6dde-425d-a7ca-087b4d319967",
                                     "commandName": "step",
@@ -2634,30 +3296,72 @@
                                             ]
                                         },
                                         {
-                                            "uid": "c2dd1ef5-dcba-4d40-8862-bd94f3aa92bb",
-                                            "commandName": "log",
-                                            "packageName": "Logger",
+                                            "uid": "56599140-1437-4210-85b8-2935f1fa0609",
+                                            "commandName": "if",
+                                            "packageName": "If",
+                                            "children": [
+                                                {
+                                                    "uid": "c2dd1ef5-dcba-4d40-8862-bd94f3aa92bb",
+                                                    "commandName": "log",
+                                                    "packageName": "Logger",
+                                                    "disabled": false,
+                                                    "attributes": [
+                                                        {
+                                                            "name": "logType",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": "INFO"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "logMessage",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": "Start uploading files from local to remote"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "reference",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": ""
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "branches": [],
                                             "disabled": false,
                                             "attributes": [
                                                 {
-                                                    "name": "logType",
+                                                    "name": "condition",
+                                                    "attributes": [
+                                                        {
+                                                            "name": "variable",
+                                                            "value": {
+                                                                "type": "BOOLEAN",
+                                                                "expression": "$bLoggerStarted$"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "operator",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": "EQ"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "value",
+                                                            "value": {
+                                                                "type": "BOOLEAN",
+                                                                "boolean": true
+                                                            }
+                                                        }
+                                                    ],
                                                     "value": {
-                                                        "type": "STRING",
-                                                        "string": "INFO"
-                                                    }
-                                                },
-                                                {
-                                                    "name": "logMessage",
-                                                    "value": {
-                                                        "type": "STRING",
-                                                        "string": "Start uploading files from remote to local"
-                                                    }
-                                                },
-                                                {
-                                                    "name": "reference",
-                                                    "value": {
-                                                        "type": "STRING",
-                                                        "string": ""
+                                                        "type": "CONDITIONAL",
+                                                        "conditionalName": "booleanVariable",
+                                                        "packageName": "Boolean"
                                                     }
                                                 }
                                             ]
@@ -2718,30 +3422,72 @@
                                             }
                                         },
                                         {
-                                            "uid": "ca50f74c-5710-48d2-a797-9982e6a9ceff",
-                                            "commandName": "log",
-                                            "packageName": "Logger",
+                                            "uid": "c92d1537-e927-4d70-a782-b186f1f2a432",
+                                            "commandName": "if",
+                                            "packageName": "If",
+                                            "children": [
+                                                {
+                                                    "uid": "ca50f74c-5710-48d2-a797-9982e6a9ceff",
+                                                    "commandName": "log",
+                                                    "packageName": "Logger",
+                                                    "disabled": false,
+                                                    "attributes": [
+                                                        {
+                                                            "name": "logType",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": "TRACE"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "logMessage",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": "Files are uploaded to remote folder"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "reference",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": ""
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "branches": [],
                                             "disabled": false,
                                             "attributes": [
                                                 {
-                                                    "name": "logType",
+                                                    "name": "condition",
+                                                    "attributes": [
+                                                        {
+                                                            "name": "variable",
+                                                            "value": {
+                                                                "type": "BOOLEAN",
+                                                                "expression": "$bLoggerStarted$"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "operator",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": "EQ"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "value",
+                                                            "value": {
+                                                                "type": "BOOLEAN",
+                                                                "boolean": true
+                                                            }
+                                                        }
+                                                    ],
                                                     "value": {
-                                                        "type": "STRING",
-                                                        "string": "TRACE"
-                                                    }
-                                                },
-                                                {
-                                                    "name": "logMessage",
-                                                    "value": {
-                                                        "type": "STRING",
-                                                        "string": "Files are uploaded to remote folder"
-                                                    }
-                                                },
-                                                {
-                                                    "name": "reference",
-                                                    "value": {
-                                                        "type": "STRING",
-                                                        "string": ""
+                                                        "type": "CONDITIONAL",
+                                                        "conditionalName": "booleanVariable",
+                                                        "packageName": "Boolean"
                                                     }
                                                 }
                                             ]
@@ -2836,7 +3582,163 @@
                                             }
                                         }
                                     ]
-                                },
+                                }
+                            ],
+                            "branches": [
+                                {
+                                    "uid": "fbe9ced3-9ad9-48d2-8340-881348fa0afb",
+                                    "commandName": "catch",
+                                    "packageName": "ErrorHandler",
+                                    "children": [
+                                        {
+                                            "uid": "30986869-b601-4331-bcad-f0f3e109fced",
+                                            "commandName": "messageBox",
+                                            "packageName": "MessageBox",
+                                            "disabled": false,
+                                            "attributes": [
+                                                {
+                                                    "name": "title",
+                                                    "value": {
+                                                        "type": "STRING",
+                                                        "string": "Automation Anywhere Enterprise Client"
+                                                    }
+                                                },
+                                                {
+                                                    "name": "content",
+                                                    "value": {
+                                                        "type": "STRING",
+                                                        "expression": "Cleanup step failed (Upload Files): $nCleanupErrorLineNumber.Number:toString$ - $sCleanupErrorMessage$"
+                                                    }
+                                                },
+                                                {
+                                                    "name": "scrollLines",
+                                                    "value": {
+                                                        "type": "NUMBER",
+                                                        "number": "30"
+                                                    }
+                                                },
+                                                {
+                                                    "name": "closeMsgBox",
+                                                    "value": {
+                                                        "type": "BOOLEAN",
+                                                        "boolean": true
+                                                    }
+                                                },
+                                                {
+                                                    "name": "timeOut",
+                                                    "value": {
+                                                        "type": "NUMBER",
+                                                        "number": "3"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "uid": "8fad37f7-a01a-4180-b771-a861c5b9ece0",
+                                            "commandName": "if",
+                                            "packageName": "If",
+                                            "children": [
+                                                {
+                                                    "uid": "6eb73424-6e82-4983-8705-66ded72ea284",
+                                                    "commandName": "assign",
+                                                    "packageName": "String",
+                                                    "disabled": false,
+                                                    "attributes": [
+                                                        {
+                                                            "name": "sourceString",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "expression": "$sCleanupErrorMessage$ (finally block, line $nCleanupErrorLineNumber.Number:toString$)"
+                                                            }
+                                                        }
+                                                    ],
+                                                    "returnTo": {
+                                                        "type": "VARIABLE",
+                                                        "variableName": "sErrorMessage"
+                                                    }
+                                                }
+                                            ],
+                                            "branches": [],
+                                            "disabled": false,
+                                            "attributes": [
+                                                {
+                                                    "name": "condition",
+                                                    "attributes": [
+                                                        {
+                                                            "name": "variable",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "expression": "$sErrorMessage$"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "operator",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": "EQ"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "value",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": ""
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "matchCase",
+                                                            "value": {
+                                                                "type": "BOOLEAN",
+                                                                "boolean": false
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "isIgnoreCarriage",
+                                                            "value": {
+                                                                "type": "BOOLEAN",
+                                                                "boolean": false
+                                                            }
+                                                        }
+                                                    ],
+                                                    "value": {
+                                                        "type": "CONDITIONAL",
+                                                        "conditionalName": "stringVariable",
+                                                        "packageName": "String"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "disabled": false,
+                                    "attributes": [
+                                        {
+                                            "name": "exceptionType",
+                                            "value": {
+                                                "type": "EXCEPTION",
+                                                "exceptionName": "BotException",
+                                                "packageName": "ErrorHandler"
+                                            }
+                                        }
+                                    ],
+                                    "returns": {
+                                        "errorMessage": {
+                                            "type": "VARIABLE",
+                                            "variableName": "sCleanupErrorMessage"
+                                        },
+                                        "errorLineNumber": {
+                                            "type": "VARIABLE",
+                                            "variableName": "nCleanupErrorLineNumber"
+                                        }
+                                    }
+                                }
+                            ],
+                            "disabled": false
+                        },
+                        {
+                            "uid": "5d66b8f7-34b5-4046-9459-39b8de186469",
+                            "commandName": "try",
+                            "packageName": "ErrorHandler",
+                            "children": [
                                 {
                                     "uid": "efb8274a-6896-43ab-84d3-e0c80f53af41",
                                     "commandName": "step",
@@ -2891,13 +3793,32 @@
                                                             "name": "sourceString",
                                                             "value": {
                                                                 "type": "STRING",
-                                                                "expression": "$String:Enter$Error Message: $sErrorMessage$$String:Enter$Error Line Number: $nErrorLineNumber.Number:toString$$String:Enter$Task Name: $sTaskName$$String:Enter$"
+                                                                "expression": "$String:Enter$Error Message: $sErrorMessage$$String:Enter$Error Line Number: $nErrorLineNumber.Number:toString$$String:Enter$Task Name: $sMasterTaskName$$String:Enter$"
                                                             }
                                                         }
                                                     ],
                                                     "returnTo": {
                                                         "type": "VARIABLE",
                                                         "variableName": "sEmailMessage"
+                                                    }
+                                                },
+                                                {
+                                                    "uid": "e71ea6b5-b590-47e6-9bef-b2a083e389df",
+                                                    "commandName": "assign",
+                                                    "packageName": "String",
+                                                    "disabled": false,
+                                                    "attributes": [
+                                                        {
+                                                            "name": "sourceString",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "expression": "Failed: $sErrorMessage$"
+                                                            }
+                                                        }
+                                                    ],
+                                                    "returnTo": {
+                                                        "type": "VARIABLE",
+                                                        "variableName": "workItemResult"
                                                     }
                                                 }
                                             ],
@@ -2943,6 +3864,25 @@
                                                             "returnTo": {
                                                                 "type": "VARIABLE",
                                                                 "variableName": "sEmailMessage"
+                                                            }
+                                                        },
+                                                        {
+                                                            "uid": "89739ad9-2e29-4afc-bbde-f2dc5d2821bf",
+                                                            "commandName": "assign",
+                                                            "packageName": "String",
+                                                            "disabled": false,
+                                                            "attributes": [
+                                                                {
+                                                                    "name": "sourceString",
+                                                                    "value": {
+                                                                        "type": "STRING",
+                                                                        "string": "Success"
+                                                                    }
+                                                                }
+                                                            ],
+                                                            "returnTo": {
+                                                                "type": "VARIABLE",
+                                                                "variableName": "workItemResult"
                                                             }
                                                         }
                                                     ],
@@ -3274,7 +4214,88 @@
                                             }
                                         }
                                     ]
-                                },
+                                }
+                            ],
+                            "branches": [
+                                {
+                                    "uid": "b4dd3835-024d-4b0c-ad6d-cc025451b495",
+                                    "commandName": "catch",
+                                    "packageName": "ErrorHandler",
+                                    "children": [
+                                        {
+                                            "uid": "6b0c28ef-1e68-415c-8789-e9aae9c910e3",
+                                            "commandName": "messageBox",
+                                            "packageName": "MessageBox",
+                                            "disabled": false,
+                                            "attributes": [
+                                                {
+                                                    "name": "title",
+                                                    "value": {
+                                                        "type": "STRING",
+                                                        "string": "Automation Anywhere Enterprise Client"
+                                                    }
+                                                },
+                                                {
+                                                    "name": "content",
+                                                    "value": {
+                                                        "type": "STRING",
+                                                        "expression": "Cleanup step failed (Email Notification): $nCleanupErrorLineNumber.Number:toString$ - $sCleanupErrorMessage$"
+                                                    }
+                                                },
+                                                {
+                                                    "name": "scrollLines",
+                                                    "value": {
+                                                        "type": "NUMBER",
+                                                        "number": "30"
+                                                    }
+                                                },
+                                                {
+                                                    "name": "closeMsgBox",
+                                                    "value": {
+                                                        "type": "BOOLEAN",
+                                                        "boolean": true
+                                                    }
+                                                },
+                                                {
+                                                    "name": "timeOut",
+                                                    "value": {
+                                                        "type": "NUMBER",
+                                                        "number": "3"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "disabled": false,
+                                    "attributes": [
+                                        {
+                                            "name": "exceptionType",
+                                            "value": {
+                                                "type": "EXCEPTION",
+                                                "exceptionName": "BotException",
+                                                "packageName": "ErrorHandler"
+                                            }
+                                        }
+                                    ],
+                                    "returns": {
+                                        "errorMessage": {
+                                            "type": "VARIABLE",
+                                            "variableName": "sCleanupErrorMessage"
+                                        },
+                                        "errorLineNumber": {
+                                            "type": "VARIABLE",
+                                            "variableName": "nCleanupErrorLineNumber"
+                                        }
+                                    }
+                                }
+                            ],
+                            "disabled": false
+                        },
+                        {
+                            "uid": "5d28ad29-9409-4b45-aa07-bde98a077d50",
+                            "commandName": "try",
+                            "packageName": "ErrorHandler",
+                            "children": [
                                 {
                                     "uid": "51d56906-a51f-4d27-9bac-803e74d11144",
                                     "commandName": "step",
@@ -3346,7 +4367,88 @@
                                             }
                                         }
                                     ]
-                                },
+                                }
+                            ],
+                            "branches": [
+                                {
+                                    "uid": "44868ca2-1504-499d-a818-9793f8314039",
+                                    "commandName": "catch",
+                                    "packageName": "ErrorHandler",
+                                    "children": [
+                                        {
+                                            "uid": "156841fc-0a4f-4a35-ba7f-2656e88bb2ee",
+                                            "commandName": "messageBox",
+                                            "packageName": "MessageBox",
+                                            "disabled": false,
+                                            "attributes": [
+                                                {
+                                                    "name": "title",
+                                                    "value": {
+                                                        "type": "STRING",
+                                                        "string": "Automation Anywhere Enterprise Client"
+                                                    }
+                                                },
+                                                {
+                                                    "name": "content",
+                                                    "value": {
+                                                        "type": "STRING",
+                                                        "expression": "Cleanup step failed (Kill Applications): $nCleanupErrorLineNumber.Number:toString$ - $sCleanupErrorMessage$"
+                                                    }
+                                                },
+                                                {
+                                                    "name": "scrollLines",
+                                                    "value": {
+                                                        "type": "NUMBER",
+                                                        "number": "30"
+                                                    }
+                                                },
+                                                {
+                                                    "name": "closeMsgBox",
+                                                    "value": {
+                                                        "type": "BOOLEAN",
+                                                        "boolean": true
+                                                    }
+                                                },
+                                                {
+                                                    "name": "timeOut",
+                                                    "value": {
+                                                        "type": "NUMBER",
+                                                        "number": "3"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "disabled": false,
+                                    "attributes": [
+                                        {
+                                            "name": "exceptionType",
+                                            "value": {
+                                                "type": "EXCEPTION",
+                                                "exceptionName": "BotException",
+                                                "packageName": "ErrorHandler"
+                                            }
+                                        }
+                                    ],
+                                    "returns": {
+                                        "errorMessage": {
+                                            "type": "VARIABLE",
+                                            "variableName": "sCleanupErrorMessage"
+                                        },
+                                        "errorLineNumber": {
+                                            "type": "VARIABLE",
+                                            "variableName": "nCleanupErrorLineNumber"
+                                        }
+                                    }
+                                }
+                            ],
+                            "disabled": false
+                        },
+                        {
+                            "uid": "02b189fc-d597-4b7e-8920-5acf721e88fd",
+                            "commandName": "try",
+                            "packageName": "ErrorHandler",
+                            "children": [
                                 {
                                     "uid": "cd8388c3-d942-4cd3-907f-63af2c788696",
                                     "commandName": "step",
@@ -3422,12 +4524,12 @@
                             ],
                             "branches": [
                                 {
-                                    "uid": "9bf02432-1e29-46cc-a35f-7d2a367cf2bf",
+                                    "uid": "ce73d8e6-3a06-408d-aa64-4773c3122c35",
                                     "commandName": "catch",
                                     "packageName": "ErrorHandler",
                                     "children": [
                                         {
-                                            "uid": "2b8c1193-eefa-482a-b3b3-f8157aceaa43",
+                                            "uid": "bcfd6547-7a6a-4151-883c-d3e88e593b87",
                                             "commandName": "messageBox",
                                             "packageName": "MessageBox",
                                             "disabled": false,
@@ -3443,7 +4545,7 @@
                                                     "name": "content",
                                                     "value": {
                                                         "type": "STRING",
-                                                        "expression": "$nErrorLineNumber.Number:toString$ - $sErrorMessage$"
+                                                        "expression": "Cleanup step failed (Clear Local Folders): $nCleanupErrorLineNumber.Number:toString$ - $sCleanupErrorMessage$"
                                                     }
                                                 },
                                                 {
@@ -3480,7 +4582,163 @@
                                                 "packageName": "ErrorHandler"
                                             }
                                         }
+                                    ],
+                                    "returns": {
+                                        "errorMessage": {
+                                            "type": "VARIABLE",
+                                            "variableName": "sCleanupErrorMessage"
+                                        },
+                                        "errorLineNumber": {
+                                            "type": "VARIABLE",
+                                            "variableName": "nCleanupErrorLineNumber"
+                                        }
+                                    }
+                                }
+                            ],
+                            "disabled": false
+                        },
+                        {
+                            "uid": "18f7a63b-29db-4041-b0c6-b8eed093ef77",
+                            "commandName": "try",
+                            "packageName": "ErrorHandler",
+                            "children": [
+                                {
+                                    "uid": "0f4d6b71-4a21-4a49-b517-e736b56156a4",
+                                    "commandName": "step",
+                                    "packageName": "Step",
+                                    "children": [
+                                        {
+                                            "uid": "79ef56f2-1661-4c5d-bf87-cc3f4c38bf54",
+                                            "commandName": "if",
+                                            "packageName": "If",
+                                            "children": [
+                                                {
+                                                    "uid": "259c7928-7830-451e-af28-4d3cf1ead194",
+                                                    "commandName": "end",
+                                                    "packageName": "Logger",
+                                                    "disabled": false
+                                                }
+                                            ],
+                                            "branches": [],
+                                            "disabled": false,
+                                            "attributes": [
+                                                {
+                                                    "name": "condition",
+                                                    "attributes": [
+                                                        {
+                                                            "name": "variable",
+                                                            "value": {
+                                                                "type": "BOOLEAN",
+                                                                "expression": "$bLoggerStarted$"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "operator",
+                                                            "value": {
+                                                                "type": "STRING",
+                                                                "string": "EQ"
+                                                            }
+                                                        },
+                                                        {
+                                                            "name": "value",
+                                                            "value": {
+                                                                "type": "BOOLEAN",
+                                                                "boolean": true
+                                                            }
+                                                        }
+                                                    ],
+                                                    "value": {
+                                                        "type": "CONDITIONAL",
+                                                        "conditionalName": "booleanVariable",
+                                                        "packageName": "Boolean"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "disabled": false,
+                                    "attributes": [
+                                        {
+                                            "name": "title",
+                                            "value": {
+                                                "type": "STRING",
+                                                "string": "Release Log"
+                                            }
+                                        }
                                     ]
+                                }
+                            ],
+                            "branches": [
+                                {
+                                    "uid": "619d911d-0ba9-4050-a1f5-0179fa7abfb5",
+                                    "commandName": "catch",
+                                    "packageName": "ErrorHandler",
+                                    "children": [
+                                        {
+                                            "uid": "9057e0c7-02c0-4612-8db8-bd78b34937e0",
+                                            "commandName": "messageBox",
+                                            "packageName": "MessageBox",
+                                            "disabled": false,
+                                            "attributes": [
+                                                {
+                                                    "name": "title",
+                                                    "value": {
+                                                        "type": "STRING",
+                                                        "string": "Automation Anywhere Enterprise Client"
+                                                    }
+                                                },
+                                                {
+                                                    "name": "content",
+                                                    "value": {
+                                                        "type": "STRING",
+                                                        "expression": "Cleanup step failed (Release Log): $nCleanupErrorLineNumber.Number:toString$ - $sCleanupErrorMessage$"
+                                                    }
+                                                },
+                                                {
+                                                    "name": "scrollLines",
+                                                    "value": {
+                                                        "type": "NUMBER",
+                                                        "number": "30"
+                                                    }
+                                                },
+                                                {
+                                                    "name": "closeMsgBox",
+                                                    "value": {
+                                                        "type": "BOOLEAN",
+                                                        "boolean": true
+                                                    }
+                                                },
+                                                {
+                                                    "name": "timeOut",
+                                                    "value": {
+                                                        "type": "NUMBER",
+                                                        "number": "3"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "disabled": false,
+                                    "attributes": [
+                                        {
+                                            "name": "exceptionType",
+                                            "value": {
+                                                "type": "EXCEPTION",
+                                                "exceptionName": "BotException",
+                                                "packageName": "ErrorHandler"
+                                            }
+                                        }
+                                    ],
+                                    "returns": {
+                                        "errorMessage": {
+                                            "type": "VARIABLE",
+                                            "variableName": "sCleanupErrorMessage"
+                                        },
+                                        "errorLineNumber": {
+                                            "type": "VARIABLE",
+                                            "variableName": "nCleanupErrorLineNumber"
+                                        }
+                                    }
                                 }
                             ],
                             "disabled": false
@@ -3506,31 +4764,7 @@
             }
         },
         {
-            "name": "sTaskName",
-            "description": "",
-            "type": "STRING",
-            "readOnly": false,
-            "input": false,
-            "output": false,
-            "defaultValue": {
-                "type": "STRING",
-                "string": ""
-            }
-        },
-        {
             "name": "sErrorMessage",
-            "description": "",
-            "type": "STRING",
-            "readOnly": false,
-            "input": false,
-            "output": false,
-            "defaultValue": {
-                "type": "STRING",
-                "string": ""
-            }
-        },
-        {
-            "name": "sErrorScreenshotPath",
             "description": "",
             "type": "STRING",
             "readOnly": false,
@@ -3578,31 +4812,6 @@
             }
         },
         {
-            "name": "aAny",
-            "description": "",
-            "type": "ANY",
-            "readOnly": false,
-            "input": false,
-            "output": false,
-            "defaultValue": {
-                "type": "STRING",
-                "string": ""
-            }
-        },
-        {
-            "name": "dMainTaskResult",
-            "description": "",
-            "type": "DICTIONARY",
-            "readOnly": false,
-            "input": false,
-            "output": false,
-            "subtype": "ANY",
-            "defaultValue": {
-                "type": "DICTIONARY",
-                "dictionary": []
-            }
-        },
-        {
             "name": "sCorrelationId",
             "description": "",
             "type": "STRING",
@@ -3613,14 +4822,6 @@
                 "type": "STRING",
                 "string": ""
             }
-        },
-        {
-            "name": "wAA",
-            "description": "",
-            "type": "WINDOW",
-            "readOnly": false,
-            "input": false,
-            "output": false
         },
         {
             "name": "dTaskOutput",
@@ -3760,6 +4961,78 @@
             "defaultValue": {
                 "type": "BOOLEAN",
                 "boolean": true
+            }
+        },
+        {
+            "name": "bLoggerStarted",
+            "description": "True once Logger start succeeded",
+            "type": "BOOLEAN",
+            "readOnly": false,
+            "input": false,
+            "output": false,
+            "defaultValue": {
+                "type": "BOOLEAN",
+                "boolean": false
+            }
+        },
+        {
+            "name": "sCleanupErrorMessage",
+            "description": "Error raised by a cleanup action in finally",
+            "type": "STRING",
+            "readOnly": false,
+            "input": false,
+            "output": false,
+            "defaultValue": {
+                "type": "STRING",
+                "string": ""
+            }
+        },
+        {
+            "name": "nCleanupErrorLineNumber",
+            "description": "",
+            "type": "NUMBER",
+            "readOnly": false,
+            "input": false,
+            "output": false,
+            "defaultValue": {
+                "type": "NUMBER",
+                "number": "0"
+            }
+        },
+        {
+            "name": "sMainTaskErrors",
+            "description": "Errors collected from the independent main tasks",
+            "type": "STRING",
+            "readOnly": false,
+            "input": false,
+            "output": false,
+            "defaultValue": {
+                "type": "STRING",
+                "string": ""
+            }
+        },
+        {
+            "name": "sStepErrorMessage",
+            "description": "",
+            "type": "STRING",
+            "readOnly": false,
+            "input": false,
+            "output": false,
+            "defaultValue": {
+                "type": "STRING",
+                "string": ""
+            }
+        },
+        {
+            "name": "nStepErrorLineNumber",
+            "description": "",
+            "type": "NUMBER",
+            "readOnly": false,
+            "input": false,
+            "output": false,
+            "defaultValue": {
+                "type": "NUMBER",
+                "number": "0"
             }
         },
         {
