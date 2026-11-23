@@ -1,0 +1,43 @@
+# YAML is a data serialization language that is often used for writing configuration files.
+# YAML is a strict superset of JSON, it can do everything that JSON can and more.
+# YAML is a popular programming language because it is human-readable and easy to understand
+# 
+# Do not use TABs for key/values
+# Special Characters { } [ ] & * # ? | - < > = ! % @ : ` , 
+
+
+logToFile:          true                         # false will disable logging
+processName:        Streamlined Energy & Carbon Reporting
+logLevel:           TRACE                        # Only TRACE, INFO are accepted. Anything other than this will be defaulted to INFO.
+logFolder:          C:\Users\Public\Public Documents\Log                           
+auditLogFileName:   AuditLog
+errorLogFileName:   ErrorLog                     # Leave this empty or delete this line if you don't want a separate 'Error' log file.
+fileTimeFormat:     yyyyMMdd                     # Will be appended to log file name. For eg. AuditLog_20220501
+logTimeFormat:      yyyy-MM-dd HH:mm:ss
+logSeparator:       ","                          # Comma separated file
+failOnError:        false                        # Throw error incase of log failure. Keep it false if the bot should continue its work even if log write is failed.
+logTimestampInUTC:  false
+logToDatabase:      false
+connectionString:   jdbc:sqlserver://localhost;port=1433;databaseName=Test;integratedSecurity=true;  # Only JDBC connections.
+logTableName:       dbo.log
+
+
+
+# TABLE STRUCTURE FOR LOG TO DATABASE
+# CREATE TABLE [dbo].[log](
+# 	[id] [bigint] IDENTITY(1,1) NOT NULL,
+# 	[correlation_id] [varchar](50) NULL,
+# 	[device] [nvarchar](100) NULL,
+# 	[user] [nvarchar](100) NULL,
+# 	[process_name] [nvarchar](200) NULL,
+# 	[bot_name] [nvarchar](200) NULL,
+# 	[log_type] [nvarchar](50) NULL,
+# 	[log_message] [nvarchar](max) NULL,
+# 	[reference] [nvarchar](200) NULL,
+# 	[timestamp] [datetime] NULL,
+# 	[is_utc_timestamp] [bit] NULL,
+#  CONSTRAINT [PK_log] PRIMARY KEY CLUSTERED 
+# (
+# 	[id] ASC
+# ))
+# GO

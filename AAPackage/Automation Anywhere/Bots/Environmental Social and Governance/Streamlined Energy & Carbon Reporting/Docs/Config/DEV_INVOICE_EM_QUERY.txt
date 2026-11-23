@@ -1,0 +1,35 @@
+SELECT LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(c.Name, CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [Cust]
+,LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(c.Address1, CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [Address1]
+,LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(c.Address2, CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [Address2]
+,LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(c.Town, CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [Town]
+,LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(c.PostCode, CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [Postcode]
+,LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(p.Type, CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [Utility]
+,LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(p.Units, CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [Units]
+,LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(i.AccountRef, CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [Reference Number]
+,LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(i.SupplierName, CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [Supplier]
+,LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(p.M1_Code1, CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [M1 MPAN / MPR / Water SPID]
+,LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(p.M1_Code3, CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [Top Line]
+,LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(i.Estimate, CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [Estimated Invoice]
+,LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(i.Units, CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [Invoice Units]
+,LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(i.Gross, CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [Cost]
+,LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(i.VAT, CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [VAT]
+,LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(i.Climate_Change_Levy, CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [CCL]
+,CONVERT(VARCHAR(10), i.FromDate, 120) AS [From Date]
+,CONVERT(VARCHAR(10), i.ToDate, 120) AS [Date]
+,CONVERT(VARCHAR(10), i.TaxPoint, 120) AS [Invoice Tax Date]
+,LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(i.InvType, CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [InvType]
+FROM MasterEM_Dev.[local].Lookup l
+INNER JOIN MasterEM_Dev.[local].Contacts c
+ON c.Group_1 = l.Lookup_Id
+AND c.DBName = l.DBName
+INNER JOIN MasterEM_Dev.[local].Points p
+ON p.Contacts_Id = c.Id
+AND p.DBName = c.DBName
+INNER JOIN MasterEM_Dev.[local].Invoice i
+ON i.MeterID = p.Id
+AND i.DBName = p.DBName
+WHERE l.Lookup_Name = '@ClientName'
+AND i.ToDate >= '@ReportStartDate'
+AND i.FromDate <= '@ReportEndDate'
+AND p.Type in ('Electricity','Gas')
+ORDER BY c.Name ASC, p.M1_Code1 ASC, i.ToDate DESC, i.TaxPoint ASC, i.Units ASC
