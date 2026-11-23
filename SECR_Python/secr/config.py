@@ -56,6 +56,8 @@ class OdinConfig:
     request_timeout_seconds: int = 120
     poll_interval_seconds: int = 40
     max_poll_attempts: int = 15
+    max_parallel_sheets: int = 5        # sheets of ONE file submitted / polled / downloaded at the same time
+    max_parallel_requests: int = 20     # Odin calls + CSV downloads in flight across ALL files and batches
 
 
 @dataclass
@@ -157,6 +159,8 @@ def load_config(path: str | Path) -> AppConfig:
         request_timeout_seconds=int(o.get("request_timeout_seconds", 120)),
         poll_interval_seconds=int(o.get("poll_interval_seconds", 40)),
         max_poll_attempts=int(o.get("max_poll_attempts", 15)),
+        max_parallel_sheets=int(o.get("max_parallel_sheets", 5)),
+        max_parallel_requests=int(o.get("max_parallel_requests", 20)),
     )
 
     s = _section(raw, "sources")

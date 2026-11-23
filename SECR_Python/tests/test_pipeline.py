@@ -376,3 +376,89 @@ def test_local_paths_stay_under_windows_limit(monkeypatch):
     with pytest.raises(OSError, match="over the Windows limit"):
         paths.check_path_length(Path("C:/" + "x" * 300))
     paths.check_path_length(Path("C:/short.xlsx"), extra=9)
+
+
+class CountingAI(FakeAI):
+    """Thread-safe fake that records how many Odin calls run at the same time."""
+
+    def __init__(self, csv_url, answer_after=2, delay=0.02):
+        super().__init__(csv_url)
+        self.lock = threading.Lock()
+        self.active = self.peak = 0
+        self.answer_after, self.delay = answer_after, delay
+        self.created = 0
+
+    def _call(self):
+        with self.lock:
+            self.active += 1
+            self.peak = max(self.peak, self.active)
+        time.sleep(self.delay)
+        with self.lock:
+            self.active -= 1
+
+    def create_chat(self, name):
+        self._call()
+        with self.lock:
+            self.created += 1
+            return f"chat-{self.created}"
+
+    def send_file(self, chat_id, path):
+        self._call()
+        return True
+
+    def get_csv_links(self, chat_id):
+        self._call()
+        with self.lock:
+            self.polls[chat_id] = self.polls.get(chat_id, 0) + 1
+            n = self.polls[chat_id]
+        return None if n < self.answer_after else {"metrics": self.csv_url}
+
+
+def _many_sheets(path: Path, n: int) -> Path:
+    from openpyxl import Workbook
+
+    wb = Workbook()
+    wb.active.title = "S1"
+    wb.active.append(["a"])
+    for i in range(2, n + 1):
+        wb.create_sheet(f"S{i}").append(["a"])
+    wb.save(path)
+    return path
+
+
+def _flow(tmp, ai, sheets=6, per_file=4, in_flight=20):
+    import requests_stub  # noqa: F401
+
+    db = FakeDb({})
+    sleeps = []
+    flow = NormalizeFlow(db, FakeStorage(_many_sheets(tmp / "many.xlsx", sheets)), ai,
+                         StagingLoader("tester", True, 5, 1000, get_logger()), poll_interval=40,
+                         max_poll_attempts=5, max_parallel_sheets=per_file, max_parallel_requests=in_flight,
+                         sleep=sleeps.append)
+    return db, flow, sleeps
+
+
+def test_sheets_of_one_file_run_in_parallel(tmp_path):
+    from secr.models import BatchContext
+
+    ai = CountingAI(str(_metrics_csv(tmp_path / "m.csv")), answer_after=3)
+    db, flow, sleeps = _flow(tmp_path, ai, sheets=6, per_file=4)
+    ctx = BatchContext("40", "5", "ACME", "2024-04-01", "2025-03-31", tmp_path / "w")
+    out = flow.run_file(ctx, _row("40", 77), get_logger())
+    assert out.status == st.COMPLETED, out
+    assert ai.peak == 4                         # 6 sheets, at most 4 at a time
+    assert sleeps == [40, 40]                   # all 6 chats answered on poll 3: 2 waits, not 2 per sheet
+    assert db.inserted["Staging_Metrics"] == 6
+    assert db.history["77"].count(st.NORMALIZING) == 1
+
+
+def test_odin_calls_are_capped_across_files(tmp_path):
+    from secr.models import BatchContext
+
+    ai = CountingAI(str(_metrics_csv(tmp_path / "m.csv")), answer_after=1)
+    db, flow, _ = _flow(tmp_path, ai, sheets=5, per_file=5, in_flight=3)
+    ctx = BatchContext("40", "5", "ACME", "2024-04-01", "2025-03-31", tmp_path / "w")
+    with __import__("concurrent.futures").futures.ThreadPoolExecutor(4) as pool:
+        outs = list(pool.map(lambda i: flow.run_file(ctx, _row("40", i), get_logger()), range(1, 5)))
+    assert all(o.status == st.COMPLETED for o in outs)
+    assert ai.peak == 3                         # 4 files x 5 sheets, never more than 3 calls at once

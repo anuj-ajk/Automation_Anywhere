@@ -3,7 +3,15 @@
 The AA bot ran each stage for ALL files of a batch before moving to the next stage
 (download all -> split all -> submit all -> poll one by one -> load all). Here every file
 runs its own pipeline in a worker thread, so a slow AI response for one file no longer
-holds up the others, and the sheets of one file are polled together.
+holds up the others.
+
+Inside one file (same approach as SECR_AIResponse):
+  * all sheets are submitted to the AI in parallel (up to ``max_parallel_sheets``);
+  * each poll round checks every waiting chat in parallel, then waits ``poll_interval``;
+  * the normalized CSVs are downloaded in parallel, then loaded one after the other
+    (staging tables are locked per table and earlier rows are cleared first, so loads stay ordered).
+A semaphore shared by ALL files and batches caps the Odin calls in flight (``max_parallel_requests``),
+so 10 batches x 4 files x N sheets never become hundreds of simultaneous API calls.
 
 Status flow per file (unchanged):
     PARSING -> PARSED -> NORMALIZING -> NORMALIZATION_COMPLETED / PARTIAL_FAILURE /
@@ -11,7 +19,10 @@ Status flow per file (unchanged):
 """
 from __future__ import annotations
 
+import contextlib
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -35,17 +46,50 @@ class _Sheet:
     chat_id: str = ""
     links: dict[str, str] = field(default_factory=dict)
     error: str = ""
+    answered: bool = False
 
 
 class NormalizeFlow:
     def __init__(self, db: EsgDb, storage: S3Storage, ai: OdinClient, loader: StagingLoader,
-                 poll_interval: int, max_poll_attempts: int):
+                 poll_interval: int, max_poll_attempts: int, max_parallel_sheets: int = 5,
+                 max_parallel_requests: int = 20, sleep=time.sleep):
         self.db = db
         self.storage = storage
         self.ai = ai
         self.loader = loader
         self.poll_interval = poll_interval
         self.max_poll_attempts = max_poll_attempts
+        self.max_parallel_sheets = max(1, int(max_parallel_sheets))
+        # Shared by every file and batch of the run: Odin calls / CSV downloads in flight at once.
+        self._api_slots = threading.BoundedSemaphore(max(1, int(max_parallel_requests)))
+        self._sleep = sleep
+
+    # ------------------------------------------------------------------ concurrency helpers
+    @contextlib.contextmanager
+    def _api_call(self):
+        self._api_slots.acquire()
+        try:
+            yield
+        finally:
+            self._api_slots.release()
+
+    def _parallel(self, items, fn, ctx: BatchContext, file_id: str, label: str) -> list:
+        """Run ``fn(item)`` for every item on up to ``max_parallel_sheets`` threads, keeping the
+        batch/file log context in the worker threads. Results come back in input order."""
+        items = list(items)
+        if not items:
+            return []
+
+        def run(item):
+            with log_context(batch_id=ctx.batch_id, file_id=file_id):
+                return fn(item)
+
+        workers = min(self.max_parallel_sheets, len(items))
+        if workers == 1:
+            return [run(i) for i in items]
+        with ThreadPoolExecutor(max_workers=workers,
+                                thread_name_prefix=f"b{ctx.batch_id}-f{file_id}-{label}") as pool:
+            return list(pool.map(run, items))
 
     # ------------------------------------------------------------------ public
     def run_file(self, ctx: BatchContext, row: dict[str, Any], log: ContextLogger) -> FileOutcome:
@@ -98,8 +142,8 @@ class NormalizeFlow:
 
         # 3. AI normalization: submit every sheet, then poll all chats together
         with timed_step(log, "Step 3/4 AI normalization (submit + poll)"):
-            self._submit(file_id, sheets, log)
-            self._poll(sheets, log)
+            self._submit(ctx, file_id, sheets, log)
+            self._poll(ctx, file_id, sheets, log)
         ai_ok = [s for s in sheets if s.links]
         ai_failed = [s for s in sheets if not s.links]
         ai_errors = "".join(f" {s.name}: {s.error or 'no CSV link returned'}." for s in ai_failed)
@@ -119,24 +163,39 @@ class NormalizeFlow:
                  sum(len(s.links) for s in ai_ok))
         step_started = time.monotonic()
 
-        # 4. Download each normalized CSV and load it
-        loaded, load_failed, load_errors = 0, 0, []
-        for idx, sheet in enumerate(ai_ok, 1):
-            for key, link in sheet.links.items():
-                try:
-                    csv_path = work / "csv" / f"{idx:02d}_{key}.csv"
-                    log.info("Downloading %s CSV for sheet '%s': %s", key, sheet.name, filename_from_url(link))
+        # 4a. Download every normalized CSV in parallel
+        tasks = [(sheet, key, link, work / "csv" / f"{idx:02d}_{key}.csv")
+                 for idx, sheet in enumerate(ai_ok, 1) for key, link in sheet.links.items()]
+
+        def download(task):
+            sheet, key, link, csv_path = task
+            try:
+                log.info("Downloading %s CSV for sheet '%s': %s", key, sheet.name, filename_from_url(link))
+                with self._api_call():
                     download_link(link, csv_path)
-                    log.debug("Saved %s (%d bytes)", csv_path, csv_path.stat().st_size)
-                    with self.db.session() as s:
-                        result = self.loader.load(s, NORMALIZED_SPECS[key], csv_path, work / "cleaned",
-                                                  file_id, ctx.report_id)
-                    loaded += 1
-                    log.info("Loaded %s (%s): %d row(s)", sheet.name, key, result.rows_inserted)
-                except Exception as exc:
-                    load_failed += 1
-                    load_errors.append(f" Error: {exc} while processing {sheet.name} ({key}).")
-                    log.error("Load failed for %s (%s): %s", sheet.name, key, exc)
+                log.debug("Saved %s (%d bytes)", csv_path, csv_path.stat().st_size)
+                return None
+            except Exception as exc:
+                log.error("Download failed for %s (%s): %s", sheet.name, key, exc)
+                return exc
+
+        download_errors = self._parallel(tasks, download, ctx, file_id, "dl")
+
+        # 4b. Load them one after the other (staging tables are shared and locked per table)
+        loaded, load_failed, load_errors = 0, 0, []
+        for (sheet, key, _link, csv_path), error in zip(tasks, download_errors):
+            try:
+                if error is not None:
+                    raise error
+                with self.db.session() as s:
+                    result = self.loader.load(s, NORMALIZED_SPECS[key], csv_path, work / "cleaned",
+                                              file_id, ctx.report_id)
+                loaded += 1
+                log.info("Loaded %s (%s): %d row(s)", sheet.name, key, result.rows_inserted)
+            except Exception as exc:
+                load_failed += 1
+                load_errors.append(f" Error: {exc} while processing {sheet.name} ({key}).")
+                log.error("Load failed for %s (%s): %s", sheet.name, key, exc)
 
         log.info("Step 4/4 download and load - done in %.1fs (%d loaded, %d failed)",
                  time.monotonic() - step_started, loaded, load_failed)
@@ -148,57 +207,68 @@ class NormalizeFlow:
         log.info("Final status %s (loaded %d, failed %d)", final, loaded, load_failed + len(ai_failed))
         return FileOutcome(file_id, file_name, "normalize", final, (ai_errors + "".join(load_errors)).strip())
 
-    def _submit(self, file_id: str, sheets: list[_Sheet], log) -> None:
-        marked = False
-        for sheet in sheets:
+    def _submit(self, ctx: BatchContext, file_id: str, sheets: list[_Sheet], log) -> None:
+        """Create a chat and upload the sheet for every sheet, in parallel."""
+        def submit(sheet: _Sheet) -> None:
             try:
                 log.info("Submitting sheet '%s' (%s) to the AI agent", sheet.name, sheet.path.name)
-                sheet.chat_id = self.ai.create_chat(sheet.path.name)
-                accepted = self.ai.send_file(sheet.chat_id, sheet.path)
+                with self._api_call():
+                    sheet.chat_id = self.ai.create_chat(sheet.path.name)
+                with self._api_call():
+                    accepted = self.ai.send_file(sheet.chat_id, sheet.path)
                 if not accepted:
                     log.warning("Upload of %s timed out; assuming it was accepted and polling anyway", sheet.name)
-                if not marked:
-                    self._status(file_id, st.NORMALIZING, log=log)
-                    marked = True
                 log.info("Sheet %s submitted, chat id %s", sheet.name, sheet.chat_id)
             except Exception as exc:
                 sheet.chat_id = ""
                 sheet.error = f"chat could not be created or message not sent ({exc})"
                 log.error("Sheet %s: %s", sheet.name, sheet.error)
 
-    def _poll(self, sheets: list[_Sheet], log) -> None:
+        if len(sheets) > 1:
+            log.info("Submitting %d sheet(s), up to %d at a time", len(sheets),
+                     min(self.max_parallel_sheets, len(sheets)))
+        self._parallel(sheets, submit, ctx, file_id, "ai")
+        if any(s.chat_id for s in sheets):  # NORMALIZING once, as soon as one sheet was accepted
+            self._status(file_id, st.NORMALIZING, log=log)
+
+    def _poll(self, ctx: BatchContext, file_id: str, sheets: list[_Sheet], log) -> None:
+        """Every round polls all waiting chats in parallel, then waits ``poll_interval`` seconds."""
         pending = [s for s in sheets if s.chat_id]
         if not pending:
             log.warning("No sheet was submitted; skipping polling")
             return
         log.info("Polling %d chat(s) every %ss, up to %d attempts", len(pending), self.poll_interval,
                  self.max_poll_attempts)
+
+        def poll(sheet: _Sheet, attempt: int) -> None:
+            try:
+                with self._api_call():
+                    links = self.ai.get_csv_links(sheet.chat_id)
+            except Exception as exc:  # transient HTTP errors: try again next round
+                log.warning("Poll %d for %s failed: %s", attempt, sheet.name, exc)
+                return
+            if links is None:
+                log.debug("Sheet '%s' (chat %s): agent still working", sheet.name, sheet.chat_id)
+                return
+            sheet.links = links
+            sheet.answered = True
+            if not links:
+                sheet.error = "agent answered without any CSV link"
+            log.info("Sheet %s normalized after poll %d: %s", sheet.name, attempt,
+                     ", ".join(links) or "no categories")
+
         for attempt in range(1, self.max_poll_attempts + 1):
             log.debug("Poll attempt %d/%d, waiting for: %s", attempt, self.max_poll_attempts,
                       ", ".join(s.name for s in pending))
-            for sheet in list(pending):
-                try:
-                    links = self.ai.get_csv_links(sheet.chat_id)
-                except Exception as exc:  # transient HTTP errors: try again next round
-                    log.warning("Poll %d for %s failed: %s", attempt, sheet.name, exc)
-                    continue
-                if links is None:
-                    log.debug("Sheet '%s' (chat %s): agent still working", sheet.name, sheet.chat_id)
-                    continue
-                if links is not None:
-                    sheet.links = links
-                    if not links:
-                        sheet.error = "agent answered without any CSV link"
-                    pending.remove(sheet)
-                    log.info("Sheet %s normalized after poll %d: %s", sheet.name, attempt,
-                             ", ".join(links) or "no categories")
+            self._parallel(pending, lambda sh, a=attempt: poll(sh, a), ctx, file_id, "poll")
+            pending = [s for s in pending if not s.answered]
             if not pending:
                 return
             if attempt % 10 == 0:
                 log.info("Still waiting for %d sheet(s) after %d poll(s): %s", len(pending), attempt,
                          ", ".join(s.name for s in pending))
             if attempt < self.max_poll_attempts:
-                time.sleep(self.poll_interval)
+                self._sleep(self.poll_interval)
         for sheet in pending:
             sheet.error = "timed out waiting for the AI response"
             log.warning("Chat %s for %s timed out", sheet.chat_id, sheet.name)

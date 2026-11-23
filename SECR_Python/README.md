@@ -153,8 +153,20 @@ run_batches  ── ThreadPoolExecutor(max_parallel_batches = 10)
         ├─ read all files of the batch        0..N rows, uploaded + 'Source: Daisy' mixed
         └─ ThreadPoolExecutor(max_parallel_files_per_batch = 4)
               ├─ NormalizeFlow.run_file   S3 → split → Odin submit+poll → download CSV → load
+              │    └─ ThreadPoolExecutor(odin.max_parallel_sheets = 5)   per file
+              │         submit all sheets │ poll all chats each round │ download all CSVs
+              │         (then the CSVs are loaded one after the other)
               └─ DaisyFlow.run_file       Energy Manager / NAV → CSV → load
+
+All Odin calls and CSV downloads share one cap: odin.max_parallel_requests = 20
 ```
+
+* **Sheets in a file:** the sheets of one file are submitted to the AI in parallel (`odin.max_parallel_sheets`).
+  Each poll round checks every waiting chat at once and then waits 40 s, so 6 sheets take about as long as 1.
+  The normalized CSVs are downloaded in parallel and then loaded in order, because the staging lock and the
+  "clear earlier rows" step need the loads to run in order.
+* **API cap:** `odin.max_parallel_requests` limits the Odin calls and CSV downloads in flight across **all**
+  files and batches. Lower it if Odin returns HTTP 429 (rate limit).
 
 * **Batches**: at most `max_parallel_batches` (default 10) run at once; when one finishes the next starts.
 * **Files in a batch**: any number. They are queued into the batch's own pool, so a batch with 1 file

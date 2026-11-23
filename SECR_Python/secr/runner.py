@@ -51,7 +51,8 @@ def build(cfg: AppConfig, debug: bool = False) -> tuple[BatchProcessor, EsgDb, N
         from .storage import S3Storage
 
         normalize = NormalizeFlow(db, S3Storage(cfg.s3), OdinClient(cfg.odin), loader,
-                                  cfg.odin.poll_interval_seconds, cfg.odin.max_poll_attempts)
+                                  cfg.odin.poll_interval_seconds, cfg.odin.max_poll_attempts,
+                                  cfg.odin.max_parallel_sheets, cfg.odin.max_parallel_requests)
     except Exception as exc:
         log.warning("Normalize flow disabled: %s", exc)
     try:
@@ -87,8 +88,10 @@ def _log_settings(cfg: AppConfig, log) -> None:
                     "is faster and keeps paths under the Windows 260-character limit", r.work_dir)
     log.info("Rerun: skip files already in %s: %s; clear earlier staging rows before load: %s",
              "/".join(r.completed_statuses), r.skip_completed_files, r.clear_staging_before_load)
-    log.info("Odin polling: every %ss, up to %d attempts; source environment: %s",
-             cfg.odin.poll_interval_seconds, cfg.odin.max_poll_attempts, cfg.sources.environment)
+    log.info("Odin polling: every %ss, up to %d attempts; up to %d sheet(s) per file in parallel, max %d "
+             "Odin call(s) in flight; source environment: %s", cfg.odin.poll_interval_seconds,
+             cfg.odin.max_poll_attempts, cfg.odin.max_parallel_sheets, cfg.odin.max_parallel_requests,
+             cfg.sources.environment)
     log.info("Secrets: %s", ", ".join(f"{v}={'set' if os.environ.get(v) else 'NOT SET'}" for v in _SECRET_VARS))
 
 
