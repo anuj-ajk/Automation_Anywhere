@@ -63,6 +63,9 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()  # load .env file if present
 
 HERE = Path(__file__).resolve().parent
 
@@ -697,7 +700,7 @@ if __name__ == "__main__":
                 "file_id": "77",
                 "report_id": "5",
                 "category": "",                      # empty: taken from the file name
-                "ESGDBServerName": os.environ.get("ESG_DB_HOST", ""),
+                "ESGDBServerName": os.environ.get("ESGDBServerName", ""),
                 "DatabaseName": "esgdb",
                 "MySQL_Port": 3306,
                 "created_by": "",                    # empty: Windows user
