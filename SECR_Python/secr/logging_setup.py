@@ -61,6 +61,11 @@ def log_context(**values) -> Iterator[None]:
             setattr(_ctx, k, v)
 
 
+def current_context() -> dict:
+    """The batch/file tags of this thread, to pass on to worker threads with log_context(**...)."""
+    return {"batch_id": getattr(_ctx, "batch_id", None), "file_id": getattr(_ctx, "file_id", None)}
+
+
 def setup_logging(log_dir: Path, level: int = logging.INFO) -> tuple[logging.Logger, str, str]:
     """Configure the 'secr' logger. Returns the logger, the run's correlation id and the log file path.
 

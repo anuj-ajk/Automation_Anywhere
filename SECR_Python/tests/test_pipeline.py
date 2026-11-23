@@ -462,3 +462,87 @@ def test_odin_calls_are_capped_across_files(tmp_path):
         outs = list(pool.map(lambda i: flow.run_file(ctx, _row("40", i), get_logger()), range(1, 5)))
     assert all(o.status == st.COMPLETED for o in outs)
     assert ai.peak == 3                         # 4 files x 5 sheets, never more than 3 calls at once
+
+
+class RecSession:
+    """Records inserts, procedure calls and named locks in one shared event list."""
+
+    def __init__(self, events, name="main"):
+        self.events, self.name = events, name
+
+    def delete_staging_rows(self, table, file_id):
+        return 0
+
+    def bulk_insert(self, table, columns, rows, chunk):
+        rows = list(rows)
+        time.sleep(0.02)
+        self.events.append(("insert", self.name, len(rows)))
+        return len(rows)
+
+    def call_proc(self, name, args, n_out):
+        self.events.append(("proc", name))
+        return ["completed successfully", "OK"][:n_out]
+
+    @contextlib.contextmanager
+    def named_lock(self, name, timeout):
+        self.events.append(("lock", name))
+        try:
+            yield
+        finally:
+            self.events.append(("unlock", name))
+
+
+class RecDb:
+    def __init__(self, events, free):
+        self.events, self.free = events, free
+
+    @contextlib.contextmanager
+    def try_session(self):
+        if self.free <= 0:
+            yield None
+            return
+        self.free -= 1
+        yield RecSession(self.events, f"extra{self.free}")
+
+
+def _invoice_csv(path, n):
+    from secr.loader import DAISY_SPECS
+
+    cols = [c for c, _ in DAISY_SPECS["invoices"].columns if c != "FileId"]
+    path.write_text(",".join(cols) + "\n" + "".join(",".join("x" for _ in cols) + "\n" for _ in range(n)),
+                    encoding="utf-8")
+    return path
+
+
+def test_big_file_is_inserted_over_free_connections(tmp_path):
+    from secr.loader import DAISY_SPECS
+
+    events = []
+    loader = StagingLoader("tester", True, 5, 1000, get_logger(), db=RecDb(events, free=10),
+                           insert_connections=4, parallel_insert_min_rows=100)
+    res = loader.load(RecSession(events), DAISY_SPECS["invoices"], _invoice_csv(tmp_path / "i.csv", 1000),
+                      tmp_path, "48", "2")
+    inserts = [e for e in events if e[0] == "insert"]
+    assert res.rows_inserted == 1000 and len(inserts) == 4 and sum(e[2] for e in inserts) == 1000
+
+    events.clear()  # no free connection: falls back to one, never waits
+    loader.db = RecDb(events, free=0)
+    loader._cleared.clear()
+    res = loader.load(RecSession(events), DAISY_SPECS["invoices"], _invoice_csv(tmp_path / "j.csv", 1000),
+                      tmp_path, "49", "2")
+    assert [e for e in events if e[0] == "insert"] == [("insert", "main", 1000)]
+
+
+def test_report_level_procs_run_after_staging_lock(tmp_path):
+    from secr.loader import DAISY_SPECS
+
+    events = []
+    loader = StagingLoader("tester", True, 5, 1000, get_logger())
+    loader.load(RecSession(events), DAISY_SPECS["invoices"], _invoice_csv(tmp_path / "i.csv", 3),
+                tmp_path, "48", "2")
+    assert [e for e in events if e[0] != "insert"] == [
+        ("lock", "secr_load_Staging_Invoices"), ("proc", "LoadInvoiceData"),
+        ("unlock", "secr_load_Staging_Invoices"),
+        ("lock", "secr_report_2_CalculateInvoiceData"), ("proc", "CalculateInvoiceData"),
+        ("unlock", "secr_report_2_CalculateInvoiceData"),
+    ]

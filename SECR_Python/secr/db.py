@@ -277,6 +277,25 @@ class EsgDb:
             LOG.warning("All %d DB connections are in use; waiting for a free one", self._max)
             self._slots.acquire()
             LOG.info("Got a DB connection after waiting %.1fs", time.monotonic() - started)
+        with self._opened() as s:
+            yield s
+
+    @contextlib.contextmanager
+    def try_session(self) -> Iterator[EsgSession | None]:
+        """An EXTRA connection only if one is free right now, else None (never waits).
+
+        Used for parallel bulk inserts: a worker that already holds a connection must not wait for more,
+        or all workers could end up waiting for each other.
+        """
+        if not self._slots.acquire(blocking=False):
+            yield None
+            return
+        with self._opened() as s:
+            yield s
+
+    @contextlib.contextmanager
+    def _opened(self) -> Iterator[EsgSession]:
+        """Open a connection for a slot that is already taken; always gives the slot back."""
         try:
             try:
                 conn = self._open()

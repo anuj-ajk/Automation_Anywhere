@@ -12,6 +12,8 @@ run:
   serialize_staging_loads: true     # one load per staging table at a time (MySQL GET_LOCK)
   staging_lock_timeout_seconds: 900
   insert_chunk_size: 1000
+  insert_connections: 4             # big files are bulk-inserted over up to 4 connections (only free ones)
+  parallel_insert_min_rows: 20000   # rows per extra connection; smaller files use one connection
   # Optional, used by "run --pending". Must return a BatchId column. Example only - adjust to
   # however new batches are flagged in your DB:
   pending_batches_query: "SELECT FB.BatchId FROM FileUploadBatch FB JOIN RefBatchStatus B ON B.BatchStatusId = FB.BatchStatusId WHERE B.Code = 'PROCESSING' ORDER BY FB.BatchId"

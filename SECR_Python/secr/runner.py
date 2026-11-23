@@ -42,7 +42,9 @@ def build(cfg: AppConfig, debug: bool = False) -> tuple[BatchProcessor, EsgDb, N
     db = EsgDb(cfg.db, cfg.run.max_db_connections)
     loader = StagingLoader(cfg.run.created_by, cfg.run.serialize_staging_loads,
                            cfg.run.staging_lock_timeout_seconds, cfg.run.insert_chunk_size, log,
-                           clear_staging=cfg.run.clear_staging_before_load)
+                           clear_staging=cfg.run.clear_staging_before_load, db=db,
+                           insert_connections=cfg.run.insert_connections,
+                           parallel_insert_min_rows=cfg.run.parallel_insert_min_rows)
 
     # Created separately so a Daisy-only setup does not need S3/Odin settings and vice versa.
     normalize = daisy = None
@@ -86,6 +88,8 @@ def _log_settings(cfg: AppConfig, log) -> None:
     if str(r.work_dir).startswith("\\\\"):
         log.warning("run.work_dir %s is on a network share: a short local folder (e.g. %%TEMP%%\\SECR_work) "
                     "is faster and keeps paths under the Windows 260-character limit", r.work_dir)
+    log.info("Bulk insert: chunks of %d, files with >= %d rows split over up to %d connection(s)",
+             r.insert_chunk_size, r.parallel_insert_min_rows, r.insert_connections)
     log.info("Rerun: skip files already in %s: %s; clear earlier staging rows before load: %s",
              "/".join(r.completed_statuses), r.skip_completed_files, r.clear_staging_before_load)
     log.info("Odin polling: every %ss, up to %d attempts; up to %d sheet(s) per file in parallel, max %d "

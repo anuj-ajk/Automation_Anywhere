@@ -165,6 +165,17 @@ All Odin calls and CSV downloads share one cap: odin.max_parallel_requests = 20
   Each poll round checks every waiting chat at once and then waits 40 s, so 6 sheets take about as long as 1.
   The normalized CSVs are downloaded in parallel and then loaded in order, because the staging lock and the
   "clear earlier rows" step need the loads to run in order.
+* **Bulk insert:** a file with at least `parallel_insert_min_rows` (20,000) rows per connection is split over up to
+  `insert_connections` (4) connections that insert at the same time.
+  * Example: 115,269 HH rows go over 4 connections instead of 115 sequential chunks on one.
+  * Extra connections are taken only if they are free at that moment. A worker never waits for more connections,
+    so workers cannot deadlock each other. If none are free, it inserts on one connection as before.
+* **Stored procedures:** the staging lock now covers only the clean-up, the insert and the `Load*` procedure.
+  * Report-level procedures (`UpdatePortfolioDerivedFields`, `CalculateInvoiceData`) do not read the staging
+    table. They run after the staging lock is released, under a lock per report and procedure
+    (`secr_report_<id>_<proc>`).
+  * So another batch can load `Staging_Invoices` while `CalculateInvoiceData` (about 2 minutes) runs.
+  * One procedure call itself cannot be split; it runs as fast as MySQL runs it.
 * **API cap:** `odin.max_parallel_requests` limits the Odin calls and CSV downloads in flight across **all**
   files and batches. Lower it if Odin returns HTTP 429 (rate limit).
 

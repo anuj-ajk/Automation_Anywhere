@@ -6,14 +6,18 @@ The CSV -> table column mappings are copied from the bots' "Database: Insert in 
 """
 from __future__ import annotations
 
+import contextlib
 import csv
 import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Sequence
 
 from .csv_clean import clean_csv
 from .db import EsgSession
+from .logging_setup import current_context, log_context
 
 
 def _m(*cols) -> tuple[tuple[str, str], ...]:
@@ -36,6 +40,11 @@ class ProcCall:
     in_args: tuple[str, ...]          # names from: file_id, report_id, created_by
     n_out: int = 1                    # p_Message [, p_Status]
     has_status: bool = False          # second OUT param is a status ('ERROR' = failure)
+
+    @property
+    def report_level(self) -> bool:
+        """Works on the whole report (e.g. CalculateInvoiceData), not on this file's staging rows."""
+        return "file_id" not in self.in_args
 
 
 @dataclass(frozen=True)
@@ -170,13 +179,18 @@ class LoadResult:
 
 class StagingLoader:
     def __init__(self, created_by: str, serialize: bool, lock_timeout: int, chunk_size: int, log,
-                 clear_staging: bool = True):
+                 clear_staging: bool = True, db=None, insert_connections: int = 1,
+                 parallel_insert_min_rows: int = 20000):
         self.created_by = created_by
         self.serialize = serialize
         self.lock_timeout = lock_timeout
         self.chunk_size = chunk_size
         self.log = log
         self.clear_staging = clear_staging
+        # Parallel bulk insert: big files are split over up to ``insert_connections`` connections.
+        self.db = db
+        self.insert_connections = max(1, int(insert_connections))
+        self.parallel_insert_min_rows = max(1, int(parallel_insert_min_rows))
         # (file_id, table) pairs already cleared in this run: the sheets of one file that share a staging
         # table must not delete each other's rows, only what an earlier run left behind.
         self._cleared: set[tuple[str, str]] = set()
@@ -198,14 +212,30 @@ class StagingLoader:
         self.log.info("%d data row(s), %d mapped column(s)", len(rows), len(columns))
         args = {"file_id": file_id, "report_id": report_id, "created_by": self.created_by}
 
-        # Staging tables and the load procedures are shared by every batch, so by default only one
-        # worker (across all processes, via a MySQL named lock) loads a given staging table at a time.
+        file_procs = tuple(p for p in spec.procs if not p.report_level)
+        report_procs = tuple(p for p in spec.procs if p.report_level)
+
+        # 1. Staging part: the staging tables and the Load* procedures are shared by every batch, so only one
+        #    worker (across all processes, via a MySQL named lock) inserts + runs Load* for a table at a time.
         lock_name = f"secr_load_{spec.staging_table}"
         if self.serialize:
             self.log.debug("Waiting for staging lock %s (only one load per staging table at a time)", lock_name)
             with session.named_lock(lock_name, self.lock_timeout):
-                return self._insert_and_call(session, spec, columns, rows, args)
-        return self._insert_and_call(session, spec, columns, rows, args)
+                inserted, messages = self._insert_and_call(session, spec, columns, rows, args, file_procs)
+        else:
+            inserted, messages = self._insert_and_call(session, spec, columns, rows, args, file_procs)
+
+        # 2. Report-level procedures (UpdatePortfolioDerivedFields, CalculateInvoiceData) do not read the staging
+        #    table, so they run AFTER the staging lock is released: other batches can load the same table
+        #    meanwhile. They are serialised per report and procedure instead.
+        for proc in report_procs:
+            proc_lock = f"secr_report_{report_id}_{proc.name}"
+            if self.serialize:
+                with session.named_lock(proc_lock, self.lock_timeout):
+                    messages.append(self._call(session, proc, args, inserted, spec))
+            else:
+                messages.append(self._call(session, proc, args, inserted, spec))
+        return LoadResult(inserted, False, messages)
 
     def _clear_previous_rows(self, session, table: str, file_id: str) -> None:
         if not self.clear_staging:
@@ -220,30 +250,64 @@ class StagingLoader:
         else:
             self.log.info("No earlier rows in %s for FileId %s", table, file_id)
 
-    def _insert_and_call(self, session, spec, columns, rows, args) -> LoadResult:
+    def _insert_and_call(self, session, spec, columns, rows, args, procs) -> tuple[int, list[str]]:
         self._clear_previous_rows(session, spec.staging_table, str(args["file_id"]))
-        inserted = session.bulk_insert(spec.staging_table, columns, rows, self.chunk_size)
+        inserted = self._bulk_insert(session, spec.staging_table, columns, rows)
         self.log.info("Inserted %d row(s) into %s", inserted, spec.staging_table)
-        messages = []
-        for proc in spec.procs:
-            in_values = [args[a] for a in proc.in_args]
-            try:
-                outs = session.call_proc(proc.name, in_values, proc.n_out)
-            except Exception as exc:
-                # A MySQL error raised while the procedure runs (e.g. 1136 "Column count doesn't match")
-                # comes from the procedure's own SQL, not from this bulk insert.
-                self.log.error("Stored procedure %s(%s) failed inside MySQL: %s. The %d row(s) just inserted "
-                               "into %s for FileId %s are still there.", proc.name,
-                               ", ".join(map(str, in_values)), exc, inserted, spec.staging_table, args["file_id"])
-                raise LoadError(f"Error inside stored procedure {proc.name}: {exc}") from exc
-            message = str(outs[0] or "")
-            status = str(outs[1] or "") if proc.has_status and len(outs) > 1 else ""
-            self.log.info("%s -> message=%r%s", proc.name, message, f", status={status!r}" if status else "")
-            if not _proc_succeeded(message, status, proc.has_status):
-                self.log.error("%s reported a failure: %s", proc.name, message or status or "no message returned")
-                raise LoadError(f"Error in {proc.name}: {message or status or 'no message returned'}")
-            messages.append(f"{proc.name}: {message}")
-        return LoadResult(inserted, False, messages)
+        return inserted, [self._call(session, proc, args, inserted, spec) for proc in procs]
+
+    def _bulk_insert(self, session, table: str, columns, rows: list) -> int:
+        """Insert on this connection, or split a big file over extra connections that are free right now."""
+        wanted = min(self.insert_connections, len(rows) // self.parallel_insert_min_rows + 1)
+        if self.db is None or wanted < 2:
+            return session.bulk_insert(table, columns, rows, self.chunk_size)
+
+        with contextlib.ExitStack() as stack:
+            extra = []
+            for _ in range(wanted - 1):
+                s = stack.enter_context(self.db.try_session())
+                if s is None:  # no free connection: use what we have, never wait (no deadlock)
+                    break
+                extra.append(s)
+            sessions = [session] + extra
+            if len(sessions) == 1:
+                self.log.info("No free DB connection for a parallel insert; inserting on one connection")
+                return session.bulk_insert(table, columns, rows, self.chunk_size)
+
+            size = -(-len(rows) // len(sessions))  # ceiling division
+            slices = [rows[i:i + size] for i in range(0, len(rows), size)]
+            self.log.info("Inserting %d row(s) into %s over %d connection(s) (%d rows each)", len(rows), table,
+                          len(slices), size)
+            started, context = time.monotonic(), current_context()
+
+            def insert(pair):
+                s, part = pair
+                with log_context(**context):
+                    return s.bulk_insert(table, columns, part, self.chunk_size)
+
+            with ThreadPoolExecutor(max_workers=len(slices), thread_name_prefix="insert") as pool:
+                total = sum(pool.map(insert, zip(sessions, slices)))
+            self.log.info("Parallel insert into %s: %d row(s) in %.1fs", table, total, time.monotonic() - started)
+            return total
+
+    def _call(self, session, proc: ProcCall, args: dict, inserted: int, spec: LoadSpec) -> str:
+        in_values = [args[a] for a in proc.in_args]
+        try:
+            outs = session.call_proc(proc.name, in_values, proc.n_out)
+        except Exception as exc:
+            # A MySQL error raised while the procedure runs (e.g. 1136 "Column count doesn't match")
+            # comes from the procedure's own SQL, not from this bulk insert.
+            self.log.error("Stored procedure %s(%s) failed inside MySQL: %s. The %d row(s) just inserted "
+                           "into %s for FileId %s are still there.", proc.name,
+                           ", ".join(map(str, in_values)), exc, inserted, spec.staging_table, args["file_id"])
+            raise LoadError(f"Error inside stored procedure {proc.name}: {exc}") from exc
+        message = str(outs[0] or "")
+        status = str(outs[1] or "") if proc.has_status and len(outs) > 1 else ""
+        self.log.info("%s -> message=%r%s", proc.name, message, f", status={status!r}" if status else "")
+        if not _proc_succeeded(message, status, proc.has_status):
+            self.log.error("%s reported a failure: %s", proc.name, message or status or "no message returned")
+            raise LoadError(f"Error in {proc.name}: {message or status or 'no message returned'}")
+        return f"{proc.name}: {message}"
 
     def _read_mapped(self, cleaned_csv: Path, spec: LoadSpec) -> tuple[list[str], list[tuple]]:
         with cleaned_csv.open("r", encoding="utf-8", newline="") as fh:

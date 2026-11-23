@@ -81,6 +81,9 @@ class RunConfig:
     serialize_staging_loads: bool = True
     staging_lock_timeout_seconds: int = 900
     insert_chunk_size: int = 1000
+    # Big files are bulk-inserted over several DB connections at once (only connections that are free).
+    insert_connections: int = 4
+    parallel_insert_min_rows: int = 20000
     pending_batches_query: str = ""
     # Rerun: files already in one of completed_statuses are not processed again (force / --force overrides).
     skip_completed_files: bool = True
@@ -184,6 +187,8 @@ def load_config(path: str | Path) -> AppConfig:
         serialize_staging_loads=bool(r.get("serialize_staging_loads", True)),
         staging_lock_timeout_seconds=int(r.get("staging_lock_timeout_seconds", 900)),
         insert_chunk_size=int(r.get("insert_chunk_size", 1000)),
+        insert_connections=int(r.get("insert_connections", 4)),
+        parallel_insert_min_rows=int(r.get("parallel_insert_min_rows", 20000)),
         pending_batches_query=r.get("pending_batches_query", "") or "",
         skip_completed_files=bool(r.get("skip_completed_files", True)),
         completed_statuses=tuple(str(c).strip().upper() for c in
