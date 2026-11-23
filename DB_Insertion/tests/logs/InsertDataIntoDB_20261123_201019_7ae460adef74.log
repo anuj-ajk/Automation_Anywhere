@@ -1,0 +1,9 @@
+2026-11-23 20:10:19,521 INFO    [run 7ae460adef74] Called with keys: DatabaseName, ESGDBServerName, MySQL_Port, category, created_by, csv_path, debug, dry_run, file_id, input_folder, log_dir, report_id; secrets: SECR_DB_USER=NOT SET SECR_DB_PASSWORD=NOT SET
+2026-11-23 20:10:19,521 INFO    [run 7ae460adef74] Start: csv=D:\Automation_Anywhere\DB_Insertion\tests\Portfolio_ESG_Normalized_Data.csv, file id 77, report id 5, db <not set>:3306/esgdb, dry run True (File Id: 77)
+2026-11-23 20:10:19,521 INFO    [run 7ae460adef74] Category detected from file name 'Portfolio_ESG_Normalized_Data.csv': 'Portfolio' (File Id: 77)
+2026-11-23 20:10:19,521 DEBUG   [run 7ae460adef74] Cleaning CSV D:\Automation_Anywhere\DB_Insertion\tests\Portfolio_ESG_Normalized_Data.csv and adding File Id (File Id: 77)
+2026-11-23 20:10:19,523 INFO    [run 7ae460adef74] CSV cleaned: 3 row(s) incl. header, 11 blank(s) filled -> D:\Automation_Anywhere\DB_Insertion\tests\work\Cleaned_Portfolio_77.csv (File Id: 77)
+2026-11-23 20:10:19,523 DEBUG   [run 7ae460adef74] Cleaned the file and stored at D:\Automation_Anywhere\DB_Insertion\tests\work\Cleaned_Portfolio_77.csv (File Id: 77)
+2026-11-23 20:10:19,523 INFO    [run 7ae460adef74] [dry-run] Would insert D:\Automation_Anywhere\DB_Insertion\tests\work\Cleaned_Portfolio_77.csv into esgdb.Staging_Portfolio with 26 mapped columns, then call LoadPortfolioData, UpdatePortfolioDerivedFields
+2026-11-23 20:10:19,523 DEBUG   [run 7ae460adef74] Finally block: DB connected: False (File Id: 77)
+2026-11-23 20:10:19,523 INFO    [run 7ae460adef74] Returning status DRY_RUN
