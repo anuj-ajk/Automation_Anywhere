@@ -9,7 +9,6 @@ Secrets are read ONLY from environment variables, never from the YAML file:
     SECR_ODIN_API_KEY, SECR_ODIN_API_SECRET    (was CV "AA ESG EKB Credential")
     SECR_EM_CONNECTION_STRING                  ODBC string for Energy Manager (was @sql_JupiterConnection)
     SECR_NAV_CONNECTION_STRING                 ODBC string for NAV (was CV "NAV_ESGDB_ConnectionString")
-    SECR_SMTP_USER, SECR_SMTP_PASSWORD         optional, for notification e-mails
 """
 from __future__ import annotations
 
@@ -92,8 +91,6 @@ class NotifyConfig:
     from_address: str = ""
     to_addresses: list[str] = field(default_factory=list)
     cc_addresses: list[str] = field(default_factory=list)
-    user: str = ""
-    password: str = ""
 
 
 @dataclass
@@ -188,8 +185,6 @@ def load_config(path: str | Path) -> AppConfig:
         from_address=n.get("from_address", ""),
         to_addresses=list(n.get("to_addresses", []) or []),
         cc_addresses=list(n.get("cc_addresses", []) or []),
-        user=_env("SECR_SMTP_USER"),
-        password=_env("SECR_SMTP_PASSWORD"),
     )
 
     cfg = AppConfig(db=db, s3=s3, odin=odin, sources=sources, run=run, notify=notify)

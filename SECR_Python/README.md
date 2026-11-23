@@ -26,7 +26,6 @@ You also need the Microsoft ODBC Driver for SQL Server for the Energy Manager / 
 | `SECR_ODIN_API_KEY`, `SECR_ODIN_API_SECRET` | ESG Locker / AA ESG EKB Credential |
 | `SECR_EM_CONNECTION_STRING` | global value `@sql_JupiterConnection` (ODBC string) |
 | `SECR_NAV_CONNECTION_STRING` | ESG Locker / NAV_ESGDB_ConnectionString (ODBC string) |
-| `SECR_SMTP_USER`, `SECR_SMTP_PASSWORD` | optional, for notification e-mails |
 
 ## Running
 

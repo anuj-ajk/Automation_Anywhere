@@ -64,3 +64,12 @@ def test_errors_come_back_as_json():
     assert out["status"] == "FAILED" and "FileNotFoundError" in out["message"]
     out = json.loads(aa_entry.run_batches({"batch_ids": "40", "secrets": {"PATH": "x"}}))
     assert out["status"] == "FAILED" and "not a SECR_" in out["message"]
+
+
+def test_unset_secrets_are_not_written_as_none(monkeypatch):
+    monkeypatch.setenv("SECR_ODIN_API_KEY", "from-machine")
+    monkeypatch.delenv("SECR_NAV_CONNECTION_STRING", raising=False)
+    aa_entry._apply_secrets({"SECR_ODIN_API_KEY": None, "SECR_NAV_CONNECTION_STRING": ""})
+    assert aa_entry.os.environ["SECR_ODIN_API_KEY"] == "from-machine"
+    assert "SECR_NAV_CONNECTION_STRING" not in aa_entry.os.environ
+    assert aa_entry._secret_keys({"SECR_DB_USER": "u", "SECR_DB_PASSWORD": None}) == "SECR_DB_USER"

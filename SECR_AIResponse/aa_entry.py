@@ -56,6 +56,8 @@ def _apply_secrets(secrets) -> None:
     for key, val in dict(secrets).items():
         if key not in _ALLOWED_SECRETS:
             raise ValueError(f"secrets key '{key}' is not one of {', '.join(_ALLOWED_SECRETS)}")
+        if val is None or str(val) == "":  # not set in .env / Credential Vault: keep what the machine has
+            continue
         os.environ[key] = str(val)
 
 

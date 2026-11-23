@@ -27,8 +27,7 @@ class Notifier:
             with smtplib.SMTP(self.cfg.smtp_host, self.cfg.smtp_port, timeout=60) as smtp:
                 if self.cfg.use_tls:
                     smtp.starttls()
-                if self.cfg.user:
-                    smtp.login(self.cfg.user, self.cfg.password)
+                # No login: mails go through the SMTP relay without credentials.
                 smtp.send_message(msg)
             self.log.info("E-mail '%s' sent to %d recipient(s)", subject,
                           len(self.cfg.to_addresses) + len(self.cfg.cc_addresses or []))

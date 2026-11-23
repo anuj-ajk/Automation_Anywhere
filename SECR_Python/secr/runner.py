@@ -65,7 +65,7 @@ def build(cfg: AppConfig, debug: bool = False) -> tuple[BatchProcessor, EsgDb, N
 
 _SECRET_VARS = ("SECR_DB_USER", "SECR_DB_PASSWORD", "SECR_S3_BUCKET", "AWS_ACCESS_KEY_ID",
                 "AWS_SECRET_ACCESS_KEY", "SECR_ODIN_API_KEY", "SECR_ODIN_API_SECRET",
-                "SECR_EM_CONNECTION_STRING", "SECR_NAV_CONNECTION_STRING", "SECR_SMTP_USER", "SECR_SMTP_PASSWORD")
+                "SECR_EM_CONNECTION_STRING", "SECR_NAV_CONNECTION_STRING")
 
 
 def _log_settings(cfg: AppConfig, log) -> None:

@@ -31,6 +31,20 @@ import re
 import sys
 import traceback
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()  # load .env if present, so AA can override with its own environment variables
+
+# Secrets used by the SECR process (values come from .env or the machine's environment variables).
+SECR_DB_USER = os.environ.get("SECR_DB_USER")
+SECR_DB_PASSWORD = os.environ.get("SECR_DB_PASSWORD")
+SECR_S3_BUCKET = os.environ.get("SECR_S3_BUCKET")
+AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
+SECR_ODIN_API_KEY = os.environ.get("SECR_ODIN_API_KEY")
+SECR_ODIN_API_SECRET = os.environ.get("SECR_ODIN_API_SECRET")
+SECR_EM_CONNECTION_STRING = os.environ.get("SECR_EM_CONNECTION_STRING")
+SECR_NAV_CONNECTION_STRING = os.environ.get("SECR_NAV_CONNECTION_STRING")
 
 HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:  # AA runs the file directly, so make the 'secr' package importable
@@ -77,6 +91,8 @@ def _apply_secrets(secrets) -> None:
     for key, val in dict(secrets).items():
         if not str(key).startswith(_ALLOWED_SECRET_PREFIXES):
             raise ValueError(f"secrets key '{key}' is not a SECR_* or AWS_* variable")
+        if val is None or str(val) == "":  # not set in .env / Credential Vault: keep what the machine has
+            continue
         os.environ[str(key)] = str(val)
 
 
@@ -85,7 +101,7 @@ def _secret_keys(secrets) -> str:
     try:
         if isinstance(secrets, str):
             secrets = json.loads(secrets)
-        return ", ".join(sorted(str(k) for k in dict(secrets or {})))
+        return ", ".join(sorted(str(k) for k, v in dict(secrets or {}).items() if v not in (None, "")))
     except Exception:
         return "unreadable"
 
@@ -154,5 +170,24 @@ def _result(status, code, message, log_file="", batches=None, trace="") -> str:
     return json.dumps(out, default=str)
 
 
-if __name__ == "__main__":  # manual test: python aa_entry.py 40,41
-    print(run_batches({"batch_ids": " ".join(sys.argv[1:])}))
+if __name__ == "__main__":  # manual test: python aa_entry.py 40,41  (same dictionary the AA bot passes)
+    print(run_batches(
+        {
+            "batch_ids": " ".join(sys.argv[1:]) or "40",
+            "config_path": str(HERE / "config.yaml"),
+            "max_batches": 10,
+            "max_files": 4,
+            "debug": True,
+            "secrets": {
+                "SECR_DB_USER": SECR_DB_USER,
+                "SECR_DB_PASSWORD": SECR_DB_PASSWORD,
+                "SECR_S3_BUCKET": SECR_S3_BUCKET,
+                "AWS_ACCESS_KEY_ID": AWS_ACCESS_KEY_ID,
+                "AWS_SECRET_ACCESS_KEY": AWS_SECRET_ACCESS_KEY,
+                "SECR_ODIN_API_KEY": SECR_ODIN_API_KEY,
+                "SECR_ODIN_API_SECRET": SECR_ODIN_API_SECRET,
+                "SECR_EM_CONNECTION_STRING": SECR_EM_CONNECTION_STRING,
+                "SECR_NAV_CONNECTION_STRING": SECR_NAV_CONNECTION_STRING,
+            },
+        }
+    ))
