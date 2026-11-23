@@ -1,0 +1,4 @@
+Supply_ID,Site_Code,Site_Name,Street_Address_Line_1,Street_Address_Line_2,Building_Type,Town_or_City,Post_Code,Country,Subsidiary_Company,Utility_Type,Utility_Supplier_Landlord,MPAN_MPRN_or_Reference,MPAN_Top_Line,Supplier_name,Supplier_Contract_Start_Date,Supplier_Contract_End_Date,Date_Supply_Held_From,Date_Supply_Held_To,Normalization_Confidence,Reason_for_Confidence,Error_Code,Error_Field,Error_Value,Error_Message
+S001,ST01,Test Site One,1 High Street,,Office,Leeds,LS1 1AA,UK,Test Co,Electricity,Test Energy,1200000000001,,Test Energy,2024-04-01,2025-03-31,2024-04-01,2025-03-31,High,All fields present,,,,
+S002,ST02,"Test Site ""Two""",2 Main Road,Unit 4,Warehouse,York,YO1 1BB,UK,Test Co,Gas,Test Gas,9876543210,,Test Gas,2024-04-01,2025-03-31,2024-04-01,2025-03-31,Medium,"Post code
+checked",,,,

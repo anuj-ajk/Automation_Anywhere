@@ -13,15 +13,39 @@ What it does (same order as the bot):
      category's staging table (1000 rows per batch).
   5. Calls the category's stored procedure(s) and checks the p_Message they return.
 
-Usage:
-  python st_insert_data_into_db.py --csv <normalized csv> --input-folder <folder> \\
-         --file-id 77 --report-id 5 [--config config.json] [--dry-run]
+Automation Anywhere (same pattern as SECR_Python / SECR_AIResponse aa_entry.py):
+  1. Python script: Open             -> file = <path>\\DB_Insertion\\st_insert_data_into_db.py, session "DBIns"
+  2. Python script: Execute function -> function insert_data_into_db, argument = Dictionary, output = sDBOutput
+  3. Python script: Close            -> session "DBIns"
 
-Database settings: read from --config (the bot's dConfig JSON, using the ProcessConfig
-keys ESGDBServerName / DatabaseName / MySQL_Port), overridden by the environment
-variables ESG_DB_HOST / ESG_DB_NAME / ESG_DB_PORT.
-Credentials (they replace the "ESGDB MySQL" Credential Vault entry): set the environment
-variables ESG_DB_USER and ESG_DB_PASSWORD. Credentials are never stored in this file.
+  Dictionary keys (every value may be text; AA names in brackets are accepted too):
+    csv_path      [ioCSVFilePath]      required  normalized CSV to load
+    input_folder  [ioInputFolderPath]  optional  folder for Cleaned_<category>.csv (default: the CSV's folder)
+    file_id       [ioFileId]           required  77 / "77" / 77.0 all become "77"
+    report_id     [ioReportId]         required
+    category                           optional  e.g. "portfolio" (the Category column of the AI Response
+                                                 output); default: text before "_ESG" in the file name
+    ESGDBServerName / db_host, DatabaseName / db_name, MySQL_Port / db_port   (from dProcessConfig)
+    created_by                         optional  p_CreatedBy for the procedures (default: Windows user)
+    dry_run       "true": clean + validate only, no database
+    debug         "true": detailed log;  log_dir  optional (default: DB_Insertion\\logs)
+    secrets       optional dictionary: SECR_DB_USER, SECR_DB_PASSWORD
+
+  Output: always a JSON string (never raises) with the bot's output variables plus "status" and "log_file":
+    {"status": "SUCCESS" | "NO_DATA" | "DRY_RUN" | "FAILED", "sBotStatus": "...", "sBotComments": "...",
+     "sErrorMessage": "...", "nErrorLineNumber": 0, "sErrorType": "", "nInsertedRecords": 120,
+     "category": "portfolio", "cleaned_file": "...", "log_file": "..."}
+
+Command line:
+  python st_insert_data_into_db.py --csv <normalized csv> --input-folder <folder> \\
+         --file-id 77 --report-id 5 [--config config.json] [--category portfolio] [--dry-run]
+  python st_insert_data_into_db.py --manual-test      (runs the dictionary at the bottom of this file)
+
+Database settings: the dictionary / --config (the bot's dConfig JSON, ProcessConfig keys
+ESGDBServerName / DatabaseName / MySQL_Port), overridden by ESG_DB_HOST / ESG_DB_NAME / ESG_DB_PORT.
+Credentials (they replace the "ESGDB MySQL" Credential Vault entry): SECR_DB_USER / SECR_DB_PASSWORD
+(same names as the other SECR folders; ESG_DB_USER / ESG_DB_PASSWORD still work), from the
+environment or a .env file next to this script. Credentials are never stored in this file.
 """
 
 from __future__ import annotations
@@ -35,8 +59,24 @@ import os
 import re
 import sys
 import traceback
+import uuid
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+
+try:  # .env next to this script (or the current folder); AA / machine environment variables win
+    from dotenv import load_dotenv
+
+    load_dotenv(HERE / ".env")
+except ImportError:  # python-dotenv not installed: use the machine's environment variables only
+    pass
+
+SECR_DB_USER = os.environ.get("SECR_DB_USER")
+SECR_DB_PASSWORD = os.environ.get("SECR_DB_PASSWORD")
+
+_ALLOWED_SECRETS = ("SECR_DB_USER", "SECR_DB_PASSWORD", "ESG_DB_USER", "ESG_DB_PASSWORD")
 
 log = logging.getLogger("ST_InsertDataIntoDB")
 
@@ -373,14 +413,26 @@ def notify_error(config: dict, message: str) -> None:
 # Main flow
 # ----------------------------------------------------------------------------------
 
+def normalize_id(value) -> str:
+    """AA number variables arrive as 77.0 - the FileId column and the procedures need '77'."""
+    if isinstance(value, float) and value.is_integer():
+        value = int(value)
+    text = "" if value is None else str(value).strip()
+    return text.split(".")[0] if re.fullmatch(r"\d+\.0+", text) else text
+
+
 def run(csv_path: str, input_folder: str, file_id: str, report_id: str,
-        config: dict | None = None, dry_run: bool = False) -> dict:
+        config: dict | None = None, dry_run: bool = False, category: str | None = None,
+        created_by: str | None = None) -> dict:
     config = config or {}
     process_cfg = config.get("ProcessConfig", {}) or {}
+    file_id, report_id = normalize_id(file_id), normalize_id(report_id)
+    input_folder = input_folder or str(Path(csv_path).parent)
     ref = f"File Id: {file_id}"
 
     outputs = {"sBotStatus": "", "sBotComments": "", "sErrorMessage": "",
-               "nErrorLineNumber": 0, "sErrorType": "", "nInsertedRecords": 0}
+               "nErrorLineNumber": 0, "sErrorType": "", "nInsertedRecords": 0,
+               "category": "", "cleaned_file": ""}
     conn = None
     sp_message = ""
 
@@ -389,17 +441,29 @@ def run(csv_path: str, input_folder: str, file_id: str, report_id: str,
         host = os.environ.get("ESG_DB_HOST") or process_cfg.get("ESGDBServerName", "")
         database = os.environ.get("ESG_DB_NAME") or process_cfg.get("DatabaseName", "")
         port = int(os.environ.get("ESG_DB_PORT") or process_cfg.get("MySQL_Port") or 3306)
-        log.debug("Variables are initialized")
+        log.info("Start: csv=%s, file id %s, report id %s, db %s:%s/%s, dry run %s (%s)",
+                 csv_path, file_id, report_id, host or "<not set>", port, database or "<not set>",
+                 dry_run, ref)
+        if not file_id or not report_id:
+            raise BotException("file_id and report_id are required")
 
         # ---- Clean CSV and add a column FileID ---------------------------------
         file_name = Path(csv_path).name
-        category = get_category(csv_path)
-        log.debug("Category detected from file name '%s': '%s' (%s)", file_name, category, ref)
+        if category:
+            category = str(category).strip()
+            log.info("Category given by the caller: '%s' (%s)", category, ref)
+        else:
+            category = get_category(csv_path)
+            log.info("Category detected from file name '%s': '%s' (%s)", file_name, category, ref)
+        outputs["category"] = category
         if category == "":
             log.error("Could not determine the category from file name %s (%s)", file_name, ref)
             raise BotException(f"Could not determine the category from file name {file_name}")
 
-        cleaned_path = str(Path(input_folder) / f"Cleaned_{category}.csv")
+        # File id in the name: two loads of the same category in one folder must not overwrite each other.
+        Path(input_folder).mkdir(parents=True, exist_ok=True)
+        cleaned_path = str(Path(input_folder) / f"Cleaned_{category}_{file_id}.csv")
+        outputs["cleaned_file"] = cleaned_path
         log.debug("Cleaning CSV %s and adding File Id (%s)", csv_path, ref)
         result = json.loads(fill_csv_blanks({
             "input_file": csv_path,
@@ -413,7 +477,8 @@ def run(csv_path: str, input_folder: str, file_id: str, report_id: str,
             raise BotException(f"Python execution failed with error message {msg}")
 
         rows_processed = int(result["result"]["rows_processed"])
-        log.debug("CSV cleaned. Rows processed: %s (%s)", rows_processed, ref)
+        log.info("CSV cleaned: %s row(s) incl. header, %s blank(s) filled -> %s (%s)", rows_processed,
+                 result["result"]["blanks_filled"], cleaned_path, ref)
         log.debug("Cleaned the file and stored at %s (%s)", cleaned_path, ref)
 
         if rows_processed <= 1:  # header row only
@@ -431,6 +496,12 @@ def run(csv_path: str, input_folder: str, file_id: str, report_id: str,
         mappings = COLUMN_MAPPINGS[cat.table]
 
         if dry_run:
+            with open(cleaned_path, "r", encoding="utf-8", newline="") as f:
+                header = next(csv.reader(f), [])
+            missing = [m if isinstance(m, str) else m[0] for m in mappings
+                       if (m if isinstance(m, str) else m[0]) not in header]
+            if missing:
+                raise BotException(f"CSV {cleaned_path} is missing mapped column(s): {missing}")
             log.info("[dry-run] Would insert %s into %s.%s with %d mapped columns, then call %s",
                      cleaned_path, database or "<db>", cat.table, len(mappings),
                      ", ".join(p.name for p in cat.procs))
@@ -438,26 +509,28 @@ def run(csv_path: str, input_folder: str, file_id: str, report_id: str,
                            sBotComments=f"Cleaned file at {cleaned_path}; nothing loaded")
             return outputs
 
-        user = os.environ.get("ESG_DB_USER")
-        password = os.environ.get("ESG_DB_PASSWORD")
+        user = os.environ.get("SECR_DB_USER") or os.environ.get("ESG_DB_USER")
+        password = os.environ.get("SECR_DB_PASSWORD") or os.environ.get("ESG_DB_PASSWORD")
         if not (host and database and user and password):
             raise BotException("Database settings missing: need host and database name "
-                               "(config or ESG_DB_HOST/ESG_DB_NAME) and ESG_DB_USER/"
-                               "ESG_DB_PASSWORD environment variables")
+                               "(ESGDBServerName/DatabaseName or ESG_DB_HOST/ESG_DB_NAME) and "
+                               "SECR_DB_USER/SECR_DB_PASSWORD (environment, .env or secrets)")
 
+        log.info("Connecting to %s:%s/%s (%s)", host, port, database, ref)
         conn = connect(host, port, database, user, password)
-        log.debug("Connected to %s successful and starting to bulk insert (%s)", database, ref)
+        log.info("Connected; inserting into %s (%s)", cat.table, ref)
 
         inserted = batch_insert(conn, database, cat.table, cleaned_path, mappings)
         outputs["nInsertedRecords"] = inserted
-        log.debug("Inserted %d record(s) into the staging table for %s (%s)", inserted, category, ref)
+        log.info("Inserted %d record(s) into %s (%s)", inserted, cat.table, ref)
 
-        values = {"p_FileId": str(file_id), "p_ReportId": str(report_id),
-                  "p_CreatedBy": getpass.getuser()}
+        values = {"p_FileId": file_id, "p_ReportId": report_id,
+                  "p_CreatedBy": created_by or getpass.getuser()}
         for proc in cat.procs:
+            log.info("Calling %s(%s) (%s)", proc.name, ", ".join(values[p] for p in proc.inputs), ref)
             out = call_proc(conn, database, proc, values)
             sp_message = out.get("p_Message", "")
-            log.debug("Stored procedure %s finished. Message: %s (%s)", proc.name, sp_message, ref)
+            log.info("Stored procedure %s finished. OUT: %s (%s)", proc.name, out, ref)
             if proc.success_text.lower() not in sp_message.lower():
                 log.error("Error in %s SP: %s (%s)", proc.name, sp_message, ref)
                 raise BotException(f"Error in {proc.name} SP: {sp_message}")
@@ -494,6 +567,101 @@ def run(csv_path: str, input_folder: str, file_id: str, report_id: str,
                 log.warning("Could not close the database connection cleanly")
 
 
+# ----------------------------------------------------------------------------------
+# Automation Anywhere entry
+# ----------------------------------------------------------------------------------
+
+_ALIASES = {
+    "csv_path": ("csv_path", "ioCSVFilePath"),
+    "input_folder": ("input_folder", "ioInputFolderPath"),
+    "file_id": ("file_id", "ioFileId", "FileID", "FileId"),
+    "report_id": ("report_id", "ioReportId", "ReportId"),
+    "category": ("category", "Category"),
+    "db_host": ("db_host", "ESGDBServerName"),
+    "db_name": ("db_name", "DatabaseName"),
+    "db_port": ("db_port", "MySQL_Port"),
+}
+
+
+def _pick(args: dict, name: str):
+    for key in _ALIASES.get(name, (name,)):
+        if args.get(key) not in (None, ""):
+            return args[key]
+    return None
+
+
+def _as_bool(value) -> bool:
+    return value is True or str(value).strip().lower() in ("1", "true", "yes", "y")
+
+
+def _apply_secrets(secrets) -> None:
+    if not secrets:
+        return
+    if isinstance(secrets, str):
+        secrets = json.loads(secrets)
+    for key, val in dict(secrets).items():
+        if key not in _ALLOWED_SECRETS:
+            raise ValueError(f"secrets key '{key}' is not one of {', '.join(_ALLOWED_SECRETS)}")
+        if val is None or str(val) == "":  # not set in .env / Credential Vault: keep what the machine has
+            continue
+        os.environ[key] = str(val)
+
+
+def setup_logging(log_dir: Path, debug: bool = False) -> str:
+    """Console + one log file per call. Safe to call again in a long-lived AA Python session."""
+    run_id = uuid.uuid4().hex[:12]
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_file = log_dir / f"InsertDataIntoDB_{datetime.now():%Y%m%d_%H%M%S}_{run_id}.log"
+    fmt = logging.Formatter(f"%(asctime)s %(levelname)-7s [run {run_id}] %(message)s")
+    log.setLevel(logging.DEBUG if debug else logging.INFO)
+    for old in list(log.handlers):
+        log.removeHandler(old)
+        old.close()
+    log.propagate = False
+    for handler in (logging.StreamHandler(), logging.FileHandler(log_file, encoding="utf-8")):
+        handler.setFormatter(fmt)
+        log.addHandler(handler)
+    return str(log_file)
+
+
+def _status(outputs: dict) -> str:
+    return {STATUS_SUCCESS: "SUCCESS", STATUS_NO_DATA: "NO_DATA", "Dry Run": "DRY_RUN"}.get(
+        outputs.get("sBotStatus"), "FAILED")
+
+
+def insert_data_into_db(args) -> str:
+    """AA entry: ``args`` is the AA dictionary (or a JSON string). Always returns a JSON string."""
+    log_file = ""
+    try:
+        if isinstance(args, str):
+            args = json.loads(args)
+        args = dict(args or {})
+        _apply_secrets(args.pop("secrets", None))
+        log_file = setup_logging(Path(str(args.get("log_dir") or HERE / "logs")), _as_bool(args.get("debug")))
+        log.info("Called with keys: %s; secrets: SECR_DB_USER=%s SECR_DB_PASSWORD=%s", ", ".join(sorted(args)),
+                 "set" if os.environ.get("SECR_DB_USER") or os.environ.get("ESG_DB_USER") else "NOT SET",
+                 "set" if os.environ.get("SECR_DB_PASSWORD") or os.environ.get("ESG_DB_PASSWORD") else "NOT SET")
+
+        csv_path = _pick(args, "csv_path")
+        if not csv_path:
+            raise ValueError("csv_path (ioCSVFilePath) is required")
+        process_cfg = {"ESGDBServerName": _pick(args, "db_host") or "",
+                       "DatabaseName": _pick(args, "db_name") or "",
+                       "MySQL_Port": _pick(args, "db_port") or 3306}
+        outputs = run(str(csv_path), str(_pick(args, "input_folder") or ""), _pick(args, "file_id"),
+                      _pick(args, "report_id"), config={"ProcessConfig": process_cfg},
+                      dry_run=_as_bool(args.get("dry_run")), category=_pick(args, "category"),
+                      created_by=args.get("created_by"))
+        outputs.update(status=_status(outputs), log_file=log_file)
+        log.info("Returning status %s", outputs["status"])
+        return json.dumps(outputs, default=str)
+    except Exception as exc:  # AA only sees the returned text
+        log.exception("insert_data_into_db failed")
+        return json.dumps({"status": "FAILED", "sBotStatus": STATUS_TECHNICAL_EXCEPTION,
+                           "sErrorMessage": f"{type(exc).__name__}: {exc}", "nInsertedRecords": 0,
+                           "log_file": log_file, "trace": traceback.format_exc()})
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="Clean an ESG normalized CSV and load it into MySQL.")
     p.add_argument("--csv", required=True, help="Path to the normalized CSV (ioCSVFilePath)")
@@ -502,23 +670,45 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--file-id", required=True, help="ioFileId")
     p.add_argument("--report-id", required=True, help="ioReportId")
     p.add_argument("--config", help="JSON file with the bot's dConfig (uses ProcessConfig keys)")
+    p.add_argument("--category", help="Category (e.g. portfolio); default: from the file name")
     p.add_argument("--dry-run", action="store_true",
                    help="Clean the CSV and validate the mapping, but do not touch the database")
     p.add_argument("-v", "--verbose", action="store_true", help="Show TRACE-level logging")
     args = p.parse_args(argv)
 
-    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO,
-                        format="%(asctime)s %(levelname)-7s %(message)s")
+    setup_logging(HERE / "logs", args.verbose)
 
     config = {}
     if args.config:
         config = json.loads(Path(args.config).read_text(encoding="utf-8"))
 
     outputs = run(args.csv, args.input_folder, args.file_id, args.report_id,
-                  config=config, dry_run=args.dry_run)
+                  config=config, dry_run=args.dry_run, category=args.category)
     print(json.dumps(outputs, indent=2))
     return 0 if outputs["sBotStatus"] in (STATUS_SUCCESS, STATUS_NO_DATA, "Dry Run") else 1
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    if sys.argv[1:] == ["--manual-test"]:  # same dictionary the AA bot passes; edit the values to test
+        print(insert_data_into_db(
+            {
+                "csv_path": str(HERE / "tests" / "Portfolio_ESG_Normalized_Data.csv"),
+                "input_folder": str(HERE / "tests" / "work"),
+                "file_id": "77",
+                "report_id": "5",
+                "category": "",                      # empty: taken from the file name
+                "ESGDBServerName": os.environ.get("ESG_DB_HOST", ""),
+                "DatabaseName": "esgdb",
+                "MySQL_Port": 3306,
+                "created_by": "",                    # empty: Windows user
+                "dry_run": True,                     # set False to really load into the database
+                "debug": True,
+                "log_dir": str(HERE / "tests" / "logs"),
+                "secrets": {
+                    "SECR_DB_USER": SECR_DB_USER,
+                    "SECR_DB_PASSWORD": SECR_DB_PASSWORD,
+                },
+            }
+        ))
+    else:
+        sys.exit(main())
