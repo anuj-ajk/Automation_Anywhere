@@ -163,3 +163,25 @@ def test_errors_come_back_as_json():
     assert out["status"] == "FAILED"
     out = json.loads(aa_entry.get_ai_responses({"files": "1|x", "secrets": {"PATH": "x"}}))
     assert out["status"] == "FAILED" and "secrets key" in out["message"]
+
+
+def test_na_links_are_left_out(tmp_path):
+    from ai_response.odin_client import parse_agent_response
+
+    body = {"messages": [{"json_response": {"normalized_csv_file_links": {
+        "portfolio": "https://x/p.csv", "metrics": "NA", "invoice": " n/a ", "transport": "", "landlord": None}}}]}
+    assert parse_agent_response(body) == {"portfolio": "https://x/p.csv"}
+    all_na = {"messages": [{"json_response": {"normalized_csv_file_links": {"portfolio": "NA"}}}]}
+    assert parse_agent_response(all_na) == {}
+
+    class NAClient(FakeClient):  # a client that does not filter: the processor must still drop NA
+        def get_csv_links(self, chat_id):
+            return {"portfolio": "https://x/p.csv", "metrics": "NA"}
+
+    db = FakeDb()
+    proc, _ = _processor(NAClient(), db)
+    result = proc.run(_jobs(tmp_path, [("77", "sheet_a")]))
+    assert [r["Category"] for r in result.links] == ["portfolio"]
+    assert all(r["NormalizedCSVLink"] != "NA" for r in result.links)
+    assert db.categories["77"] == ["Portfolio"]
+    assert result.files[0].status == "NORMALIZATION_COMPLETED"

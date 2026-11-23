@@ -118,6 +118,14 @@ def _trace(call: str, resp, started: float) -> None:
         LOG.debug("Odin %s -> HTTP %s in %.1fs", call, resp.status_code, elapsed)
 
 
+_NOT_A_LINK = {"", "na", "n/a", "n.a.", "none", "null", "nan", "-"}
+
+
+def is_real_link(value) -> bool:
+    """False for empty values and placeholders such as 'NA', 'N/A', 'null' (any case, any spaces)."""
+    return value is not None and str(value).strip().lower() not in _NOT_A_LINK
+
+
 def parse_agent_response(body: dict[str, Any]) -> dict[str, str] | None:
     """Read messages[0].json_response.normalized_csv_file_links (same JSON paths as the bot)."""
     messages = (body or {}).get("messages") or []
@@ -131,11 +139,16 @@ def parse_agent_response(body: dict[str, Any]) -> dict[str, str] | None:
             json_response = json.loads(json_response)
         except ValueError:
             raise AIError(f"Agent json_response is not valid JSON: {json_response[:300]}")
-    links = (json_response or {}).get("normalized_csv_file_links") or {}
+    raw_links = (json_response or {}).get("normalized_csv_file_links") or {}
+    # The agent writes "NA" (or similar) for categories it did not find: those are not links.
+    not_available = [k for k, v in raw_links.items() if v is not None and not is_real_link(v)]
+    if not_available:
+        LOG.debug("Categories without a CSV link (NA), left out: %s", ", ".join(not_available))
+    links = {k: v for k, v in raw_links.items() if is_real_link(v)}
     unknown = [k for k, v in links.items() if v and k not in CATEGORY_KEYS]
     if unknown:
         LOG.warning("Agent returned link(s) for unknown categories, ignored: %s", unknown)
     if not links:
-        LOG.warning("Agent answered without normalized_csv_file_links. json_response keys: %s",
+        LOG.warning("Agent answered without any CSV link (all NA or missing). json_response keys: %s",
                     list((json_response or {}).keys()))
     return {key: str(links[key]) for key in CATEGORY_KEYS if links.get(key)}

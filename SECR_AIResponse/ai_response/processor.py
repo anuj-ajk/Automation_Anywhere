@@ -18,7 +18,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .logging_setup import get_logger, log_context
-from .odin_client import CATEGORY_DISPLAY_NAMES, OdinClient
+from .odin_client import CATEGORY_DISPLAY_NAMES, OdinClient, is_real_link
 from .status_db import NORMALIZING, roll_up
 
 LOG = get_logger(__name__)
@@ -154,7 +154,8 @@ class AIResponseProcessor:
                 LOG.debug("Poll %d: agent still working", attempt)
                 return
             job.answered = True
-            job.links = links
+            job.links = {k: v for k, v in links.items() if is_real_link(v)}  # never keep "NA" links
+            links = job.links
             if links:
                 LOG.info("Answered after poll %d: %s", attempt, ", ".join(links))
             else:

@@ -1,3 +1,4 @@
 requests>=2.31
 PyMySQL>=1.1
+python-dotenv>=1.0  # aa_entry.py loads a .env file
 pytest>=8.0  # tests only

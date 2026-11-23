@@ -100,6 +100,9 @@ Exit code: `0` all files OK, `2` some sheets failed, `1` everything failed or th
 The status rules are the same as in the bot, per FileID:
 
 * `NORMALIZING` is set as soon as one sheet of the file has been submitted.
+* Categories the agent returns as `NA` (also `N/A`, `null`, `none` or empty, in any case) are not links. They are
+  left out of the JSON `links`, out of `output_csv` and out of `CategoryRecognized`, and they do not count as
+  successes. If all of a sheet's categories are `NA`, the sheet counts as "answered without any CSV link".
 * Each CSV link the agent returns counts as one success. Each sheet that failed counts as one failure. A sheet fails when:
   * the chat could not be created or the message could not be sent;
   * the agent did not answer in time (time-out);
