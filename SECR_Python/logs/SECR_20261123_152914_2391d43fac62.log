@@ -1,0 +1,347 @@
+2026-11-23 15:29:14,616 INFO    [run 2391d43fac62] [MainThread] [secr] Log file: \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\logs\SECR_20261123_152914_2391d43fac62.log (level DEBUG)
+2026-11-23 15:29:14,764 INFO    [run 2391d43fac62] [MainThread] [secr.runner] Python 3.14.10 on MAN-RDS-V10 (pid 11656)
+2026-11-23 15:29:14,767 INFO    [run 2391d43fac62] [MainThread] [secr.runner] Parallelism: 10 batch(es) x 4 file(s) per batch, max 60 DB connection(s)
+2026-11-23 15:29:14,768 INFO    [run 2391d43fac62] [MainThread] [secr.runner] Work folder \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\work (keep files: False), serialize staging loads: True, created by: anuj.kumar
+2026-11-23 15:29:14,769 INFO    [run 2391d43fac62] [MainThread] [secr.runner] Odin polling: every 40s, up to 15 attempts; source environment: DEV
+2026-11-23 15:29:14,770 INFO    [run 2391d43fac62] [MainThread] [secr.runner] Secrets: SECR_DB_USER=set, SECR_DB_PASSWORD=set, SECR_S3_BUCKET=set, AWS_ACCESS_KEY_ID=set, AWS_SECRET_ACCESS_KEY=set, SECR_ODIN_API_KEY=set, SECR_ODIN_API_SECRET=set, SECR_EM_CONNECTION_STRING=set, SECR_NAV_CONNECTION_STRING=set
+2026-11-23 15:29:14,773 INFO    [run 2391d43fac62] [MainThread] [secr.db] ESG DB esg-instance.cm18ojbg8cjx.eu-west-2.rds.amazonaws.com:3306/esgdb, max 60 connection(s)
+2026-11-23 15:29:17,148 INFO    [run 2391d43fac62] [MainThread] [secr.storage] S3 storage ready: bucket appsmith-client-docs-ins-main-raw, region eu-west-2
+2026-11-23 15:29:17,151 INFO    [run 2391d43fac62] [MainThread] [secr.ai_client] Odin AI client ready: https://api.getodin.ai, project 356316e20dcb48658ce127, agent 63622
+2026-11-23 15:29:17,152 INFO    [run 2391d43fac62] [MainThread] [secr.source_systems] Source systems ready: environment DEV, EM query folder \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\queries, EM configured, NAV configured
+2026-11-23 15:29:17,153 INFO    [run 2391d43fac62] [MainThread] [secr.runner] Flows enabled: Normalize=True, Daisy=True
+2026-11-23 15:29:17,153 INFO    [run 2391d43fac62] [MainThread] [secr.aa_entry] Called from Automation Anywhere: config \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\config.yaml, batch ids 40, max_batches=10, max_files=4, debug=True, secrets passed: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, SECR_DB_PASSWORD, SECR_DB_USER, SECR_EM_CONNECTION_STRING, SECR_NAV_CONNECTION_STRING, SECR_ODIN_API_KEY, SECR_ODIN_API_SECRET, SECR_S3_BUCKET
+2026-11-23 15:29:17,154 INFO    [run 2391d43fac62] [MainThread] [secr.runner] Run started for 1 batch id(s): 40
+2026-11-23 15:29:17,155 DEBUG   [run 2391d43fac62] [MainThread] [secr.runner] E-mail 'SECR normalizer started' not sent (notifications disabled)
+2026-11-23 15:29:17,159 INFO    [run 2391d43fac62] [MainThread] [secr.orchestrator] Processing 1 batch(es), up to 1 in parallel
+2026-11-23 15:29:17,165 INFO    [run 2391d43fac62] [batch_0] [secr.batch] [batch 40] Batch started
+2026-11-23 15:29:18,221 DEBUG   [run 2391d43fac62] [batch_0] [secr.db] [batch 40] DB connection opened (1/60 in use)
+2026-11-23 15:29:18,222 DEBUG   [run 2391d43fac62] [batch_0] [secr.batch] [batch 40] Trying DB lock secr_batch_40
+2026-11-23 15:29:18,233 DEBUG   [run 2391d43fac62] [batch_0] [secr.db] [batch 40] SQL query (0.01s, 1 row(s)): SELECT GET_LOCK(%s, %s) AS got | params=('secr_batch_40', 0)
+2026-11-23 15:29:18,234 DEBUG   [run 2391d43fac62] [batch_0] [secr.db] [batch 40] Got DB lock secr_batch_40 after 0.0s
+2026-11-23 15:29:18,235 DEBUG   [run 2391d43fac62] [batch_0] [secr.batch] [batch 40] Got DB lock secr_batch_40; work folder \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\work\batch_40_20261123_152917_166153
+2026-11-23 15:29:18,236 INFO    [run 2391d43fac62] [batch_0] [secr.batch] [batch 40] Read batch files from ESG DB - started
+2026-11-23 15:29:18,340 DEBUG   [run 2391d43fac62] [batch_0] [secr.db] [batch 40] DB connection opened (2/60 in use)
+2026-11-23 15:29:18,358 DEBUG   [run 2391d43fac62] [batch_0] [secr.db] [batch 40] SQL query (0.01s, 3 row(s)): SELECT FB.BatchId, FB.ReportId, R.ClientId, R.ReportStart, R.ReportEnd, BP.BusinessPartnerName, UF.CategorySelected, UF.FileId, UF.FileName, UF.StoragePath, UF. | params=('40',)
+2026-11-23 15:29:18,371 INFO    [run 2391d43fac62] [batch_0] [secr.batch] [batch 40] Read batch files from ESG DB - done in 0.1s
+2026-11-23 15:29:18,374 INFO    [run 2391d43fac62] [batch_0] [secr.batch] [batch 40] 3 valid SECR file row(s) found
+2026-11-23 15:29:18,375 DEBUG   [run 2391d43fac62] [batch_0] [secr.batch] [batch 40]   FileId=47 Category=Portfolio FileName=Source: Daisy StoragePath=
+2026-11-23 15:29:18,383 DEBUG   [run 2391d43fac62] [batch_0] [secr.batch] [batch 40]   FileId=48 Category=Invoices FileName=Source: Daisy StoragePath=
+2026-11-23 15:29:18,384 DEBUG   [run 2391d43fac62] [batch_0] [secr.batch] [batch 40]   FileId=49 Category=Half Hourly Data FileName=Source: Daisy StoragePath=
+2026-11-23 15:29:18,384 INFO    [run 2391d43fac62] [batch_0] [secr.batch] [batch 40] Client Heron Foods, report 2 (2024-04-01 to 2025-03-30): 0 uploaded file(s), 3 Daisy file(s)
+2026-11-23 15:29:18,387 INFO    [run 2391d43fac62] [batch_0] [secr.batch] [batch 40] Processing 3 file(s), up to 3 in parallel
+2026-11-23 15:29:18,391 INFO    [run 2391d43fac62] [b40-file_0] [secr.daisy] [batch 40][file 47] Daisy sync started (category: Portfolio)
+2026-11-23 15:29:18,392 INFO    [run 2391d43fac62] [b40-file_1] [secr.daisy] [batch 40][file 48] Daisy sync started (category: Invoices)
+2026-11-23 15:29:18,393 INFO    [run 2391d43fac62] [b40-file_2] [secr.daisy] [batch 40][file 49] Daisy sync started (category: Half Hourly Data)
+2026-11-23 15:29:18,527 DEBUG   [run 2391d43fac62] [b40-file_1] [secr.db] [batch 40][file 48] DB connection opened (2/60 in use)
+2026-11-23 15:29:18,535 DEBUG   [run 2391d43fac62] [b40-file_0] [secr.db] [batch 40][file 47] DB connection opened (3/60 in use)
+2026-11-23 15:29:18,538 DEBUG   [run 2391d43fac62] [b40-file_1] [secr.db] [batch 40][file 48] SQL query (0.01s, 1 row(s)): SELECT DataSourceType FROM BusinessPartner WHERE BusinessPartnerName = %s | params=('Heron Foods',)
+2026-11-23 15:29:18,540 INFO    [run 2391d43fac62] [b40-file_1] [secr.daisy] [batch 40][file 48] Data source type for Heron Foods: NAV
+2026-11-23 15:29:18,541 INFO    [run 2391d43fac62] [b40-file_1] [secr.daisy] [batch 40][file 48] Invoices load from NAV for Heron Foods, 2024-04-01 to 2025-03-30
+2026-11-23 15:29:18,541 INFO    [run 2391d43fac62] [b40-file_1] [secr.daisy] [batch 40][file 48] Export Invoices from NAV - started
+2026-11-23 15:29:18,542 INFO    [run 2391d43fac62] [b40-file_1] [secr.source_systems] [batch 40][file 48] Querying nav (esg.InvoiceData) for client Heron Foods, 2024-04-01 to 2025-03-30
+2026-11-23 15:29:18,542 DEBUG   [run 2391d43fac62] [b40-file_1] [secr.source_systems] [batch 40][file 48] Source SQL: {CALL esg.InvoiceData (?, ?, ?)} | params=['Heron Foods', '20240401', '20250330']
+2026-11-23 15:29:18,544 DEBUG   [run 2391d43fac62] [b40-file_0] [secr.db] [batch 40][file 47] SQL query (0.01s, 1 row(s)): SELECT DataSourceType FROM BusinessPartner WHERE BusinessPartnerName = %s | params=('Heron Foods',)
+2026-11-23 15:29:18,545 INFO    [run 2391d43fac62] [b40-file_0] [secr.daisy] [batch 40][file 47] Data source type for Heron Foods: NAV
+2026-11-23 15:29:18,545 INFO    [run 2391d43fac62] [b40-file_0] [secr.daisy] [batch 40][file 47] Portfolio load from NAV for Heron Foods, 2024-04-01 to 2025-03-30
+2026-11-23 15:29:18,546 INFO    [run 2391d43fac62] [b40-file_0] [secr.daisy] [batch 40][file 47] Export Portfolio from NAV - started
+2026-11-23 15:29:18,547 INFO    [run 2391d43fac62] [b40-file_0] [secr.source_systems] [batch 40][file 47] Querying nav (esg.PortfolioData) for client Heron Foods, 2024-04-01 to 2025-03-30
+2026-11-23 15:29:18,548 DEBUG   [run 2391d43fac62] [b40-file_0] [secr.source_systems] [batch 40][file 47] Source SQL: {CALL esg.PortfolioData (?, ?, ?)} | params=['Heron Foods', '20240401', '20250330']
+2026-11-23 15:29:18,549 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49] DB connection opened (2/60 in use)
+2026-11-23 15:29:18,562 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49] SQL query (0.01s, 1 row(s)): SELECT DataSourceType FROM BusinessPartner WHERE BusinessPartnerName = %s | params=('Heron Foods',)
+2026-11-23 15:29:18,565 INFO    [run 2391d43fac62] [b40-file_2] [secr.daisy] [batch 40][file 49] Data source type for Heron Foods: NAV
+2026-11-23 15:29:18,568 INFO    [run 2391d43fac62] [b40-file_2] [secr.daisy] [batch 40][file 49] Half Hourly Data load from NAV for Heron Foods, 2024-04-01 to 2025-03-30
+2026-11-23 15:29:18,574 INFO    [run 2391d43fac62] [b40-file_2] [secr.daisy] [batch 40][file 49] Export Half Hourly Data from NAV - started
+2026-11-23 15:29:18,576 INFO    [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49] Querying nav (esg.hhdata) for client Heron Foods, 2024-04-01 to 2025-03-30
+2026-11-23 15:29:18,578 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49] Source SQL: {CALL esg.hhdata (?, ?, ?)} | params=['Heron Foods', '20240401', '20250330']
+2026-11-23 15:29:19,007 DEBUG   [run 2391d43fac62] [b40-file_0] [secr.source_systems] [batch 40][file 47] nav query executed in 0.4s
+2026-11-23 15:29:19,009 DEBUG   [run 2391d43fac62] [b40-file_0] [secr.source_systems] [batch 40][file 47] nav columns: ['Client', 'Site ID', 'Meter Id', 'Sugar ID', 'Site Code', 'Site Name', 'Address1', 'Address2', 'Town', 'County', 'Post Code', 'Country', 'Subsidiary Company', 'Utility', 'Utility Supplier / Landlord', 'MPAN/MPR', 'M1_Code3', 'Current Supplier', 'Contract Start Date', 'Contract End Date', 'Held From', 'Held To', 'Contract Status']
+2026-11-23 15:29:19,139 DEBUG   [run 2391d43fac62] [b40-file_0] [secr.source_systems] [batch 40][file 47]   1176 row(s) fetched so far
+2026-11-23 15:29:19,173 INFO    [run 2391d43fac62] [b40-file_0] [secr.source_systems] [batch 40][file 47] nav returned 1176 row(s) in 0.6s
+2026-11-23 15:29:19,188 INFO    [run 2391d43fac62] [b40-file_0] [secr.daisy] [batch 40][file 47] Export Portfolio from NAV - done in 0.6s
+2026-11-23 15:29:19,189 INFO    [run 2391d43fac62] [b40-file_0] [secr.daisy] [batch 40][file 47] 1176 row(s) exported to Portfolio_FileID47_ReportID2_20261123_152918.csv
+2026-11-23 15:29:19,190 INFO    [run 2391d43fac62] [b40-file_0] [secr.daisy] [batch 40][file 47] Load Portfolio into Staging_Portfolio - started
+2026-11-23 15:29:19,289 DEBUG   [run 2391d43fac62] [b40-file_0] [secr.db] [batch 40][file 47] DB connection opened (2/60 in use)
+2026-11-23 15:29:19,299 INFO    [run 2391d43fac62] [b40-file_0] [secr.runner] [batch 40][file 47] Loading Portfolio_FileID47_ReportID2_20261123_152918.csv into Staging_Portfolio (procedures: LoadPortfolioData)
+2026-11-23 15:29:19,515 DEBUG   [run 2391d43fac62] [b40-file_0] [secr.csv_clean] [batch 40][file 47] Cleaned Portfolio_FileID47_ReportID2_20261123_152918.csv -> Cleaned_Portfolio_FileID47_ReportID2_20261123_152918.csv: 1177 line(s) incl. header, 8838 blank(s) filled, 0 newline(s), 0 quote(s) removed
+2026-11-23 15:29:19,517 DEBUG   [run 2391d43fac62] [b40-file_0] [secr.runner] [batch 40][file 47] Cleaned Portfolio_FileID47_ReportID2_20261123_152918.csv: 1177 rows, 8838 blanks filled
+2026-11-23 15:29:19,555 DEBUG   [run 2391d43fac62] [b40-file_0] [secr.runner] [batch 40][file 47] Cleaned_Portfolio_FileID47_ReportID2_20261123_152918.csv header: ['Client', 'Site ID', 'Meter Id', 'Sugar ID', 'Site Code', 'Site Name', 'Address1', 'Address2', 'Town', 'County', 'Post Code', 'Country', 'Subsidiary Company', 'Utility', 'Utility Supplier / Landlord', 'MPAN/MPR', 'M1_Code3', 'Current Supplier', 'Contract Start Date', 'Contract End Date', 'Held From', 'Held To', 'Contract Status', 'FileId']
+2026-11-23 15:29:19,576 INFO    [run 2391d43fac62] [b40-file_0] [secr.runner] [batch 40][file 47] 1176 data row(s), 24 mapped column(s)
+2026-11-23 15:29:19,579 DEBUG   [run 2391d43fac62] [b40-file_0] [secr.runner] [batch 40][file 47] Waiting for staging lock secr_load_Staging_Portfolio (only one load per staging table at a time)
+2026-11-23 15:29:19,582 DEBUG   [run 2391d43fac62] [b40-file_0] [secr.db] [batch 40][file 47] Waiting up to 900s for DB lock secr_load_Staging_Portfolio
+2026-11-23 15:29:19,595 DEBUG   [run 2391d43fac62] [b40-file_0] [secr.db] [batch 40][file 47] SQL query (0.01s, 1 row(s)): SELECT GET_LOCK(%s, %s) AS got | params=('secr_load_Staging_Portfolio', 900)
+2026-11-23 15:29:19,597 DEBUG   [run 2391d43fac62] [b40-file_0] [secr.db] [batch 40][file 47] Got DB lock secr_load_Staging_Portfolio after 0.0s
+2026-11-23 15:29:19,598 DEBUG   [run 2391d43fac62] [b40-file_0] [secr.db] [batch 40][file 47] Bulk insert into Staging_Portfolio (24 column(s), chunks of 1000)
+2026-11-23 15:29:19,832 DEBUG   [run 2391d43fac62] [b40-file_0] [secr.db] [batch 40][file 47]   Staging_Portfolio: 1000 row(s) inserted so far
+2026-11-23 15:29:19,888 INFO    [run 2391d43fac62] [b40-file_0] [secr.db] [batch 40][file 47] Bulk insert into Staging_Portfolio: 1176 row(s) in 0.3s
+2026-11-23 15:29:19,889 INFO    [run 2391d43fac62] [b40-file_0] [secr.runner] [batch 40][file 47] Inserted 1176 row(s) into Staging_Portfolio
+2026-11-23 15:29:19,889 INFO    [run 2391d43fac62] [b40-file_0] [secr.db] [batch 40][file 47] Calling procedure LoadPortfolioData(47, 2)
+2026-11-23 15:29:20,412 DEBUG   [run 2391d43fac62] [b40-file_0] [secr.db] [batch 40][file 47] Procedure LoadPortfolioData returned after 0.5s
+2026-11-23 15:29:20,421 INFO    [run 2391d43fac62] [b40-file_0] [secr.db] [batch 40][file 47] Procedure LoadPortfolioData finished in 0.5s, OUT=['LoadPortfolioData completed successfully']
+2026-11-23 15:29:20,423 INFO    [run 2391d43fac62] [b40-file_0] [secr.runner] [batch 40][file 47] LoadPortfolioData -> message='LoadPortfolioData completed successfully'
+2026-11-23 15:29:20,434 DEBUG   [run 2391d43fac62] [b40-file_0] [secr.db] [batch 40][file 47] SQL query (0.01s, 1 row(s)): SELECT RELEASE_LOCK(%s) AS released | params=('secr_load_Staging_Portfolio',)
+2026-11-23 15:29:20,434 DEBUG   [run 2391d43fac62] [b40-file_0] [secr.db] [batch 40][file 47] Released DB lock secr_load_Staging_Portfolio
+2026-11-23 15:29:20,473 DEBUG   [run 2391d43fac62] [b40-file_0] [secr.db] [batch 40][file 47] SQL execute (0.03s, 1 row(s) affected): UPDATE UploadedFile SET ProcessingStatusId = (SELECT s.FileProcessingStatusId FROM RefFileProcessingStatus s WHERE s.Code = %s), StatusDescription = NULL WHERE  | params=('COMPLETED', '47')
+2026-11-23 15:29:20,474 INFO    [run 2391d43fac62] [b40-file_0] [secr.daisy] [batch 40][file 47] Load Portfolio into Staging_Portfolio - done in 1.3s
+2026-11-23 15:29:20,481 INFO    [run 2391d43fac62] [b40-file_0] [secr.daisy] [batch 40][file 47] Status -> COMPLETED
+2026-11-23 15:29:20,482 INFO    [run 2391d43fac62] [b40-file_0] [secr.daisy] [batch 40][file 47] Portfolio loaded: 1176 row(s)
+2026-11-23 15:29:20,484 INFO    [run 2391d43fac62] [b40-file_0] [secr.daisy] [batch 40][file 47] Daisy sync finished: COMPLETED in 2.1s
+2026-11-23 15:29:31,345 DEBUG   [run 2391d43fac62] [b40-file_1] [secr.source_systems] [batch 40][file 48] nav query executed in 12.7s
+2026-11-23 15:29:31,347 DEBUG   [run 2391d43fac62] [b40-file_1] [secr.source_systems] [batch 40][file 48] nav columns: ['Cust', 'Address1', 'Address2', 'Town', 'Postcode', 'Utility', 'Units', 'Reference Number', 'Supplier', 'M1 MPAN / MPR / Water SPID', 'Top Line', 'Estimated Invoice', 'Invoice Units', 'Cost', 'VAT', 'CCL', 'From Date', 'Date', 'Invoice Tax Date', 'InvType']
+2026-11-23 15:29:31,714 DEBUG   [run 2391d43fac62] [b40-file_1] [secr.source_systems] [batch 40][file 48]   5000 row(s) fetched so far
+2026-11-23 15:29:31,767 DEBUG   [run 2391d43fac62] [b40-file_1] [secr.source_systems] [batch 40][file 48]   6427 row(s) fetched so far
+2026-11-23 15:29:31,799 INFO    [run 2391d43fac62] [b40-file_1] [secr.source_systems] [batch 40][file 48] nav returned 6427 row(s) in 13.2s
+2026-11-23 15:29:32,016 INFO    [run 2391d43fac62] [b40-file_1] [secr.daisy] [batch 40][file 48] Export Invoices from NAV - done in 13.5s
+2026-11-23 15:29:32,017 INFO    [run 2391d43fac62] [b40-file_1] [secr.daisy] [batch 40][file 48] 6427 row(s) exported to Invoices_FileID48_ReportID2_20261123_152918.csv
+2026-11-23 15:29:32,023 INFO    [run 2391d43fac62] [b40-file_1] [secr.daisy] [batch 40][file 48] Load Invoices into Staging_Invoices - started
+2026-11-23 15:29:32,160 DEBUG   [run 2391d43fac62] [b40-file_1] [secr.db] [batch 40][file 48] DB connection opened (2/60 in use)
+2026-11-23 15:29:32,162 INFO    [run 2391d43fac62] [b40-file_1] [secr.runner] [batch 40][file 48] Loading Invoices_FileID48_ReportID2_20261123_152918.csv into Staging_Invoices (procedures: LoadInvoiceData, CalculateInvoiceData)
+2026-11-23 15:29:32,783 DEBUG   [run 2391d43fac62] [b40-file_1] [secr.csv_clean] [batch 40][file 48] Cleaned Invoices_FileID48_ReportID2_20261123_152918.csv -> Cleaned_Invoices_FileID48_ReportID2_20261123_152918.csv: 6428 line(s) incl. header, 9925 blank(s) filled, 0 newline(s), 0 quote(s) removed
+2026-11-23 15:29:32,792 DEBUG   [run 2391d43fac62] [b40-file_1] [secr.runner] [batch 40][file 48] Cleaned Invoices_FileID48_ReportID2_20261123_152918.csv: 6428 rows, 9925 blanks filled
+2026-11-23 15:29:32,828 DEBUG   [run 2391d43fac62] [b40-file_1] [secr.runner] [batch 40][file 48] Cleaned_Invoices_FileID48_ReportID2_20261123_152918.csv header: ['Cust', 'Address1', 'Address2', 'Town', 'Postcode', 'Utility', 'Units', 'Reference Number', 'Supplier', 'M1 MPAN / MPR / Water SPID', 'Top Line', 'Estimated Invoice', 'Invoice Units', 'Cost', 'VAT', 'CCL', 'From Date', 'Date', 'Invoice Tax Date', 'InvType', 'FileId']
+2026-11-23 15:29:32,985 INFO    [run 2391d43fac62] [b40-file_1] [secr.runner] [batch 40][file 48] 6427 data row(s), 21 mapped column(s)
+2026-11-23 15:29:32,991 DEBUG   [run 2391d43fac62] [b40-file_1] [secr.runner] [batch 40][file 48] Waiting for staging lock secr_load_Staging_Invoices (only one load per staging table at a time)
+2026-11-23 15:29:32,995 DEBUG   [run 2391d43fac62] [b40-file_1] [secr.db] [batch 40][file 48] Waiting up to 900s for DB lock secr_load_Staging_Invoices
+2026-11-23 15:29:33,008 DEBUG   [run 2391d43fac62] [b40-file_1] [secr.db] [batch 40][file 48] SQL query (0.01s, 1 row(s)): SELECT GET_LOCK(%s, %s) AS got | params=('secr_load_Staging_Invoices', 900)
+2026-11-23 15:29:33,010 DEBUG   [run 2391d43fac62] [b40-file_1] [secr.db] [batch 40][file 48] Got DB lock secr_load_Staging_Invoices after 0.0s
+2026-11-23 15:29:33,011 DEBUG   [run 2391d43fac62] [b40-file_1] [secr.db] [batch 40][file 48] Bulk insert into Staging_Invoices (21 column(s), chunks of 1000)
+2026-11-23 15:29:33,191 DEBUG   [run 2391d43fac62] [b40-file_1] [secr.db] [batch 40][file 48]   Staging_Invoices: 1000 row(s) inserted so far
+2026-11-23 15:29:33,300 DEBUG   [run 2391d43fac62] [b40-file_1] [secr.db] [batch 40][file 48]   Staging_Invoices: 2000 row(s) inserted so far
+2026-11-23 15:29:33,408 DEBUG   [run 2391d43fac62] [b40-file_1] [secr.db] [batch 40][file 48]   Staging_Invoices: 3000 row(s) inserted so far
+2026-11-23 15:29:33,519 DEBUG   [run 2391d43fac62] [b40-file_1] [secr.db] [batch 40][file 48]   Staging_Invoices: 4000 row(s) inserted so far
+2026-11-23 15:29:33,659 DEBUG   [run 2391d43fac62] [b40-file_1] [secr.db] [batch 40][file 48]   Staging_Invoices: 5000 row(s) inserted so far
+2026-11-23 15:29:33,777 DEBUG   [run 2391d43fac62] [b40-file_1] [secr.db] [batch 40][file 48]   Staging_Invoices: 6000 row(s) inserted so far
+2026-11-23 15:29:33,839 INFO    [run 2391d43fac62] [b40-file_1] [secr.db] [batch 40][file 48] Bulk insert into Staging_Invoices: 6427 row(s) in 0.8s
+2026-11-23 15:29:33,844 INFO    [run 2391d43fac62] [b40-file_1] [secr.runner] [batch 40][file 48] Inserted 6427 row(s) into Staging_Invoices
+2026-11-23 15:29:33,848 INFO    [run 2391d43fac62] [b40-file_1] [secr.db] [batch 40][file 48] Calling procedure LoadInvoiceData(48, 2)
+2026-11-23 15:29:34,227 DEBUG   [run 2391d43fac62] [b40-file_1] [secr.db] [batch 40][file 48] SQL query (0.01s, 1 row(s)): SELECT RELEASE_LOCK(%s) AS released | params=('secr_load_Staging_Invoices',)
+2026-11-23 15:29:34,229 DEBUG   [run 2391d43fac62] [b40-file_1] [secr.db] [batch 40][file 48] Released DB lock secr_load_Staging_Invoices
+2026-11-23 15:29:34,230 ERROR   [run 2391d43fac62] [b40-file_1] [secr.daisy] [batch 40][file 48] Load Invoices into Staging_Invoices - FAILED after 2.2s: OperationalError: (1136, "Column count doesn't match value count at row 1")
+2026-11-23 15:29:34,230 ERROR   [run 2391d43fac62] [b40-file_1] [secr.daisy] [batch 40][file 48] Daisy Invoices load: (1136, "Column count doesn't match value count at row 1")
+Traceback (most recent call last):
+  File "\\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\secr\daisy.py", line 66, in _run
+    result = self.loader.load(s, load_spec, csv_path, work, file_id, ctx.report_id)
+  File "\\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\secr\loader.py", line 200, in load
+    return self._insert_and_call(session, spec, columns, rows, args)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "\\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\secr\loader.py", line 208, in _insert_and_call
+    outs = session.call_proc(proc.name, [args[a] for a in proc.in_args], proc.n_out)
+  File "\\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\secr\db.py", line 192, in call_proc
+    cur.callproc(name, args)
+    ~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\anuj.kumar\AppData\Roaming\Python\Python314\site-packages\pymysql\cursors.py", line 282, in callproc
+    self._query(q)
+    ~~~~~~~~~~~^^^
+  File "C:\Users\anuj.kumar\AppData\Roaming\Python\Python314\site-packages\pymysql\cursors.py", line 335, in _query
+    conn.query(q)
+    ~~~~~~~~~~^^^
+  File "C:\Users\anuj.kumar\AppData\Roaming\Python\Python314\site-packages\pymysql\connections.py", line 591, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+                          ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\anuj.kumar\AppData\Roaming\Python\Python314\site-packages\pymysql\connections.py", line 867, in _read_query_result
+    result.read()
+    ~~~~~~~~~~~^^
+  File "C:\Users\anuj.kumar\AppData\Roaming\Python\Python314\site-packages\pymysql\connections.py", line 1300, in read
+    first_packet = self.connection._read_packet()
+  File "C:\Users\anuj.kumar\AppData\Roaming\Python\Python314\site-packages\pymysql\connections.py", line 820, in _read_packet
+    packet.raise_for_error()
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\anuj.kumar\AppData\Roaming\Python\Python314\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\anuj.kumar\AppData\Roaming\Python\Python314\site-packages\pymysql\err.py", line 154, in raise_mysql_exception
+    raise errorclass(errno, errval, sqlstate=sqlstate)
+pymysql.err.OperationalError: (1136, "Column count doesn't match value count at row 1")
+2026-11-23 15:29:34,549 DEBUG   [run 2391d43fac62] [b40-file_1] [secr.db] [batch 40][file 48] DB connection opened (2/60 in use)
+2026-11-23 15:29:34,586 DEBUG   [run 2391d43fac62] [b40-file_1] [secr.db] [batch 40][file 48] SQL execute (0.04s, 1 row(s) affected): UPDATE UploadedFile SET ProcessingStatusId = (SELECT s.FileProcessingStatusId FROM RefFileProcessingStatus s WHERE s.Code = %s), StatusDescription = %s WHERE Fi | params=('FAILED', 'Daisy Invoices load: (1136, "Column count doesn\'t match value count at row 1")', '48')
+2026-11-23 15:29:34,588 INFO    [run 2391d43fac62] [b40-file_1] [secr.daisy] [batch 40][file 48] Status -> FAILED
+2026-11-23 15:29:34,594 INFO    [run 2391d43fac62] [b40-file_1] [secr.daisy] [batch 40][file 48] Daisy sync finished: FAILED in 16.2s
+2026-11-23 15:29:50,482 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49] nav query executed in 31.9s
+2026-11-23 15:29:50,483 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49] nav columns: ['Cust', 'Address1', 'Address2', 'Town', 'Postcode', 'Utility', 'Units', 'Date', 'M1 MPAN / MPR / Water SPID', '00:30', '01:00', '01:30', '02:00', '02:30', '03:00', '03:30', '04:00', '04:30', '05:00', '05:30', '06:00', '06:30', '07:00', '07:30', '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30', '22:00', '22:30', '23:00', '23:30', '24:00', 'Blank1', 'Blank2', 'TotalUnits']
+2026-11-23 15:29:51,063 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49]   5000 row(s) fetched so far
+2026-11-23 15:29:51,619 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49]   10000 row(s) fetched so far
+2026-11-23 15:29:52,319 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49]   15000 row(s) fetched so far
+2026-11-23 15:29:52,985 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49]   20000 row(s) fetched so far
+2026-11-23 15:29:53,534 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49]   25000 row(s) fetched so far
+2026-11-23 15:29:54,114 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49]   30000 row(s) fetched so far
+2026-11-23 15:29:54,705 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49]   35000 row(s) fetched so far
+2026-11-23 15:29:55,442 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49]   40000 row(s) fetched so far
+2026-11-23 15:29:56,032 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49]   45000 row(s) fetched so far
+2026-11-23 15:29:56,658 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49]   50000 row(s) fetched so far
+2026-11-23 15:29:57,225 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49]   55000 row(s) fetched so far
+2026-11-23 15:29:57,769 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49]   60000 row(s) fetched so far
+2026-11-23 15:29:58,484 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49]   65000 row(s) fetched so far
+2026-11-23 15:29:59,029 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49]   70000 row(s) fetched so far
+2026-11-23 15:29:59,675 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49]   75000 row(s) fetched so far
+2026-11-23 15:30:00,233 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49]   80000 row(s) fetched so far
+2026-11-23 15:30:00,889 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49]   85000 row(s) fetched so far
+2026-11-23 15:30:01,420 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49]   90000 row(s) fetched so far
+2026-11-23 15:30:02,028 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49]   95000 row(s) fetched so far
+2026-11-23 15:30:02,616 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49]   100000 row(s) fetched so far
+2026-11-23 15:30:03,264 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49]   105000 row(s) fetched so far
+2026-11-23 15:30:03,898 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49]   110000 row(s) fetched so far
+2026-11-23 15:30:04,460 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49]   115000 row(s) fetched so far
+2026-11-23 15:30:04,517 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49]   115269 row(s) fetched so far
+2026-11-23 15:30:04,553 INFO    [run 2391d43fac62] [b40-file_2] [secr.source_systems] [batch 40][file 49] nav returned 115269 row(s) in 45.9s
+2026-11-23 15:30:04,707 INFO    [run 2391d43fac62] [b40-file_2] [secr.daisy] [batch 40][file 49] Export Half Hourly Data from NAV - done in 46.1s
+2026-11-23 15:30:04,709 INFO    [run 2391d43fac62] [b40-file_2] [secr.daisy] [batch 40][file 49] 115269 row(s) exported to HHD_FileID49_ReportID2_20261123_152918.csv
+2026-11-23 15:30:04,714 INFO    [run 2391d43fac62] [b40-file_2] [secr.daisy] [batch 40][file 49] Load Half Hourly Data into Staging_HHData - started
+2026-11-23 15:30:04,912 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49] DB connection opened (2/60 in use)
+2026-11-23 15:30:04,913 INFO    [run 2391d43fac62] [b40-file_2] [secr.runner] [batch 40][file 49] Loading HHD_FileID49_ReportID2_20261123_152918.csv into Staging_HHData (procedures: LoadHHData)
+2026-11-23 15:30:21,946 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.csv_clean] [batch 40][file 49] Cleaned HHD_FileID49_ReportID2_20261123_152918.csv -> Cleaned_HHD_FileID49_ReportID2_20261123_152918.csv: 115270 line(s) incl. header, 365997 blank(s) filled, 0 newline(s), 0 quote(s) removed
+2026-11-23 15:30:22,402 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.runner] [batch 40][file 49] Cleaned HHD_FileID49_ReportID2_20261123_152918.csv: 115270 rows, 365997 blanks filled
+2026-11-23 15:30:22,424 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.runner] [batch 40][file 49] Cleaned_HHD_FileID49_ReportID2_20261123_152918.csv header: ['Cust', 'Address1', 'Address2', 'Town', 'Postcode', 'Utility', 'Units', 'Date', 'M1 MPAN / MPR / Water SPID', '00:30', '01:00', '01:30', '02:00', '02:30', '03:00', '03:30', '04:00', '04:30', '05:00', '05:30', '06:00', '06:30', '07:00', '07:30', '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30', '22:00', '22:30', '23:00', '23:30', '24:00', 'Blank1', 'Blank2', 'TotalUnits', 'FileId']
+2026-11-23 15:30:25,899 INFO    [run 2391d43fac62] [b40-file_2] [secr.runner] [batch 40][file 49] 115269 data row(s), 61 mapped column(s)
+2026-11-23 15:30:25,900 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.runner] [batch 40][file 49] Waiting for staging lock secr_load_Staging_HHData (only one load per staging table at a time)
+2026-11-23 15:30:25,901 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49] Waiting up to 900s for DB lock secr_load_Staging_HHData
+2026-11-23 15:30:25,973 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49] SQL query (0.07s, 1 row(s)): SELECT GET_LOCK(%s, %s) AS got | params=('secr_load_Staging_HHData', 900)
+2026-11-23 15:30:25,974 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49] Got DB lock secr_load_Staging_HHData after 0.1s
+2026-11-23 15:30:25,975 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49] Bulk insert into Staging_HHData (61 column(s), chunks of 1000)
+2026-11-23 15:30:26,512 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 1000 row(s) inserted so far
+2026-11-23 15:30:26,675 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 2000 row(s) inserted so far
+2026-11-23 15:30:26,907 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 3000 row(s) inserted so far
+2026-11-23 15:30:27,130 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 4000 row(s) inserted so far
+2026-11-23 15:30:27,425 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 5000 row(s) inserted so far
+2026-11-23 15:30:27,664 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 6000 row(s) inserted so far
+2026-11-23 15:30:27,856 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 7000 row(s) inserted so far
+2026-11-23 15:30:28,079 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 8000 row(s) inserted so far
+2026-11-23 15:30:28,302 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 9000 row(s) inserted so far
+2026-11-23 15:30:28,643 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 10000 row(s) inserted so far
+2026-11-23 15:30:28,857 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 11000 row(s) inserted so far
+2026-11-23 15:30:29,072 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 12000 row(s) inserted so far
+2026-11-23 15:30:29,304 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 13000 row(s) inserted so far
+2026-11-23 15:30:29,621 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 14000 row(s) inserted so far
+2026-11-23 15:30:29,875 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 15000 row(s) inserted so far
+2026-11-23 15:30:30,267 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 16000 row(s) inserted so far
+2026-11-23 15:30:30,488 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 17000 row(s) inserted so far
+2026-11-23 15:30:30,744 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 18000 row(s) inserted so far
+2026-11-23 15:30:30,991 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 19000 row(s) inserted so far
+2026-11-23 15:30:31,265 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 20000 row(s) inserted so far
+2026-11-23 15:30:31,618 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 21000 row(s) inserted so far
+2026-11-23 15:30:31,858 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 22000 row(s) inserted so far
+2026-11-23 15:30:32,119 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 23000 row(s) inserted so far
+2026-11-23 15:30:32,385 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 24000 row(s) inserted so far
+2026-11-23 15:30:32,633 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 25000 row(s) inserted so far
+2026-11-23 15:30:32,878 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 26000 row(s) inserted so far
+2026-11-23 15:30:33,130 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 27000 row(s) inserted so far
+2026-11-23 15:30:33,386 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 28000 row(s) inserted so far
+2026-11-23 15:30:33,657 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 29000 row(s) inserted so far
+2026-11-23 15:30:33,896 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 30000 row(s) inserted so far
+2026-11-23 15:30:34,136 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 31000 row(s) inserted so far
+2026-11-23 15:30:34,354 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 32000 row(s) inserted so far
+2026-11-23 15:30:34,685 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 33000 row(s) inserted so far
+2026-11-23 15:30:34,957 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 34000 row(s) inserted so far
+2026-11-23 15:30:35,211 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 35000 row(s) inserted so far
+2026-11-23 15:30:35,479 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 36000 row(s) inserted so far
+2026-11-23 15:30:35,865 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 37000 row(s) inserted so far
+2026-11-23 15:30:36,345 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 38000 row(s) inserted so far
+2026-11-23 15:30:36,750 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 39000 row(s) inserted so far
+2026-11-23 15:30:37,043 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 40000 row(s) inserted so far
+2026-11-23 15:30:37,584 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 41000 row(s) inserted so far
+2026-11-23 15:30:37,959 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 42000 row(s) inserted so far
+2026-11-23 15:30:38,384 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 43000 row(s) inserted so far
+2026-11-23 15:30:38,779 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 44000 row(s) inserted so far
+2026-11-23 15:30:39,128 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 45000 row(s) inserted so far
+2026-11-23 15:30:39,573 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 46000 row(s) inserted so far
+2026-11-23 15:30:40,057 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 47000 row(s) inserted so far
+2026-11-23 15:30:40,518 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 48000 row(s) inserted so far
+2026-11-23 15:30:40,884 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 49000 row(s) inserted so far
+2026-11-23 15:30:41,368 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 50000 row(s) inserted so far
+2026-11-23 15:30:41,964 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 51000 row(s) inserted so far
+2026-11-23 15:30:42,521 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 52000 row(s) inserted so far
+2026-11-23 15:30:43,459 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 53000 row(s) inserted so far
+2026-11-23 15:30:44,228 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 54000 row(s) inserted so far
+2026-11-23 15:30:44,561 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 55000 row(s) inserted so far
+2026-11-23 15:30:44,833 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 56000 row(s) inserted so far
+2026-11-23 15:30:45,139 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 57000 row(s) inserted so far
+2026-11-23 15:30:45,503 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 58000 row(s) inserted so far
+2026-11-23 15:30:45,879 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 59000 row(s) inserted so far
+2026-11-23 15:30:46,254 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 60000 row(s) inserted so far
+2026-11-23 15:30:46,571 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 61000 row(s) inserted so far
+2026-11-23 15:30:46,911 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 62000 row(s) inserted so far
+2026-11-23 15:30:47,347 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 63000 row(s) inserted so far
+2026-11-23 15:30:47,623 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 64000 row(s) inserted so far
+2026-11-23 15:30:47,858 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 65000 row(s) inserted so far
+2026-11-23 15:30:48,095 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 66000 row(s) inserted so far
+2026-11-23 15:30:48,465 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 67000 row(s) inserted so far
+2026-11-23 15:30:48,870 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 68000 row(s) inserted so far
+2026-11-23 15:30:49,302 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 69000 row(s) inserted so far
+2026-11-23 15:30:49,668 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 70000 row(s) inserted so far
+2026-11-23 15:30:50,089 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 71000 row(s) inserted so far
+2026-11-23 15:30:50,475 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 72000 row(s) inserted so far
+2026-11-23 15:30:50,764 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 73000 row(s) inserted so far
+2026-11-23 15:30:51,133 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 74000 row(s) inserted so far
+2026-11-23 15:30:51,422 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 75000 row(s) inserted so far
+2026-11-23 15:30:51,757 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 76000 row(s) inserted so far
+2026-11-23 15:30:52,116 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 77000 row(s) inserted so far
+2026-11-23 15:30:52,507 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 78000 row(s) inserted so far
+2026-11-23 15:30:52,871 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 79000 row(s) inserted so far
+2026-11-23 15:30:53,308 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 80000 row(s) inserted so far
+2026-11-23 15:30:53,577 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 81000 row(s) inserted so far
+2026-11-23 15:30:53,936 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 82000 row(s) inserted so far
+2026-11-23 15:30:54,320 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 83000 row(s) inserted so far
+2026-11-23 15:30:54,580 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 84000 row(s) inserted so far
+2026-11-23 15:30:54,841 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 85000 row(s) inserted so far
+2026-11-23 15:30:55,248 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 86000 row(s) inserted so far
+2026-11-23 15:30:55,625 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 87000 row(s) inserted so far
+2026-11-23 15:30:55,880 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 88000 row(s) inserted so far
+2026-11-23 15:30:56,261 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 89000 row(s) inserted so far
+2026-11-23 15:30:56,651 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 90000 row(s) inserted so far
+2026-11-23 15:30:56,896 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 91000 row(s) inserted so far
+2026-11-23 15:30:57,155 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 92000 row(s) inserted so far
+2026-11-23 15:30:57,831 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 93000 row(s) inserted so far
+2026-11-23 15:30:58,221 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 94000 row(s) inserted so far
+2026-11-23 15:30:58,555 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 95000 row(s) inserted so far
+2026-11-23 15:30:58,782 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 96000 row(s) inserted so far
+2026-11-23 15:30:59,036 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 97000 row(s) inserted so far
+2026-11-23 15:30:59,290 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 98000 row(s) inserted so far
+2026-11-23 15:30:59,651 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 99000 row(s) inserted so far
+2026-11-23 15:30:59,936 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 100000 row(s) inserted so far
+2026-11-23 15:31:00,673 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 101000 row(s) inserted so far
+2026-11-23 15:31:01,083 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 102000 row(s) inserted so far
+2026-11-23 15:31:02,564 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 103000 row(s) inserted so far
+2026-11-23 15:31:03,434 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 104000 row(s) inserted so far
+2026-11-23 15:31:03,978 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 105000 row(s) inserted so far
+2026-11-23 15:31:04,321 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 106000 row(s) inserted so far
+2026-11-23 15:31:04,543 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 107000 row(s) inserted so far
+2026-11-23 15:31:04,759 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 108000 row(s) inserted so far
+2026-11-23 15:31:04,980 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 109000 row(s) inserted so far
+2026-11-23 15:31:05,253 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 110000 row(s) inserted so far
+2026-11-23 15:31:05,497 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 111000 row(s) inserted so far
+2026-11-23 15:31:05,727 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 112000 row(s) inserted so far
+2026-11-23 15:31:06,009 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 113000 row(s) inserted so far
+2026-11-23 15:31:06,234 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 114000 row(s) inserted so far
+2026-11-23 15:31:06,441 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49]   Staging_HHData: 115000 row(s) inserted so far
+2026-11-23 15:31:06,517 INFO    [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49] Bulk insert into Staging_HHData: 115269 row(s) in 40.5s
+2026-11-23 15:31:06,525 INFO    [run 2391d43fac62] [b40-file_2] [secr.runner] [batch 40][file 49] Inserted 115269 row(s) into Staging_HHData
+2026-11-23 15:31:06,526 INFO    [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49] Calling procedure LoadHHData(49, 2, anuj.kumar)
+2026-11-23 15:31:45,038 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49] Procedure LoadHHData returned after 38.5s
+2026-11-23 15:31:45,067 INFO    [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49] Procedure LoadHHData finished in 38.5s, OUT=['SUCCESS: HHData loaded: 115269 row(s) added or changed.']
+2026-11-23 15:31:45,068 INFO    [run 2391d43fac62] [b40-file_2] [secr.runner] [batch 40][file 49] LoadHHData -> message='SUCCESS: HHData loaded: 115269 row(s) added or changed.'
+2026-11-23 15:31:45,079 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49] SQL query (0.01s, 1 row(s)): SELECT RELEASE_LOCK(%s) AS released | params=('secr_load_Staging_HHData',)
+2026-11-23 15:31:45,080 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49] Released DB lock secr_load_Staging_HHData
+2026-11-23 15:31:45,451 DEBUG   [run 2391d43fac62] [b40-file_2] [secr.db] [batch 40][file 49] SQL execute (0.09s, 1 row(s) affected): UPDATE UploadedFile SET ProcessingStatusId = (SELECT s.FileProcessingStatusId FROM RefFileProcessingStatus s WHERE s.Code = %s), StatusDescription = NULL WHERE  | params=('COMPLETED', '49')
+2026-11-23 15:31:45,454 INFO    [run 2391d43fac62] [b40-file_2] [secr.daisy] [batch 40][file 49] Load Half Hourly Data into Staging_HHData - done in 100.7s
+2026-11-23 15:31:45,454 INFO    [run 2391d43fac62] [b40-file_2] [secr.daisy] [batch 40][file 49] Status -> COMPLETED
+2026-11-23 15:31:45,455 INFO    [run 2391d43fac62] [b40-file_2] [secr.daisy] [batch 40][file 49] Half Hourly Data loaded: 115269 row(s)
+2026-11-23 15:31:45,456 INFO    [run 2391d43fac62] [b40-file_2] [secr.daisy] [batch 40][file 49] Daisy sync finished: COMPLETED in 147.1s
+2026-11-23 15:31:45,460 INFO    [run 2391d43fac62] [batch_0] [secr.batch] [batch 40] All files done: 2 OK, 1 with errors
+2026-11-23 15:31:45,646 DEBUG   [run 2391d43fac62] [batch_0] [secr.db] [batch 40] DB connection opened (2/60 in use)
+2026-11-23 15:31:45,647 DEBUG   [run 2391d43fac62] [batch_0] [secr.db] [batch 40] Setting batch 40 status to COMPLETE
+2026-11-23 15:31:45,873 DEBUG   [run 2391d43fac62] [batch_0] [secr.db] [batch 40] SQL execute (0.23s, 1 row(s) affected): UPDATE FileUploadBatch SET BatchStatusId = (SELECT b.BatchStatusId FROM RefBatchStatus b WHERE b.Code = %s) WHERE BatchId = %s | params=('COMPLETE', '40')
+2026-11-23 15:31:45,874 INFO    [run 2391d43fac62] [batch_0] [secr.batch] [batch 40] Batch status set to COMPLETE
+2026-11-23 15:31:45,875 INFO    [run 2391d43fac62] [batch_0] [secr.batch] [batch 40] File 47 [daisy] Source: Daisy (Portfolio) -> COMPLETED 
+2026-11-23 15:31:45,875 WARNING [run 2391d43fac62] [batch_0] [secr.batch] [batch 40] File 48 [daisy] Source: Daisy (Invoices) -> FAILED Daisy Invoices load: (1136, "Column count doesn't match value count at row 1")
+2026-11-23 15:31:45,876 INFO    [run 2391d43fac62] [batch_0] [secr.batch] [batch 40] File 49 [daisy] Source: Daisy (Half Hourly Data) -> COMPLETED 
+2026-11-23 15:31:45,898 DEBUG   [run 2391d43fac62] [batch_0] [secr.db] [batch 40] SQL query (0.02s, 1 row(s)): SELECT RELEASE_LOCK(%s) AS released | params=('secr_batch_40',)
+2026-11-23 15:31:45,899 DEBUG   [run 2391d43fac62] [batch_0] [secr.db] [batch 40] Released DB lock secr_batch_40
+2026-11-23 15:31:45,900 DEBUG   [run 2391d43fac62] [batch_0] [secr.batch] [batch 40] Released DB lock secr_batch_40
+2026-11-23 15:31:46,040 DEBUG   [run 2391d43fac62] [batch_0] [secr.batch] [batch 40] Removed work folder \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\work\batch_40_20261123_152917_166153
+2026-11-23 15:31:46,069 INFO    [run 2391d43fac62] [batch_0] [secr.batch] [batch 40] Batch finished: COMPLETED_WITH_FILE_ERRORS in 148.9s (3 file(s))
+2026-11-23 15:31:46,074 INFO    [run 2391d43fac62] [MainThread] [secr.orchestrator] Progress: 1/1 batch(es) done (batch 40: COMPLETED_WITH_FILE_ERRORS, 148.9s); 0 still running or queued
+2026-11-23 15:31:46,080 INFO    [run 2391d43fac62] [MainThread] [secr.orchestrator] All batches done in 148.9s
+2026-11-23 15:31:46,084 INFO    [run 2391d43fac62] [MainThread] [secr.runner] Summary
+   Batch  State                       Files   OK    Secs  Error
+      40  COMPLETED_WITH_FILE_ERRORS      3    2   148.9  
+2026-11-23 15:31:46,085 INFO    [run 2391d43fac62] [MainThread] [secr.runner] Run finished with exit code 2 (0 = all OK, 2 = some files failed, 1 = a batch failed)
+2026-11-23 15:31:46,088 DEBUG   [run 2391d43fac62] [MainThread] [secr.runner] E-mail 'SECR normalizer finished with errors' not sent (notifications disabled)
+2026-11-23 15:31:46,089 INFO    [run 2391d43fac62] [MainThread] [secr.aa_entry] Returning status PARTIAL to Automation Anywhere

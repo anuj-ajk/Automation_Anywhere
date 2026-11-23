@@ -1,0 +1,21 @@
+2026-11-23 14:55:21,104 INFO    [run 678b6aec4171] Called with keys: DatabaseName, ESGDBServerName, MySQL_Port, category, created_by, csv_path, debug, dry_run, file_id, input_folder, log_dir, report_id; secrets: SECR_DB_USER=set SECR_DB_PASSWORD=set
+2026-11-23 14:55:21,107 INFO    [run 678b6aec4171] Start: csv=\\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\DB_Insertion\tests\Portfolio_ESG_Normalized_Data.csv, file id 77, report id 5, db esg-instance.cm18ojbg8cjx.eu-west-2.rds.amazonaws.com:3306/esgdb, dry run False (File Id: 77)
+2026-11-23 14:55:21,109 INFO    [run 678b6aec4171] Category detected from file name 'Portfolio_ESG_Normalized_Data.csv': 'Portfolio' (File Id: 77)
+2026-11-23 14:55:21,265 DEBUG   [run 678b6aec4171] Cleaning CSV \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\DB_Insertion\tests\Portfolio_ESG_Normalized_Data.csv and adding File Id (File Id: 77)
+2026-11-23 14:55:21,457 INFO    [run 678b6aec4171] CSV cleaned: 3 row(s) incl. header, 11 blank(s) filled -> \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\DB_Insertion\tests\work\Cleaned_Portfolio_77.csv (File Id: 77)
+2026-11-23 14:55:21,487 DEBUG   [run 678b6aec4171] Cleaned the file and stored at \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\DB_Insertion\tests\work\Cleaned_Portfolio_77.csv (File Id: 77)
+2026-11-23 14:55:21,495 INFO    [run 678b6aec4171] Connecting to esg-instance.cm18ojbg8cjx.eu-west-2.rds.amazonaws.com:3306/esgdb (File Id: 77)
+2026-11-23 14:55:23,026 INFO    [run 678b6aec4171] Connected; inserting into Staging_Portfolio (File Id: 77)
+2026-11-23 14:55:23,150 INFO    [run 678b6aec4171] Inserted and committed 2 record(s) into Staging_Portfolio (File Id: 77)
+2026-11-23 14:55:23,181 INFO    [run 678b6aec4171] Check: esgdb.Staging_Portfolio now has 2 row(s) with FileId 77 (File Id: 77)
+2026-11-23 14:55:23,183 INFO    [run 678b6aec4171] Calling LoadPortfolioData(77, 5) (File Id: 77)
+2026-11-23 14:55:23,368 INFO    [run 678b6aec4171] Stored procedure LoadPortfolioData finished. OUT: {'p_Message': 'LoadPortfolioData completed successfully'} (File Id: 77)
+2026-11-23 14:55:23,387 INFO    [run 678b6aec4171] Check: after LoadPortfolioData, esgdb.Staging_Portfolio has 2 row(s) with FileId 77 (File Id: 77)
+2026-11-23 14:55:23,389 INFO    [run 678b6aec4171] Calling UpdatePortfolioDerivedFields(5) (File Id: 77)
+2026-11-23 14:55:23,565 INFO    [run 678b6aec4171] Stored procedure UpdatePortfolioDerivedFields finished. OUT: {'p_Message': 'UpdatePortfolioDerivedFields completed successfully. Rows updated: 698'} (File Id: 77)
+2026-11-23 14:55:23,592 INFO    [run 678b6aec4171] Check: after UpdatePortfolioDerivedFields, esgdb.Staging_Portfolio has 2 row(s) with FileId 77 (File Id: 77)
+2026-11-23 14:55:23,601 DEBUG   [run 678b6aec4171] Ran Bulk insert for Portfolio and Load SP Message: UpdatePortfolioDerivedFields completed successfully. Rows updated: 698 (File Id: 77)
+2026-11-23 14:55:23,614 INFO    [run 678b6aec4171] Load Data SP Message UpdatePortfolioDerivedFields completed successfully. Rows updated: 698
+2026-11-23 14:55:23,619 INFO    [run 678b6aec4171] Data load completed for Portfolio. Bot status: Success (File Id: 77)
+2026-11-23 14:55:23,635 DEBUG   [run 678b6aec4171] Finally block: DB connected: True (File Id: 77)
+2026-11-23 14:55:23,644 INFO    [run 678b6aec4171] Returning status SUCCESS

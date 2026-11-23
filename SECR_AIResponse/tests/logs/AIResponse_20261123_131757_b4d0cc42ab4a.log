@@ -1,0 +1,109 @@
+2026-11-23 13:17:57,609 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response] Log file: X:\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_AIResponse\tests\logs\AIResponse_20261123_131757_b4d0cc42ab4a.log
+2026-11-23 13:17:57,610 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.runner] Settings: base_uri=https://api.getodin.ai project=356316e20dcb48658ce127 agent=63622 max_parallel=10 poll=40s x 15 update_db=False; secrets: SECR_ODIN_API_KEY=set SECR_ODIN_API_SECRET=set SECR_DB_USER=set SECR_DB_PASSWORD=set
+2026-11-23 13:17:57,632 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.odin_client] Odin client: https://api.getodin.ai, project 356316e20dcb48658ce127, agent 63622
+2026-11-23 13:17:57,634 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.processor] 7 sheet(s) from 3 file(s) to normalize, up to 10 in parallel
+2026-11-23 13:17:57,643 DEBUG   [run b4d0cc42ab4a] [MainThread] [ai_response.processor]   file 2: C:\Users\anuj.kumar\Documents\Environmental Social and Governance\Streamlined Energy & Carbon Reporting\Output\Sheet_January.xlsx
+2026-11-23 13:17:57,644 DEBUG   [run b4d0cc42ab4a] [MainThread] [ai_response.processor]   file 2: C:\Users\anuj.kumar\Documents\Environmental Social and Governance\Streamlined Energy & Carbon Reporting\Output\Sheet_August.xlsx
+2026-11-23 13:17:57,645 DEBUG   [run b4d0cc42ab4a] [MainThread] [ai_response.processor]   file 2: C:\Users\anuj.kumar\Documents\Environmental Social and Governance\Streamlined Energy & Carbon Reporting\Output\Sheet_February.xlsx
+2026-11-23 13:17:57,646 DEBUG   [run b4d0cc42ab4a] [MainThread] [ai_response.processor]   file 3: C:\Users\anuj.kumar\Documents\Environmental Social and Governance\Streamlined Energy & Carbon Reporting\Output\Sheet_July.xlsx
+2026-11-23 13:17:57,646 DEBUG   [run b4d0cc42ab4a] [MainThread] [ai_response.processor]   file 3: C:\Users\anuj.kumar\Documents\Environmental Social and Governance\Streamlined Energy & Carbon Reporting\Output\Sheet_June.xlsx
+2026-11-23 13:17:57,647 DEBUG   [run b4d0cc42ab4a] [MainThread] [ai_response.processor]   file 22: C:\Users\anuj.kumar\Documents\Environmental Social and Governance\Streamlined Energy & Carbon Reporting\Output\Sheet_March.xlsx
+2026-11-23 13:17:57,648 DEBUG   [run b4d0cc42ab4a] [MainThread] [ai_response.processor]   file 22: C:\Users\anuj.kumar\Documents\Environmental Social and Governance\Streamlined Energy & Carbon Reporting\Output\Sheet_October.xlsx
+2026-11-23 13:17:57,649 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.processor] Step 1/3 submit 7 sheet(s) - started
+2026-11-23 13:18:00,473 DEBUG   [run b4d0cc42ab4a] [submit_0] [ai_response.odin_client] [file 2][Sheet_January.xlsx] Odin POST /chat/create -> HTTP 200 in 2.8s
+2026-11-23 13:18:00,476 DEBUG   [run b4d0cc42ab4a] [submit_5] [ai_response.odin_client] [file 22][Sheet_March.xlsx] Odin POST /chat/create -> HTTP 200 in 2.8s
+2026-11-23 13:18:00,476 INFO    [run b4d0cc42ab4a] [submit_0] [ai_response.odin_client] [file 2][Sheet_January.xlsx] Chat 7ce23790cf5346f3a7b5e7 created
+2026-11-23 13:18:00,477 INFO    [run b4d0cc42ab4a] [submit_5] [ai_response.odin_client] [file 22][Sheet_March.xlsx] Chat 4eb859ee5aff4233aaa969 created
+2026-11-23 13:18:00,478 INFO    [run b4d0cc42ab4a] [submit_0] [ai_response.odin_client] [file 2][Sheet_January.xlsx] Uploading Sheet_January.xlsx (11919 bytes) to chat 7ce23790cf5346f3a7b5e7
+2026-11-23 13:18:00,480 DEBUG   [run b4d0cc42ab4a] [submit_2] [ai_response.odin_client] [file 2][Sheet_February.xlsx] Odin POST /chat/create -> HTTP 200 in 2.8s
+2026-11-23 13:18:00,480 INFO    [run b4d0cc42ab4a] [submit_5] [ai_response.odin_client] [file 22][Sheet_March.xlsx] Uploading Sheet_March.xlsx (10565 bytes) to chat 4eb859ee5aff4233aaa969
+2026-11-23 13:18:00,481 INFO    [run b4d0cc42ab4a] [submit_2] [ai_response.odin_client] [file 2][Sheet_February.xlsx] Chat 466681720b1e4dc39afc11 created
+2026-11-23 13:18:00,487 INFO    [run b4d0cc42ab4a] [submit_2] [ai_response.odin_client] [file 2][Sheet_February.xlsx] Uploading Sheet_February.xlsx (10578 bytes) to chat 466681720b1e4dc39afc11
+2026-11-23 13:18:00,490 DEBUG   [run b4d0cc42ab4a] [submit_4] [ai_response.odin_client] [file 3][Sheet_June.xlsx] Odin POST /chat/create -> HTTP 200 in 2.8s
+2026-11-23 13:18:00,491 DEBUG   [run b4d0cc42ab4a] [submit_6] [ai_response.odin_client] [file 22][Sheet_October.xlsx] Odin POST /chat/create -> HTTP 200 in 2.8s
+2026-11-23 13:18:00,497 INFO    [run b4d0cc42ab4a] [submit_4] [ai_response.odin_client] [file 3][Sheet_June.xlsx] Chat 5564398011f9438eb10e28 created
+2026-11-23 13:18:00,497 INFO    [run b4d0cc42ab4a] [submit_6] [ai_response.odin_client] [file 22][Sheet_October.xlsx] Chat 38dda3c1e1a54065838a3c created
+2026-11-23 13:18:00,498 INFO    [run b4d0cc42ab4a] [submit_4] [ai_response.odin_client] [file 3][Sheet_June.xlsx] Uploading Sheet_June.xlsx (10536 bytes) to chat 5564398011f9438eb10e28
+2026-11-23 13:18:00,499 INFO    [run b4d0cc42ab4a] [submit_6] [ai_response.odin_client] [file 22][Sheet_October.xlsx] Uploading Sheet_October.xlsx (9153 bytes) to chat 38dda3c1e1a54065838a3c
+2026-11-23 13:18:00,548 DEBUG   [run b4d0cc42ab4a] [submit_1] [ai_response.odin_client] [file 2][Sheet_August.xlsx] Odin POST /chat/create -> HTTP 200 in 2.9s
+2026-11-23 13:18:00,551 INFO    [run b4d0cc42ab4a] [submit_1] [ai_response.odin_client] [file 2][Sheet_August.xlsx] Chat 912168738f42415d820934 created
+2026-11-23 13:18:00,556 INFO    [run b4d0cc42ab4a] [submit_1] [ai_response.odin_client] [file 2][Sheet_August.xlsx] Uploading Sheet_August.xlsx (9141 bytes) to chat 912168738f42415d820934
+2026-11-23 13:18:00,576 DEBUG   [run b4d0cc42ab4a] [submit_3] [ai_response.odin_client] [file 3][Sheet_July.xlsx] Odin POST /chat/create -> HTTP 200 in 2.9s
+2026-11-23 13:18:00,577 INFO    [run b4d0cc42ab4a] [submit_3] [ai_response.odin_client] [file 3][Sheet_July.xlsx] Chat ac4690aac6f8479bbc1812 created
+2026-11-23 13:18:00,578 INFO    [run b4d0cc42ab4a] [submit_3] [ai_response.odin_client] [file 3][Sheet_July.xlsx] Uploading Sheet_July.xlsx (10544 bytes) to chat ac4690aac6f8479bbc1812
+2026-11-23 13:19:46,503 DEBUG   [run b4d0cc42ab4a] [submit_2] [ai_response.odin_client] [file 2][Sheet_February.xlsx] Odin POST /v4/chat/message -> HTTP 200 in 106.0s
+2026-11-23 13:19:46,506 INFO    [run b4d0cc42ab4a] [submit_2] [ai_response.odin_client] [file 2][Sheet_February.xlsx] Upload accepted in 106.0s
+2026-11-23 13:19:46,507 INFO    [run b4d0cc42ab4a] [submit_2] [ai_response.processor] [file 2][Sheet_February.xlsx] Submitted, chat id 466681720b1e4dc39afc11
+2026-11-23 13:20:07,765 DEBUG   [run b4d0cc42ab4a] [submit_3] [ai_response.odin_client] [file 3][Sheet_July.xlsx] Odin POST /v4/chat/message -> HTTP 200 in 127.2s
+2026-11-23 13:20:07,765 INFO    [run b4d0cc42ab4a] [submit_3] [ai_response.odin_client] [file 3][Sheet_July.xlsx] Upload accepted in 127.2s
+2026-11-23 13:20:07,766 INFO    [run b4d0cc42ab4a] [submit_3] [ai_response.processor] [file 3][Sheet_July.xlsx] Submitted, chat id ac4690aac6f8479bbc1812
+2026-11-23 13:20:24,113 DEBUG   [run b4d0cc42ab4a] [submit_5] [ai_response.odin_client] [file 22][Sheet_March.xlsx] Odin POST /v4/chat/message -> HTTP 200 in 143.6s
+2026-11-23 13:20:24,114 INFO    [run b4d0cc42ab4a] [submit_5] [ai_response.odin_client] [file 22][Sheet_March.xlsx] Upload accepted in 143.6s
+2026-11-23 13:20:24,115 INFO    [run b4d0cc42ab4a] [submit_5] [ai_response.processor] [file 22][Sheet_March.xlsx] Submitted, chat id 4eb859ee5aff4233aaa969
+2026-11-23 13:20:42,979 DEBUG   [run b4d0cc42ab4a] [submit_6] [ai_response.odin_client] [file 22][Sheet_October.xlsx] Odin POST /v4/chat/message -> HTTP 200 in 162.5s
+2026-11-23 13:20:42,984 INFO    [run b4d0cc42ab4a] [submit_6] [ai_response.odin_client] [file 22][Sheet_October.xlsx] Upload accepted in 162.5s
+2026-11-23 13:20:42,985 INFO    [run b4d0cc42ab4a] [submit_6] [ai_response.processor] [file 22][Sheet_October.xlsx] Submitted, chat id 38dda3c1e1a54065838a3c
+2026-11-23 13:20:48,049 DEBUG   [run b4d0cc42ab4a] [submit_4] [ai_response.odin_client] [file 3][Sheet_June.xlsx] Odin POST /v4/chat/message -> HTTP 200 in 167.5s
+2026-11-23 13:20:48,050 INFO    [run b4d0cc42ab4a] [submit_4] [ai_response.odin_client] [file 3][Sheet_June.xlsx] Upload accepted in 167.5s
+2026-11-23 13:20:48,051 INFO    [run b4d0cc42ab4a] [submit_4] [ai_response.processor] [file 3][Sheet_June.xlsx] Submitted, chat id 5564398011f9438eb10e28
+2026-11-23 13:21:13,639 DEBUG   [run b4d0cc42ab4a] [submit_0] [ai_response.odin_client] [file 2][Sheet_January.xlsx] Odin POST /v4/chat/message -> HTTP 200 in 193.2s
+2026-11-23 13:21:13,640 INFO    [run b4d0cc42ab4a] [submit_0] [ai_response.odin_client] [file 2][Sheet_January.xlsx] Upload accepted in 193.2s
+2026-11-23 13:21:13,641 INFO    [run b4d0cc42ab4a] [submit_0] [ai_response.processor] [file 2][Sheet_January.xlsx] Submitted, chat id 7ce23790cf5346f3a7b5e7
+2026-11-23 13:21:15,409 DEBUG   [run b4d0cc42ab4a] [submit_1] [ai_response.odin_client] [file 2][Sheet_August.xlsx] Odin POST /v4/chat/message -> HTTP 200 in 194.8s
+2026-11-23 13:21:15,411 INFO    [run b4d0cc42ab4a] [submit_1] [ai_response.odin_client] [file 2][Sheet_August.xlsx] Upload accepted in 194.8s
+2026-11-23 13:21:15,412 INFO    [run b4d0cc42ab4a] [submit_1] [ai_response.processor] [file 2][Sheet_August.xlsx] Submitted, chat id 912168738f42415d820934
+2026-11-23 13:21:15,431 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 2] (update_db off) status would be NORMALIZING
+2026-11-23 13:21:15,433 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 3] (update_db off) status would be NORMALIZING
+2026-11-23 13:21:15,436 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 22] (update_db off) status would be NORMALIZING
+2026-11-23 13:21:15,443 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.processor] Step 1/3 submit - done in 197.8s: 7 submitted, 0 failed
+2026-11-23 13:21:15,446 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.processor] Step 2/3 poll 7 chat(s) - started (every 40s, up to 15 attempts)
+2026-11-23 13:21:15,447 DEBUG   [run b4d0cc42ab4a] [MainThread] [ai_response.processor] Poll round 1/15: 7 chat(s) waiting
+2026-11-23 13:21:15,817 DEBUG   [run b4d0cc42ab4a] [poll_4] [ai_response.odin_client] [file 3][Sheet_June.xlsx] Odin GET /chat/5564398011f9438eb10e28 -> HTTP 200 in 0.4s
+2026-11-23 13:21:15,820 INFO    [run b4d0cc42ab4a] [poll_4] [ai_response.processor] [file 3][Sheet_June.xlsx] Answered after poll 1: portfolio, landlord, transport, other_fuels, metrics, energy_efficiency_narrative, invoice, half_hourly_data
+2026-11-23 13:21:15,884 DEBUG   [run b4d0cc42ab4a] [poll_6] [ai_response.odin_client] [file 22][Sheet_October.xlsx] Odin GET /chat/38dda3c1e1a54065838a3c -> HTTP 200 in 0.4s
+2026-11-23 13:21:15,886 INFO    [run b4d0cc42ab4a] [poll_6] [ai_response.processor] [file 22][Sheet_October.xlsx] Answered after poll 1: portfolio, landlord, transport, other_fuels, metrics, energy_efficiency_narrative, invoice, half_hourly_data
+2026-11-23 13:21:15,887 DEBUG   [run b4d0cc42ab4a] [poll_2] [ai_response.odin_client] [file 2][Sheet_February.xlsx] Odin GET /chat/466681720b1e4dc39afc11 -> HTTP 200 in 0.4s
+2026-11-23 13:21:15,894 INFO    [run b4d0cc42ab4a] [poll_2] [ai_response.processor] [file 2][Sheet_February.xlsx] Answered after poll 1: portfolio, landlord, transport, other_fuels, metrics, energy_efficiency_narrative, invoice, half_hourly_data
+2026-11-23 13:21:15,903 DEBUG   [run b4d0cc42ab4a] [poll_0] [ai_response.odin_client] [file 2][Sheet_January.xlsx] Odin GET /chat/7ce23790cf5346f3a7b5e7 -> HTTP 200 in 0.5s
+2026-11-23 13:21:15,905 INFO    [run b4d0cc42ab4a] [poll_0] [ai_response.processor] [file 2][Sheet_January.xlsx] Answered after poll 1: portfolio, landlord, transport, other_fuels, metrics, energy_efficiency_narrative, invoice, half_hourly_data
+2026-11-23 13:21:15,913 DEBUG   [run b4d0cc42ab4a] [poll_3] [ai_response.odin_client] [file 3][Sheet_July.xlsx] Odin GET /chat/ac4690aac6f8479bbc1812 -> HTTP 200 in 0.5s
+2026-11-23 13:21:15,916 INFO    [run b4d0cc42ab4a] [poll_3] [ai_response.processor] [file 3][Sheet_July.xlsx] Answered after poll 1: portfolio, landlord, transport, other_fuels, metrics, energy_efficiency_narrative, invoice, half_hourly_data
+2026-11-23 13:21:15,919 DEBUG   [run b4d0cc42ab4a] [poll_1] [ai_response.odin_client] [file 2][Sheet_August.xlsx] Odin GET /chat/912168738f42415d820934 -> HTTP 200 in 0.5s
+2026-11-23 13:21:15,924 INFO    [run b4d0cc42ab4a] [poll_1] [ai_response.processor] [file 2][Sheet_August.xlsx] Answered after poll 1: portfolio, landlord, transport, other_fuels, metrics, energy_efficiency_narrative, invoice, half_hourly_data
+2026-11-23 13:21:15,967 DEBUG   [run b4d0cc42ab4a] [poll_5] [ai_response.odin_client] [file 22][Sheet_March.xlsx] Odin GET /chat/4eb859ee5aff4233aaa969 -> HTTP 200 in 0.5s
+2026-11-23 13:21:15,970 INFO    [run b4d0cc42ab4a] [poll_5] [ai_response.processor] [file 22][Sheet_March.xlsx] Answered after poll 1: portfolio, landlord, transport, other_fuels, metrics, energy_efficiency_narrative, invoice, half_hourly_data
+2026-11-23 13:21:15,989 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.processor] Step 2/3 poll - done in 0.5s: 7 answered, 0 timed out
+2026-11-23 13:21:15,993 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.processor] Step 3/3 write results and statuses - started
+2026-11-23 13:21:15,994 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 2] (update_db off) category recognized: Portfolio
+2026-11-23 13:21:15,994 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 2] (update_db off) category recognized: Landlord
+2026-11-23 13:21:15,995 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 2] (update_db off) category recognized: Transport
+2026-11-23 13:21:15,997 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 2] (update_db off) category recognized: Other Fuels
+2026-11-23 13:21:15,999 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 2] (update_db off) category recognized: Metrics
+2026-11-23 13:21:15,999 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 2] (update_db off) category recognized: Energy Efficiency Narrative
+2026-11-23 13:21:16,004 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 2] (update_db off) category recognized: Invoice
+2026-11-23 13:21:16,005 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 2] (update_db off) category recognized: Half Hourly Data
+2026-11-23 13:21:16,005 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 2] (update_db off) status would be NORMALIZATION_COMPLETED
+2026-11-23 13:21:16,006 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.processor] [file 2] Final status NORMALIZATION_COMPLETED (3 sheet(s): 24 CSV link(s), 0 failed sheet(s))
+2026-11-23 13:21:16,007 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 3] (update_db off) category recognized: Portfolio
+2026-11-23 13:21:16,013 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 3] (update_db off) category recognized: Landlord
+2026-11-23 13:21:16,016 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 3] (update_db off) category recognized: Transport
+2026-11-23 13:21:16,016 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 3] (update_db off) category recognized: Other Fuels
+2026-11-23 13:21:16,019 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 3] (update_db off) category recognized: Metrics
+2026-11-23 13:21:16,020 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 3] (update_db off) category recognized: Energy Efficiency Narrative
+2026-11-23 13:21:16,024 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 3] (update_db off) category recognized: Invoice
+2026-11-23 13:21:16,026 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 3] (update_db off) category recognized: Half Hourly Data
+2026-11-23 13:21:16,033 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 3] (update_db off) status would be NORMALIZATION_COMPLETED
+2026-11-23 13:21:16,036 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.processor] [file 3] Final status NORMALIZATION_COMPLETED (2 sheet(s): 16 CSV link(s), 0 failed sheet(s))
+2026-11-23 13:21:18,442 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 22] (update_db off) category recognized: Portfolio
+2026-11-23 13:21:18,443 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 22] (update_db off) category recognized: Landlord
+2026-11-23 13:21:18,444 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 22] (update_db off) category recognized: Transport
+2026-11-23 13:21:18,446 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 22] (update_db off) category recognized: Other Fuels
+2026-11-23 13:21:18,447 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 22] (update_db off) category recognized: Metrics
+2026-11-23 13:21:18,449 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 22] (update_db off) category recognized: Energy Efficiency Narrative
+2026-11-23 13:21:18,450 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 22] (update_db off) category recognized: Invoice
+2026-11-23 13:21:18,453 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 22] (update_db off) category recognized: Half Hourly Data
+2026-11-23 13:21:18,454 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.status_db] [file 22] (update_db off) status would be NORMALIZATION_COMPLETED
+2026-11-23 13:21:18,454 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.processor] [file 22] Final status NORMALIZATION_COMPLETED (2 sheet(s): 16 CSV link(s), 0 failed sheet(s))
+2026-11-23 13:21:18,455 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.processor] Step 3/3 write results and statuses - done
+2026-11-23 13:21:18,457 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.processor] Done in 200.8s: 56 CSV link(s); files: 2=NORMALIZATION_COMPLETED, 3=NORMALIZATION_COMPLETED, 22=NORMALIZATION_COMPLETED
+2026-11-23 13:21:18,525 INFO    [run b4d0cc42ab4a] [MainThread] [ai_response.runner] Wrote 56 link row(s) to X:\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_AIResponse\tests\output_csv.csv

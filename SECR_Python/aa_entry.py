@@ -173,7 +173,7 @@ def _result(status, code, message, log_file="", batches=None, trace="") -> str:
 if __name__ == "__main__":  # manual test: python aa_entry.py 40,41  (same dictionary the AA bot passes)
     print(run_batches(
         {
-            "batch_ids": " ".join(sys.argv[1:]) or "40",
+            "batch_ids": "40",
             "config_path": str(HERE / "config.yaml"),
             "max_batches": 10,
             "max_files": 4,

@@ -20,8 +20,6 @@ credentials.*
 **/UnitTest/
 
 # --- Bot run artifacts ---
-*.log
-**/Logs/
 **/Output/
 **/Input/
 __pycache__/
@@ -31,7 +29,6 @@ __pycache__/
 
 # --- SECR Python port: local config and run folders ---
 SECR_Python/work/
-SECR_Python/logs/
 
 # --- OS / editor ---
 Thumbs.db
@@ -42,6 +39,4 @@ desktop.ini
 ~$*
 SECR_AIResponse/logs/
 SECR_AIResponse/**/__pycache__/
-DB_Insertion/logs/
 DB_Insertion/tests/work/
-DB_Insertion/tests/logs/
