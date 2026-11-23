@@ -3,10 +3,14 @@ from __future__ import annotations
 
 import json
 import threading
+import time
 from pathlib import Path
 from typing import Any
 
 from .config import OdinConfig
+from .logging_setup import module_logger
+
+LOG = module_logger(__name__)
 
 # Keys in json_response.normalized_csv_file_links, in the order the bot checked them.
 CATEGORY_KEYS = (
@@ -45,6 +49,7 @@ class OdinClient:
             raise ValueError("odin.project_id / odin.agent_id are not configured")
         self.cfg = cfg
         self._local = threading.local()  # one requests.Session per thread
+        LOG.info("Odin AI client ready: %s, project %s, agent %s", cfg.base_uri, cfg.project_id, cfg.agent_id)
 
     @property
     def _http(self):
@@ -58,15 +63,18 @@ class OdinClient:
         return session
 
     def create_chat(self, name: str) -> str:
+        started = time.monotonic()
         resp = self._http.post(
             f"{self.cfg.base_uri}/chat/create",
             json={"project_id": self.cfg.project_id, "name": name},
             timeout=self.cfg.request_timeout_seconds,
         )
+        _trace("POST /chat/create", resp, started)
         resp.raise_for_status()
         chat_id = (resp.json() or {}).get("chat_id")
         if not chat_id:
             raise AIError(f"Chat creation returned no chat id. Response: {resp.text[:500]}")
+        LOG.info("Chat %s created for %s", chat_id, name)
         return str(chat_id)
 
     def send_file(self, chat_id: str, file_path: Path) -> bool:
@@ -83,6 +91,8 @@ class OdinClient:
             "chat_id": chat_id,
             "message": self.cfg.message,
         }
+        LOG.info("Uploading %s (%d bytes) to chat %s", file_path.name, file_path.stat().st_size, chat_id)
+        started = time.monotonic()
         try:
             with file_path.open("rb") as fh:
                 resp = self._http.post(
@@ -91,19 +101,36 @@ class OdinClient:
                     files={"quick_upload_file": (file_path.name, fh)},
                     timeout=self.cfg.submit_timeout_seconds,
                 )
+            _trace("POST /v4/chat/message", resp, started)
             resp.raise_for_status()
+            LOG.info("Upload to chat %s accepted in %.1fs", chat_id, time.monotonic() - started)
             return True
         except requests.Timeout:
+            LOG.warning("Upload to chat %s timed out after %.1fs (treated as accepted)", chat_id,
+                        time.monotonic() - started)
             return False
 
     def get_csv_links(self, chat_id: str) -> dict[str, str] | None:
         """Return {category_key: link} once the agent answered, or None while it is still working."""
+        started = time.monotonic()
         resp = self._http.get(
             f"{self.cfg.base_uri}/project/{self.cfg.project_id}/chat/{chat_id}",
             timeout=self.cfg.request_timeout_seconds,
         )
+        _trace(f"GET /chat/{chat_id}", resp, started)
         resp.raise_for_status()
-        return parse_agent_response(resp.json())
+        links = parse_agent_response(resp.json())
+        if links is not None:
+            LOG.info("Chat %s answered with %d CSV link(s): %s", chat_id, len(links), ", ".join(links) or "none")
+        return links
+
+
+def _trace(call: str, resp, started: float) -> None:
+    elapsed = time.monotonic() - started
+    if resp.status_code >= 400:
+        LOG.error("Odin %s -> HTTP %s in %.1fs: %s", call, resp.status_code, elapsed, resp.text[:500])
+    else:
+        LOG.debug("Odin %s -> HTTP %s in %.1fs", call, resp.status_code, elapsed)
 
 
 def parse_agent_response(body: dict[str, Any]) -> dict[str, str] | None:
@@ -119,4 +146,10 @@ def parse_agent_response(body: dict[str, Any]) -> dict[str, str] | None:
         except ValueError:
             raise AIError(f"Agent json_response is not valid JSON: {json_response[:300]}")
     links = (json_response or {}).get("normalized_csv_file_links") or {}
+    unknown = [k for k, v in links.items() if v and k not in CATEGORY_KEYS]
+    if unknown:
+        LOG.warning("Agent returned link(s) for unknown categories, ignored: %s", unknown)
+    if not links:
+        LOG.warning("Agent answered but normalized_csv_file_links is empty. Keys in json_response: %s",
+                    list((json_response or {}).keys()))
     return {key: str(links[key]) for key in CATEGORY_KEYS if links.get(key)}

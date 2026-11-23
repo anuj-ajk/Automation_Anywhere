@@ -28,12 +28,17 @@ def test_run_batches_returns_json(tmp_path, monkeypatch):
 
     def fake_build(cfg, debug=False):
         seen["batches"] = cfg.run.max_parallel_batches
-        return processor, None, runner.Notifier(cfg.notify, runner.get_logger()), "fake.log"
+        _, _, log_file = runner.setup_logging(tmp_path / "logs", runner.logging.DEBUG)
+        runner._log_settings(cfg, runner.get_logger())
+        return processor, None, runner.Notifier(cfg.notify, runner.get_logger()), log_file
 
     monkeypatch.setattr(runner, "build", fake_build)
+    config = tmp_path / "config.yaml"
+    config.write_text(f"esg_db:\n  host: localhost\nrun:\n  log_dir: {(tmp_path / 'logs').as_posix()}\n",
+                      encoding="utf-8")
     out = json.loads(aa_entry.run_batches({
         "batch_ids": "40,41,42",
-        "config_path": str(ROOT / "config.example.yaml"),
+        "config_path": str(config),
         "max_batches": "3",
     }))
     assert out["status"] == "SUCCESS" and out["exit_code"] == 0
@@ -41,6 +46,15 @@ def test_run_batches_returns_json(tmp_path, monkeypatch):
     assert [b["batch_id"] for b in out["batches"]] == ["40", "41", "42"]
     assert [b["files"] for b in out["batches"]] == [1, 2, 0]
     assert out["batches"][2]["state"] == "NO_FILES"
+
+    # Every line of a file's work carries its batch and file, low-level modules included.
+    for handler in list(runner.logging.getLogger("secr").handlers):
+        handler.flush()
+    text = Path(out["log_file"]).read_text(encoding="utf-8")
+    assert "[batch 41][file 3]" in text
+    assert "Step 1/4 download from S3 - done" in text
+    assert "Called from Automation Anywhere" in text
+    assert "SECR_DB_PASSWORD=set" in text and "=p\n" not in text  # secret values are never logged
 
 
 def test_errors_come_back_as_json():

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import csv
 import re
+import time
 from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
@@ -46,9 +47,18 @@ def to_date(value) -> date:
     return datetime.strptime(str(value)[:10], "%Y-%m-%d").date()
 
 
+from .logging_setup import module_logger  # noqa: E402
+
+LOG = module_logger(__name__)
+
+
 class SourceSystems:
     def __init__(self, cfg: SourceConfig):
         self.cfg = cfg
+        LOG.info("Source systems ready: environment %s, EM query folder %s, EM %s, NAV %s",
+                 cfg.environment, cfg.query_dir,
+                 "configured" if cfg.em_connection_string else "NOT configured",
+                 "configured" if cfg.nav_connection_string else "NOT configured")
 
     def load_em_query(self, spec: RetrieveSpec) -> str:
         path = self.cfg.query_dir / f"{self.cfg.environment}_{spec.em_query}_EM_QUERY.txt"
@@ -57,6 +67,7 @@ class SourceSystems:
         sql = path.read_text(encoding="utf-8-sig").strip()
         if not sql:
             raise SourceError(f"Energy Manager query file is empty: {path.name}")
+        LOG.info("Using Energy Manager query file %s (%d characters)", path.name, len(sql))
         return sql
 
     def export_to_csv(
@@ -79,20 +90,31 @@ class SourceSystems:
             raise SourceError(f"Unsupported data source type '{source_type}'")
         if not conn_str:
             raise SourceError(f"No connection string configured for data source '{source_type}'")
+        LOG.info("Querying %s (%s) for client %s, %s to %s", kind, spec.nav_proc if kind == NAV else spec.em_query,
+                 client, start_d, end_d)
+        LOG.debug("Source SQL: %s | params=%s", " ".join(sql.split())[:300], params)
 
         import pyodbc
 
-        conn = pyodbc.connect(conn_str, timeout=30)
+        started = time.monotonic()
+        try:
+            conn = pyodbc.connect(conn_str, timeout=30)
+        except Exception as exc:
+            LOG.error("Cannot connect to %s: %s", kind, exc)
+            raise
         try:
             conn.timeout = self.cfg.query_timeout_seconds
             cur = conn.cursor()
             cur.execute(sql, params)
+            LOG.debug("%s query executed in %.1fs", kind, time.monotonic() - started)
             # Skip row-count-only results that stored procedures can emit before the data set.
             while cur.description is None and cur.nextset():
                 pass
             if cur.description is None:
+                LOG.info("%s returned no result set", kind)
                 return 0
             header = [d[0] for d in cur.description]
+            LOG.debug("%s columns: %s", kind, header)
             count = 0
             fh = None
             try:
@@ -107,9 +129,11 @@ class SourceSystems:
                         writer.writerow(header)
                     writer.writerows(["" if v is None else v for v in row] for row in batch)
                     count += len(batch)
+                    LOG.debug("  %d row(s) fetched so far", count)
             finally:
                 if fh is not None:
                     fh.close()
+            LOG.info("%s returned %d row(s) in %.1fs", kind, count, time.monotonic() - started)
             return count
         finally:
             conn.close()

@@ -23,6 +23,11 @@ class CleanResult:
         return max(self.rows_processed - 1, 0)
 
 
+from .logging_setup import module_logger  # noqa: E402
+
+LOG = module_logger(__name__)
+
+
 def clean_csv(
     input_file: Path,
     output_file: Path,
@@ -61,4 +66,8 @@ def clean_csv(
     with output_file.open("w", encoding="utf-8", newline="") as fh:
         csv.writer(fh).writerows(rows)
 
+    LOG.debug("Cleaned %s -> %s: %d line(s) incl. header, %d blank(s) filled, %d newline(s), %d quote(s) removed",
+              input_file.name, output_file.name, len(rows), blanks, newlines, quotes)
+    if len(rows) <= 1:
+        LOG.info("%s has a header only (no data rows)", input_file.name)
     return CleanResult(output_file, len(rows), blanks, newlines, quotes)

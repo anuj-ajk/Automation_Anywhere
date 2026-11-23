@@ -8,9 +8,18 @@ from __future__ import annotations
 
 import contextlib
 import threading
+import time
 from typing import Any, Iterable, Iterator, Sequence
 
 from .config import DbConfig
+from .logging_setup import module_logger
+
+LOG = module_logger(__name__)
+SLOW_QUERY_SECONDS = 5.0
+
+
+def _short(sql: str) -> str:
+    return " ".join(sql.split())[:160]
 
 MAX_DESCRIPTION = 2000
 
@@ -53,13 +62,27 @@ class EsgSession:
 
     # ---------- generic helpers ----------
     def query(self, sql: str, params: Sequence[Any] | None = None) -> list[dict[str, Any]]:
+        started = time.monotonic()
         with self.conn.cursor() as cur:
             cur.execute(sql, params)
-            return list(cur.fetchall())
+            rows = list(cur.fetchall())
+        self._trace("query", sql, params, started, f"{len(rows)} row(s)")
+        return rows
 
     def execute(self, sql: str, params: Sequence[Any] | None = None) -> int:
+        started = time.monotonic()
         with self.conn.cursor() as cur:
-            return cur.execute(sql, params)
+            affected = cur.execute(sql, params)
+        self._trace("execute", sql, params, started, f"{affected} row(s) affected")
+        return affected
+
+    @staticmethod
+    def _trace(kind: str, sql: str, params, started: float, result: str) -> None:
+        elapsed = time.monotonic() - started
+        if elapsed >= SLOW_QUERY_SECONDS:
+            LOG.warning("Slow SQL %s (%.1fs, %s): %s", kind, elapsed, result, _short(sql))
+        else:
+            LOG.debug("SQL %s (%.2fs, %s): %s | params=%s", kind, elapsed, result, _short(sql), params)
 
     # ---------- batch / file lookups ----------
     def fetch_batch_files(self, batch_id: str) -> list[dict[str, Any]]:
@@ -99,7 +122,10 @@ class EsgSession:
         else:
             sql = f"UPDATE UploadedFile SET ProcessingStatusId = {_STATUS_ID}, StatusDescription = %s WHERE FileId = %s"
             params = (code, _clip(description), file_id)
-        self.execute(sql, params)
+        if not self.execute(sql, params):
+            # MySQL reports 0 also when the row already had this value, so this is only a hint.
+            LOG.debug("Status %s for FileId %s changed no row (same value, unknown FileId or status code)",
+                      code, file_id)
 
     def move_batch_files(self, batch_id: str, from_code: str, to_code: str, description: str) -> int:
         """Move every file of the batch still in ``from_code`` to ``to_code`` (used on fatal errors)."""
@@ -110,6 +136,7 @@ class EsgSession:
         return self.execute(sql, (to_code, _clip(description), batch_id, from_code))
 
     def set_batch_status(self, batch_id: str, code: str) -> None:
+        LOG.debug("Setting batch %s status to %s", batch_id, code)
         self.execute(
             "UPDATE FileUploadBatch SET BatchStatusId = "
             "(SELECT b.BatchStatusId FROM RefBatchStatus b WHERE b.Code = %s) WHERE BatchId = %s",
@@ -139,7 +166,9 @@ class EsgSession:
         marks = ", ".join(["%s"] * len(columns))
         sql = f"INSERT INTO {_quote_ident(table)} ({cols}) VALUES ({marks})"
         total = 0
+        started = time.monotonic()
         chunk: list[Sequence[Any]] = []
+        LOG.debug("Bulk insert into %s (%d column(s), chunks of %d)", table, len(columns), chunk_size)
         with self.conn.cursor() as cur:
             for row in rows:
                 chunk.append(row)
@@ -147,16 +176,21 @@ class EsgSession:
                     cur.executemany(sql, chunk)
                     total += len(chunk)
                     chunk = []
+                    LOG.debug("  %s: %d row(s) inserted so far", table, total)
             if chunk:
                 cur.executemany(sql, chunk)
                 total += len(chunk)
+        LOG.info("Bulk insert into %s: %d row(s) in %.1fs", table, total, time.monotonic() - started)
         return total
 
     def call_proc(self, name: str, in_args: Sequence[Any], n_out: int) -> list[Any]:
         """Call a stored procedure with IN args followed by ``n_out`` OUT args; return the OUT values."""
         args = list(in_args) + [None] * n_out
+        LOG.info("Calling procedure %s(%s)", name, ", ".join(str(a) for a in in_args))
+        started = time.monotonic()
         with self.conn.cursor() as cur:
             cur.callproc(name, args)
+            LOG.debug("Procedure %s returned after %.1fs", name, time.monotonic() - started)
             while cur.nextset():  # drain any result sets before the next statement
                 pass
             if not n_out:
@@ -165,16 +199,30 @@ class EsgSession:
             select = ", ".join(f"@_{name}_{i} AS o{i}" for i in range(first_out, first_out + n_out))
             cur.execute(f"SELECT {select}")
             row = cur.fetchone() or {}
-            return [row.get(f"o{i}") for i in range(first_out, first_out + n_out)]
+            outs = [row.get(f"o{i}") for i in range(first_out, first_out + n_out)]
+            LOG.info("Procedure %s finished in %.1fs, OUT=%s", name, time.monotonic() - started, outs)
+            return outs
 
     # ---------- named locks (work across processes and machines) ----------
     def try_lock(self, name: str, timeout_seconds: int) -> bool:
+        if timeout_seconds:
+            LOG.debug("Waiting up to %ss for DB lock %s", timeout_seconds, name)
+        started = time.monotonic()
         rows = self.query("SELECT GET_LOCK(%s, %s) AS got", (name, timeout_seconds))
-        return bool(rows and rows[0].get("got") == 1)
+        got = bool(rows and rows[0].get("got") == 1)
+        waited = time.monotonic() - started
+        if got:
+            (LOG.info if waited >= 1 else LOG.debug)("Got DB lock %s after %.1fs", name, waited)
+        else:
+            LOG.warning("DB lock %s not available (waited %.1fs)", name, waited)
+        return got
 
     def release_lock(self, name: str) -> None:
-        with contextlib.suppress(Exception):
+        try:
             self.query("SELECT RELEASE_LOCK(%s) AS released", (name,))
+            LOG.debug("Released DB lock %s", name)
+        except Exception as exc:
+            LOG.warning("Could not release DB lock %s: %s", name, exc)
 
     @contextlib.contextmanager
     def named_lock(self, name: str, timeout_seconds: int) -> Iterator[None]:
@@ -192,6 +240,10 @@ class EsgDb:
     def __init__(self, cfg: DbConfig, max_connections: int):
         self.cfg = cfg
         self._slots = threading.BoundedSemaphore(max_connections)
+        self._max = max_connections
+        self._open_count = 0
+        self._count_lock = threading.Lock()
+        LOG.info("ESG DB %s:%s/%s, max %d connection(s)", cfg.host, cfg.port, cfg.database, max_connections)
 
     def _open(self):
         import pymysql
@@ -211,10 +263,28 @@ class EsgDb:
 
     @contextlib.contextmanager
     def session(self) -> Iterator[EsgSession]:
-        with self._slots:
-            conn = self._open()
+        started = time.monotonic()
+        if not self._slots.acquire(timeout=5):
+            LOG.warning("All %d DB connections are in use; waiting for a free one", self._max)
+            self._slots.acquire()
+            LOG.info("Got a DB connection after waiting %.1fs", time.monotonic() - started)
+        try:
+            try:
+                conn = self._open()
+            except Exception as exc:
+                LOG.error("Cannot connect to ESG DB %s:%s/%s: %s", self.cfg.host, self.cfg.port,
+                          self.cfg.database, exc)
+                raise
+            with self._count_lock:
+                self._open_count += 1
+                in_use = self._open_count
+            LOG.debug("DB connection opened (%d/%d in use)", in_use, self._max)
             try:
                 yield EsgSession(conn)
             finally:
                 with contextlib.suppress(Exception):
                     conn.close()
+                with self._count_lock:
+                    self._open_count -= 1
+        finally:
+            self._slots.release()

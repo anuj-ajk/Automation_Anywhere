@@ -178,6 +178,8 @@ class StagingLoader:
     def load(
         self, session: EsgSession, spec: LoadSpec, raw_csv: Path, work_dir: Path, file_id: str, report_id: str
     ) -> LoadResult:
+        self.log.info("Loading %s into %s (procedures: %s)", raw_csv.name, spec.staging_table,
+                      ", ".join(p.name for p in spec.procs))
         cleaned = clean_csv(raw_csv, work_dir / f"Cleaned_{raw_csv.stem}.csv", file_id=file_id)
         self.log.debug("Cleaned %s: %d rows, %d blanks filled", raw_csv.name, cleaned.rows_processed,
                        cleaned.blanks_filled)
@@ -186,12 +188,14 @@ class StagingLoader:
             return LoadResult(0, True, [])
 
         columns, rows = self._read_mapped(cleaned.output_file, spec)
+        self.log.info("%d data row(s), %d mapped column(s)", len(rows), len(columns))
         args = {"file_id": file_id, "report_id": report_id, "created_by": self.created_by}
 
         # Staging tables and the load procedures are shared by every batch, so by default only one
         # worker (across all processes, via a MySQL named lock) loads a given staging table at a time.
         lock_name = f"secr_load_{spec.staging_table}"
         if self.serialize:
+            self.log.debug("Waiting for staging lock %s (only one load per staging table at a time)", lock_name)
             with session.named_lock(lock_name, self.lock_timeout):
                 return self._insert_and_call(session, spec, columns, rows, args)
         return self._insert_and_call(session, spec, columns, rows, args)
@@ -206,6 +210,7 @@ class StagingLoader:
             status = str(outs[1] or "") if proc.has_status and len(outs) > 1 else ""
             self.log.info("%s -> message=%r%s", proc.name, message, f", status={status!r}" if status else "")
             if not _proc_succeeded(message, status, proc.has_status):
+                self.log.error("%s reported a failure: %s", proc.name, message or status or "no message returned")
                 raise LoadError(f"Error in {proc.name}: {message or status or 'no message returned'}")
             messages.append(f"{proc.name}: {message}")
         return LoadResult(inserted, False, messages)
@@ -214,6 +219,7 @@ class StagingLoader:
         with cleaned_csv.open("r", encoding="utf-8", newline="") as fh:
             reader = csv.reader(fh)
             header = [h.strip() for h in next(reader)]
+            self.log.debug("%s header: %s", cleaned_csv.name, header)
             index = {name.lower(): i for i, name in enumerate(header)}
             missing = [c for c, _ in spec.columns if c.lower() not in index]
             if missing:

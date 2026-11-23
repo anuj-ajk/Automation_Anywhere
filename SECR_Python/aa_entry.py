@@ -80,6 +80,16 @@ def _apply_secrets(secrets) -> None:
         os.environ[str(key)] = str(val)
 
 
+def _secret_keys(secrets) -> str:
+    """Names of the secrets passed in (never the values)."""
+    try:
+        if isinstance(secrets, str):
+            secrets = json.loads(secrets)
+        return ", ".join(sorted(str(k) for k in dict(secrets or {})))
+    except Exception:
+        return "unreadable"
+
+
 def run_batches(args) -> str:
     """Process the given batches in parallel. ``args`` is the AA dictionary (or a JSON string)."""
     try:
@@ -100,7 +110,15 @@ def run_batches(args) -> str:
         cfg = load_config(config_path)
         apply_overrides(cfg, _as_int(args.get("max_batches")), _as_int(args.get("max_files")))
         processor, _db, notifier, log_file = build(cfg, debug=_as_bool(args.get("debug", "false")))
+
+        from secr.logging_setup import get_logger
+
+        log = get_logger("secr.aa_entry")
+        log.info("Called from Automation Anywhere: config %s, batch ids %s, max_batches=%s, max_files=%s, "
+                 "debug=%s, secrets passed: %s", config_path, ", ".join(batch_ids), args.get("max_batches"),
+                 args.get("max_files"), args.get("debug"), _secret_keys(args.get("secrets")) or "none")
         results, code, summary = execute(processor, notifier, batch_ids, cfg.run.max_parallel_batches)
+        log.info("Returning status %s to Automation Anywhere", _STATUS_BY_CODE.get(code, "FAILED"))
 
         return _result(
             _STATUS_BY_CODE.get(code, "FAILED"), code, summary, log_file,
@@ -122,6 +140,9 @@ def run_batches(args) -> str:
             ],
         )
     except Exception as exc:  # AA only sees the returned text, so never let an exception escape
+        import logging
+
+        logging.getLogger("secr.aa_entry").exception("run_batches failed")
         return _result("FAILED", 1, f"{type(exc).__name__}: {exc}", trace=traceback.format_exc())
 
 

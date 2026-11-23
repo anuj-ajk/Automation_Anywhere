@@ -83,6 +83,27 @@ Notes:
   AA work item / bot a long enough timeout.
 * Run one `run_batches` call per bot run; it already processes the batches in parallel.
 
+## Logging
+
+Each run writes one log file to `run.log_dir` (its path is in the AA output as `log_file`), and the same lines go to the console.
+Every line shows the run, the thread, the module and the batch/file it belongs to:
+
+```
+2026-11-23 16:29:24,525 INFO    [run ad5f69933743] [b41-file_1] [secr.normalize] [batch 41][file 3] Step 1/4 download from S3 - started
+```
+
+* **Filter one batch or one file:** search for `[batch 41]` or `[file 3]`. This also finds the DB, S3, Odin and CSV lines for that file.
+* **Find slow steps:** each step logs `- started` and `- done in Ns` (or `- FAILED after Ns: error`). The steps are: read batch, Normalize steps 1–4, Daisy export/load, each stored procedure and each bulk insert.
+* **Watch progress:** the batch pool logs `Progress: x/y batch(es) done`. While the AI is working, a `Still waiting for ...` line is logged every 10 polls.
+* **Settings and secrets:** the effective settings are logged at the start of the run. Secrets are listed only as `set` / `NOT SET`, never with their values. Signed download links are logged without their query string.
+* **Debug level** (`--debug` / `debug: true`) adds:
+  * every SQL statement, with its time and row count;
+  * every Odin HTTP call and every poll;
+  * DB locks and connection use;
+  * CSV headers and clean-up counts.
+
+  SQL that takes more than 5 s is logged as a warning at any level.
+
 ## How the parallel processing works
 
 ```

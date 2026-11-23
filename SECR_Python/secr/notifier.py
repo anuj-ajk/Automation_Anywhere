@@ -14,6 +14,7 @@ class Notifier:
 
     def send(self, subject: str, body: str) -> None:
         if not self.cfg.enabled or not self.cfg.to_addresses:
+            self.log.debug("E-mail '%s' not sent (notifications disabled)", subject)
             return
         msg = EmailMessage()
         msg["Subject"] = subject
@@ -29,5 +30,7 @@ class Notifier:
                 if self.cfg.user:
                     smtp.login(self.cfg.user, self.cfg.password)
                 smtp.send_message(msg)
+            self.log.info("E-mail '%s' sent to %d recipient(s)", subject,
+                          len(self.cfg.to_addresses) + len(self.cfg.cc_addresses or []))
         except Exception as exc:  # a failed e-mail must never fail the batch
             self.log.error("Could not send notification '%s': %s", subject, exc)

@@ -29,8 +29,11 @@ def run_batches(
     A batch that raises is reported as FAILED; it never stops the other batches.
     Results are returned in the order the ids were given.
     """
-    log = get_logger()
-    ids = unique_ids(batch_ids)
+    log = get_logger(__name__)
+    given = list(batch_ids)
+    ids = unique_ids(given)
+    if len(ids) != len(given):
+        log.info("Removed %d duplicate / empty batch id(s)", len(given) - len(ids))
     if not ids:
         log.warning("No batches to process")
         return []
@@ -49,7 +52,8 @@ def run_batches(
                 log.exception("Batch %s crashed", b)
                 results[b] = BatchResult(b, "FAILED", error=str(exc))
             done = len(results)
-            log.info("Progress: %d/%d batch(es) done (batch %s: %s)", done, len(ids), b, results[b].state)
+            log.info("Progress: %d/%d batch(es) done (batch %s: %s, %.1fs); %d still running or queued",
+                     done, len(ids), b, results[b].state, results[b].seconds, len(ids) - done)
 
     log.info("All batches done in %.1fs", time.monotonic() - started)
     return [results[b] for b in ids]

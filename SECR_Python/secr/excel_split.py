@@ -28,6 +28,11 @@ def _safe_name(name: str) -> str:
     return "".join(c for c in name if c.isalnum() or c in (" ", "_", "-")).rstrip() or "Sheet"
 
 
+from .logging_setup import module_logger  # noqa: E402
+
+LOG = module_logger(__name__)
+
+
 def split_workbook(source_file: Path, output_dir: Path, prefix: str = "Sheet_") -> list[SheetResult]:
     """Return one result per data sheet.
 
@@ -35,6 +40,7 @@ def split_workbook(source_file: Path, output_dir: Path, prefix: str = "Sheet_") 
     Raises SplitError when the workbook cannot be opened or no sheet could be split.
     """
     if source_file.suffix.lower() not in SPLITTABLE_EXTENSIONS:
+        LOG.info("%s is not an Excel workbook; sent to the AI as it is", source_file.name)
         return [SheetResult(sheet_name=source_file.name, file_path=source_file)]
 
     from openpyxl import Workbook, load_workbook
@@ -44,18 +50,23 @@ def split_workbook(source_file: Path, output_dir: Path, prefix: str = "Sheet_") 
         source_wb = load_workbook(source_file, read_only=True, data_only=True, keep_links=False)
     except Exception as exc:
         raise SplitError(f"Cannot open workbook {source_file.name}: {exc}") from exc
+    LOG.info("Workbook %s has %d sheet(s): %s", source_file.name, len(source_wb.sheetnames),
+             ", ".join(source_wb.sheetnames))
 
     results: list[SheetResult] = []
     used_names: set[str] = set()
     try:
         for sheet_name in source_wb.sheetnames:
             if any(k in sheet_name.lower() for k in SKIP_SHEET_KEYWORDS):
+                LOG.info("Sheet '%s' skipped (instruction / lookup sheet)", sheet_name)
                 continue
             try:
                 target_wb = Workbook(write_only=True)
                 target_sheet = target_wb.create_sheet(title=sheet_name[:31])
+                n_rows = 0
                 for row in source_wb[sheet_name].iter_rows(values_only=True):
                     target_sheet.append(row)
+                    n_rows += 1
 
                 base = _safe_name(sheet_name)
                 name, n = base, 1
@@ -67,7 +78,9 @@ def split_workbook(source_file: Path, output_dir: Path, prefix: str = "Sheet_") 
                 out = output_dir / f"{prefix}{name}.xlsx"
                 target_wb.save(out)
                 results.append(SheetResult(sheet_name=sheet_name, file_path=out))
+                LOG.info("Sheet '%s' -> %s (%d row(s))", sheet_name, out.name, n_rows)
             except Exception as exc:  # one bad sheet does not fail the file
+                LOG.warning("Sheet '%s' could not be split: %s", sheet_name, exc)
                 results.append(SheetResult(sheet_name=sheet_name, file_path=None, error=str(exc)))
     finally:
         source_wb.close()

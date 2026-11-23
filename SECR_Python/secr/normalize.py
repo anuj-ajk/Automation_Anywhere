@@ -22,7 +22,7 @@ from .db import EsgDb
 from .downloader import download_link, filename_from_url
 from .excel_split import split_workbook
 from .loader import NORMALIZED_SPECS, StagingLoader
-from .logging_setup import ContextLogger
+from .logging_setup import ContextLogger, get_logger, log_context, timed_step
 from .models import BatchContext, FileOutcome
 from .storage import S3Storage
 
@@ -50,23 +50,30 @@ class NormalizeFlow:
     def run_file(self, ctx: BatchContext, row: dict[str, Any], log: ContextLogger) -> FileOutcome:
         file_id = str(row["FileId"])
         file_name = str(row.get("FileName") or f"file_{file_id}")
-        log = log.child(file_id=file_id)
+        log = get_logger(__name__, batch_id=ctx.batch_id, file_id=file_id)
         work = ctx.work_dir / f"file_{file_id}"
-        try:
-            return self._run(ctx, row, file_id, file_name, work, log)
-        except Exception as exc:  # anything unexpected: fail this file only, never the batch
-            log.exception("Unexpected error")
-            self._status(file_id, st.FAILED, f"Unexpected error: {exc}", log=log)
-            return FileOutcome(file_id, file_name, "normalize", st.FAILED, str(exc))
+        started = time.monotonic()
+        with log_context(batch_id=ctx.batch_id, file_id=file_id):
+            log.info("Normalize started for '%s' (category selected: %s)", file_name, row.get("CategorySelected"))
+            try:
+                outcome = self._run(ctx, row, file_id, file_name, work, log)
+            except Exception as exc:  # anything unexpected: fail this file only, never the batch
+                log.exception("Unexpected error")
+                self._status(file_id, st.FAILED, f"Unexpected error: {exc}", log=log)
+                outcome = FileOutcome(file_id, file_name, "normalize", st.FAILED, str(exc))
+            log.info("Normalize finished for '%s': %s in %.1fs", file_name, outcome.status,
+                     time.monotonic() - started)
+            return outcome
 
     # ------------------------------------------------------------------ steps
     def _run(self, ctx, row, file_id, file_name, work: Path, log) -> FileOutcome:
         # 1. Download from S3
         self._status(file_id, st.PARSING, log=log)
         try:
-            local = self.storage.download(str(row.get("StoragePath") or ""),
-                                          work / "source" / Path(file_name).name)
-            log.info("Downloaded %s", row.get("StoragePath"))
+            with timed_step(log, "Step 1/4 download from S3"):
+                local = self.storage.download(str(row.get("StoragePath") or ""),
+                                              work / "source" / Path(file_name).name)
+            log.info("Downloaded %s (%d bytes)", row.get("StoragePath"), local.stat().st_size)
         except Exception as exc:
             msg = f"Unable to download the file {row.get('StoragePath')} from S3: {exc}"
             log.error(msg)
@@ -75,7 +82,8 @@ class NormalizeFlow:
 
         # 2. Split into one workbook per sheet (non-Excel files pass through)
         try:
-            split = split_workbook(local, work / "sheets")
+            with timed_step(log, "Step 2/4 split workbook into sheets"):
+                split = split_workbook(local, work / "sheets")
         except Exception as exc:
             msg = f"Unable to split the file: {exc}"
             log.error(msg)
@@ -85,21 +93,30 @@ class NormalizeFlow:
             log.warning("Sheet '%s' could not be split: %s", bad.sheet_name, bad.error)
         sheets = [_Sheet(s.sheet_name, s.file_path) for s in split if s.ok]
         self._status(file_id, st.PARSED, log=log)
-        log.info("%d sheet(s) to normalize", len(sheets))
+        log.info("%d sheet(s) to normalize: %s", len(sheets), ", ".join(s.name for s in sheets))
 
         # 3. AI normalization: submit every sheet, then poll all chats together
-        self._submit(file_id, sheets, log)
-        self._poll(sheets, log)
+        with timed_step(log, "Step 3/4 AI normalization (submit + poll)"):
+            self._submit(file_id, sheets, log)
+            self._poll(sheets, log)
         ai_ok = [s for s in sheets if s.links]
         ai_failed = [s for s in sheets if not s.links]
         ai_errors = "".join(f" {s.name}: {s.error or 'no CSV link returned'}." for s in ai_failed)
         ai_status = st.roll_up(len(ai_ok), len(ai_failed), all_ok=st.NORMALIZATION_COMPLETED,
                                none_ok=st.FAILED_WHILE_NORMALIZATION)
         self._status(file_id, ai_status, ai_errors or None, append=True, log=log)
+        log.info("AI result: %d sheet(s) OK, %d failed -> %s", len(ai_ok), len(ai_failed), ai_status)
+        for bad in ai_failed:
+            log.warning("AI failed for sheet '%s': %s", bad.name, bad.error or "no CSV link returned")
         for key in sorted({k for s in ai_ok for k in s.links}):
             self._db(lambda s, k=key: s.add_recognized_category(file_id, CATEGORY_DISPLAY_NAMES[k]), log)
         if not ai_ok:
+            log.warning("No sheet was normalized; nothing to load")
             return FileOutcome(file_id, file_name, "normalize", ai_status, ai_errors.strip())
+
+        log.info("Step 4/4 download and load %d normalized CSV(s) - started",
+                 sum(len(s.links) for s in ai_ok))
+        step_started = time.monotonic()
 
         # 4. Download each normalized CSV and load it
         loaded, load_failed, load_errors = 0, 0, []
@@ -107,7 +124,9 @@ class NormalizeFlow:
             for key, link in sheet.links.items():
                 try:
                     csv_path = work / "normalized" / f"{idx:02d}_{key}_{filename_from_url(link)}"
+                    log.info("Downloading %s CSV for sheet '%s': %s", key, sheet.name, filename_from_url(link))
                     download_link(link, csv_path)
+                    log.debug("Saved %s (%d bytes)", csv_path, csv_path.stat().st_size)
                     with self.db.session() as s:
                         result = self.loader.load(s, NORMALIZED_SPECS[key], csv_path, work / "cleaned",
                                                   file_id, ctx.report_id)
@@ -117,6 +136,9 @@ class NormalizeFlow:
                     load_failed += 1
                     load_errors.append(f" Error: {exc} while processing {sheet.name} ({key}).")
                     log.error("Load failed for %s (%s): %s", sheet.name, key, exc)
+
+        log.info("Step 4/4 download and load - done in %.1fs (%d loaded, %d failed)",
+                 time.monotonic() - step_started, loaded, load_failed)
 
         # Unlike the bot, a sheet that already failed in the AI step keeps the file out of COMPLETED.
         final = st.roll_up(loaded, load_failed + len(ai_failed), all_ok=st.COMPLETED, none_ok=st.FAILED)
@@ -129,6 +151,7 @@ class NormalizeFlow:
         marked = False
         for sheet in sheets:
             try:
+                log.info("Submitting sheet '%s' (%s) to the AI agent", sheet.name, sheet.path.name)
                 sheet.chat_id = self.ai.create_chat(sheet.path.name)
                 accepted = self.ai.send_file(sheet.chat_id, sheet.path)
                 if not accepted:
@@ -144,21 +167,35 @@ class NormalizeFlow:
 
     def _poll(self, sheets: list[_Sheet], log) -> None:
         pending = [s for s in sheets if s.chat_id]
+        if not pending:
+            log.warning("No sheet was submitted; skipping polling")
+            return
+        log.info("Polling %d chat(s) every %ss, up to %d attempts", len(pending), self.poll_interval,
+                 self.max_poll_attempts)
         for attempt in range(1, self.max_poll_attempts + 1):
+            log.debug("Poll attempt %d/%d, waiting for: %s", attempt, self.max_poll_attempts,
+                      ", ".join(s.name for s in pending))
             for sheet in list(pending):
                 try:
                     links = self.ai.get_csv_links(sheet.chat_id)
                 except Exception as exc:  # transient HTTP errors: try again next round
                     log.warning("Poll %d for %s failed: %s", attempt, sheet.name, exc)
                     continue
+                if links is None:
+                    log.debug("Sheet '%s' (chat %s): agent still working", sheet.name, sheet.chat_id)
+                    continue
                 if links is not None:
                     sheet.links = links
                     if not links:
                         sheet.error = "agent answered without any CSV link"
                     pending.remove(sheet)
-                    log.info("Sheet %s normalized: %s", sheet.name, ", ".join(links) or "no categories")
+                    log.info("Sheet %s normalized after poll %d: %s", sheet.name, attempt,
+                             ", ".join(links) or "no categories")
             if not pending:
                 return
+            if attempt % 10 == 0:
+                log.info("Still waiting for %d sheet(s) after %d poll(s): %s", len(pending), attempt,
+                         ", ".join(s.name for s in pending))
             if attempt < self.max_poll_attempts:
                 time.sleep(self.poll_interval)
         for sheet in pending:
@@ -167,6 +204,8 @@ class NormalizeFlow:
 
     # ------------------------------------------------------------------ db helpers
     def _status(self, file_id, code, description=None, *, append=False, log=None) -> None:
+        if log:
+            log.info("Status -> %s%s", code, f" ({description.strip()})" if description else "")
         self._db(lambda s: s.set_file_status(file_id, code, description, append=append), log)
 
     def _db(self, action, log) -> None:

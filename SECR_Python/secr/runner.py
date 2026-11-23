@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 import logging
+import os
+import platform
+import sys
 from typing import Iterable
 
 from .batch import BatchProcessor
@@ -30,7 +33,8 @@ def apply_overrides(cfg: AppConfig, max_batches: int | None = None, max_files: i
 def build(cfg: AppConfig, debug: bool = False) -> tuple[BatchProcessor, EsgDb, Notifier, str]:
     """Set up logging and all services. Returns (processor, db, notifier, log_file)."""
     _, _, log_file = setup_logging(cfg.run.log_dir, logging.DEBUG if debug else logging.INFO)
-    log = get_logger()
+    log = get_logger(__name__)
+    _log_settings(cfg, log)
     notifier = Notifier(cfg.notify, log)
     db = EsgDb(cfg.db, cfg.run.max_db_connections)
     loader = StagingLoader(cfg.run.created_by, cfg.run.serialize_staging_loads,
@@ -53,20 +57,41 @@ def build(cfg: AppConfig, debug: bool = False) -> tuple[BatchProcessor, EsgDb, N
     except Exception as exc:
         log.warning("Daisy flow disabled: %s", exc)
 
+    log.info("Flows enabled: Normalize=%s, Daisy=%s", normalize is not None, daisy is not None)
     processor = BatchProcessor(db, normalize, daisy, cfg.run.work_dir,
                                cfg.run.max_parallel_files_per_batch, cfg.run.keep_work_files, notifier)
     return processor, db, notifier, log_file
 
 
+_SECRET_VARS = ("SECR_DB_USER", "SECR_DB_PASSWORD", "SECR_S3_BUCKET", "AWS_ACCESS_KEY_ID",
+                "AWS_SECRET_ACCESS_KEY", "SECR_ODIN_API_KEY", "SECR_ODIN_API_SECRET",
+                "SECR_EM_CONNECTION_STRING", "SECR_NAV_CONNECTION_STRING", "SECR_SMTP_USER", "SECR_SMTP_PASSWORD")
+
+
+def _log_settings(cfg: AppConfig, log) -> None:
+    """Write the effective settings at the start of the log. Secret values are never logged, only set/not set."""
+    r = cfg.run
+    log.info("Python %s on %s (pid %d)", sys.version.split()[0], platform.node(), os.getpid())
+    log.info("Parallelism: %d batch(es) x %d file(s) per batch, max %d DB connection(s)",
+             r.max_parallel_batches, r.max_parallel_files_per_batch, r.max_db_connections)
+    log.info("Work folder %s (keep files: %s), serialize staging loads: %s, created by: %s",
+             r.work_dir, r.keep_work_files, r.serialize_staging_loads, r.created_by)
+    log.info("Odin polling: every %ss, up to %d attempts; source environment: %s",
+             cfg.odin.poll_interval_seconds, cfg.odin.max_poll_attempts, cfg.sources.environment)
+    log.info("Secrets: %s", ", ".join(f"{v}={'set' if os.environ.get(v) else 'NOT SET'}" for v in _SECRET_VARS))
+
+
 def execute(processor: BatchProcessor, notifier: Notifier, batch_ids: Iterable, max_parallel_batches: int
             ) -> tuple[list[BatchResult], int, str]:
     """Run the batches, send the start/end e-mails. Returns (results, exit code, summary text)."""
-    log = get_logger()
+    log = get_logger(__name__)
     ids = [str(b) for b in batch_ids]
+    log.info("Run started for %d batch id(s): %s", len(ids), ", ".join(ids) or "none")
     notifier.send("SECR normalizer started", f"Batches: {', '.join(ids) or 'none'}")
     results = run_batches(ids, processor.process, max_parallel_batches)
     summary = summarize(results)
     log.info("Summary\n%s", summary)
     code = exit_code(results)
+    log.info("Run finished with exit code %d (0 = all OK, 2 = some files failed, 1 = a batch failed)", code)
     notifier.send(f"SECR normalizer {'completed' if code == 0 else 'finished with errors'}", summary)
     return results, code, summary
