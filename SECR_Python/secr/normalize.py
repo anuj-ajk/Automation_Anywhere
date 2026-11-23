@@ -24,6 +24,7 @@ from .excel_split import split_workbook
 from .loader import NORMALIZED_SPECS, StagingLoader
 from .logging_setup import ContextLogger, get_logger, log_context, timed_step
 from .models import BatchContext, FileOutcome
+from .paths import short_name
 from .storage import S3Storage
 
 
@@ -51,7 +52,7 @@ class NormalizeFlow:
         file_id = str(row["FileId"])
         file_name = str(row.get("FileName") or f"file_{file_id}")
         log = get_logger(__name__, batch_id=ctx.batch_id, file_id=file_id)
-        work = ctx.work_dir / f"file_{file_id}"
+        work = ctx.work_dir / f"f{file_id}"
         started = time.monotonic()
         with log_context(batch_id=ctx.batch_id, file_id=file_id):
             log.info("Normalize started for '%s' (category selected: %s)", file_name, row.get("CategorySelected"))
@@ -72,7 +73,7 @@ class NormalizeFlow:
         try:
             with timed_step(log, "Step 1/4 download from S3"):
                 local = self.storage.download(str(row.get("StoragePath") or ""),
-                                              work / "source" / Path(file_name).name)
+                                              work / "src" / short_name(Path(file_name).name))
             log.info("Downloaded %s (%d bytes)", row.get("StoragePath"), local.stat().st_size)
         except Exception as exc:
             msg = f"Unable to download the file {row.get('StoragePath')} from S3: {exc}"
@@ -123,7 +124,7 @@ class NormalizeFlow:
         for idx, sheet in enumerate(ai_ok, 1):
             for key, link in sheet.links.items():
                 try:
-                    csv_path = work / "normalized" / f"{idx:02d}_{key}_{filename_from_url(link)}"
+                    csv_path = work / "csv" / f"{idx:02d}_{key}.csv"
                     log.info("Downloading %s CSV for sheet '%s': %s", key, sheet.name, filename_from_url(link))
                     download_link(link, csv_path)
                     log.debug("Saved %s (%d bytes)", csv_path, csv_path.stat().st_size)

@@ -7,6 +7,7 @@ from urllib.parse import unquote, urlparse
 
 from .config import S3Config
 from .logging_setup import module_logger
+from .paths import check_path_length
 
 LOG = module_logger(__name__)
 
@@ -38,6 +39,7 @@ class S3Storage:
         bucket, key = self._split(storage_path)
         LOG.info("Downloading s3://%s/%s", bucket, key)
         destination.parent.mkdir(parents=True, exist_ok=True)
+        check_path_length(destination, extra=9)  # boto3 first writes <name>.<8 random chars>, then renames
         started = time.monotonic()
         try:
             self._client.download_file(bucket, key, str(destination))

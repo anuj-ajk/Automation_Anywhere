@@ -353,3 +353,26 @@ def test_batch_status_partial_failure_with_fallback(tmp_path):
     db.batch_status.clear()
     processor.process("40")
     assert db.batch_status["40"] == "COMPLETE"
+
+
+def test_local_paths_stay_under_windows_limit(monkeypatch):
+    import pytest
+    from pathlib import PureWindowsPath
+    from secr import paths
+
+    name = "Inspired ESG_SECR_DSF_Acorn Mobility_FY25_V1_20261103_161448552.xlsx"
+    short = paths.short_name(name)
+    assert short == "Inspired ESG_SECR_DSF_Acorn Mobility_FY2.xlsx" and len(short) <= 45
+    assert paths.short_name('a<b|c?.CSV') == "a_b_c_.csv"
+
+    # The share from the failing run: old layout was 261 characters with boto3's temp suffix.
+    share = (r"\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes"
+             r"\Environmental Social and Governance\Automation_Anywhere\SECR_Python\work")
+    old = PureWindowsPath(share, "batch_52_20261123_160815_690616", "file_77", "source", name)
+    new = PureWindowsPath(share, "b52_160815690616", "f77", "src", short)
+    assert len(str(old)) + 9 > paths.WINDOWS_MAX_PATH >= len(str(new)) + 9
+
+    monkeypatch.setattr(paths.os, "name", "nt")
+    with pytest.raises(OSError, match="over the Windows limit"):
+        paths.check_path_length(Path("C:/" + "x" * 300))
+    paths.check_path_length(Path("C:/short.xlsx"), extra=9)

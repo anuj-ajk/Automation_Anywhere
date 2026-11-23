@@ -17,6 +17,16 @@ copy config.example.yaml config.yaml   # then edit config.yaml
 
 You also need the Microsoft ODBC Driver for SQL Server for the Energy Manager / NAV connections.
 
+**Work folder:** set `run.work_dir` to a short **local** folder, for example `%TEMP%\SECR_work` or `C:\SECR_work`.
+Environment variables are expanded.
+
+* A work folder on a network share (`\\server\...`) is slower.
+* It also pushes downloaded files over the Windows 260-character path limit, which shows up as
+  `[Errno 2] No such file or directory` during the S3 download.
+* Local file names are already shortened (`b<batch>_<time>\f<file>\src\<first 40 characters of the name>.xlsx`).
+  A path that is still too long fails with a clear "over the Windows limit" message.
+* The log warns when `work_dir` is on a network share.
+
 ### Secrets (environment variables only)
 
 | Variable | Replaces (AA Credential Vault) |

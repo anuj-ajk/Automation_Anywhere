@@ -126,7 +126,7 @@ def load_config(path: str | Path) -> AppConfig:
     base_dir = path.parent
 
     def resolve(p: str | Path) -> Path:
-        p = Path(p)
+        p = Path(os.path.expanduser(os.path.expandvars(str(p))))  # allows e.g. %TEMP%\SECR_work
         return p if p.is_absolute() else (base_dir / p).resolve()
 
     db_raw = _section(raw, "esg_db")

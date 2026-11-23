@@ -52,7 +52,7 @@ class DaisyFlow:
             log.info("%s load from %s for %s, %s to %s", category, source_type, ctx.client_name,
                      ctx.report_start, ctx.report_end)
 
-            work = ctx.work_dir / f"daisy_{file_id}"
+            work = ctx.work_dir / f"d{file_id}"
             csv_path = work / (f"{retrieve_spec.csv_prefix}_FileID{file_id}_ReportID{ctx.report_id}_"
                                f"{datetime.now():%Y%m%d_%H%M%S}.csv")
             with timed_step(log, f"Export {category} from {source_type}"):

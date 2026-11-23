@@ -57,7 +57,8 @@ class BatchProcessor:
         log = get_logger(__name__, batch_id=batch_id)
         started = time.monotonic()
         log.info("Batch started")
-        work_dir = self.work_root / f"batch_{batch_id}_{datetime.now():%Y%m%d_%H%M%S_%f}"
+        # Short folder names: the whole local path must stay under the Windows 260-character limit.
+        work_dir = self.work_root / f"b{batch_id}_{datetime.now():%H%M%S%f}"
         lock_name = f"secr_batch_{batch_id}"
 
         # This connection is held for the whole batch: it owns a MySQL named lock so the same

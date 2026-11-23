@@ -5,7 +5,7 @@ run:
   max_parallel_batches: 10          # batches processed at the same time
   max_parallel_files_per_batch: 5   # files of ONE batch processed at the same time
   max_db_connections: 60            # must be >= batches * (files_per_batch + 1)
-  work_dir: ./work                  # per-batch temp folders (deleted after each batch)
+  work_dir: "%TEMP%\\SECR_work"     # local per-batch temp folders (deleted after each batch); keep it short and local
   log_dir: ./logs
   keep_work_files: false            # true = keep downloaded/split/CSV files for debugging
   created_by: ""                    # passed to LoadHHData / CalculateInvoiceData; default = OS user

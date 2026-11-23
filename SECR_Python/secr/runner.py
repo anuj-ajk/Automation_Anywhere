@@ -82,6 +82,9 @@ def _log_settings(cfg: AppConfig, log) -> None:
              r.max_parallel_batches, r.max_parallel_files_per_batch, r.max_db_connections)
     log.info("Work folder %s (keep files: %s), serialize staging loads: %s, created by: %s",
              r.work_dir, r.keep_work_files, r.serialize_staging_loads, r.created_by)
+    if str(r.work_dir).startswith("\\\\"):
+        log.warning("run.work_dir %s is on a network share: a short local folder (e.g. %%TEMP%%\\SECR_work) "
+                    "is faster and keeps paths under the Windows 260-character limit", r.work_dir)
     log.info("Rerun: skip files already in %s: %s; clear earlier staging rows before load: %s",
              "/".join(r.completed_statuses), r.skip_completed_files, r.clear_staging_before_load)
     log.info("Odin polling: every %ss, up to %d attempts; source environment: %s",
