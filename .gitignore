@@ -26,6 +26,13 @@ credentials.*
 **/Input/
 __pycache__/
 *.pyc
+.venv/
+.pytest_cache/
+
+# --- SECR Python port: local config and run folders ---
+SECR_Python/config.yaml
+SECR_Python/work/
+SECR_Python/logs/
 
 # --- OS / editor ---
 Thumbs.db

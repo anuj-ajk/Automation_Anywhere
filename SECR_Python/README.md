@@ -1,0 +1,158 @@
+# SECR Normalizer – Python port
+
+Python version of the Automation Anywhere process **MT Normalizer Uploaded Data**
+(`AAPackage/.../Streamlined Energy & Carbon Reporting/Tasks`), including
+`MainTask_Normalize_RawData`, `MainTask_Retrive_Data_Daisy_EM` and all their sub tasks.
+It processes **up to 10 batches at the same time**, and each batch can have any number of files.
+
+## Setup
+
+```powershell
+cd SECR_Python
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+copy config.example.yaml config.yaml   # then edit config.yaml
+```
+
+You also need the Microsoft ODBC Driver for SQL Server for the Energy Manager / NAV connections.
+
+### Secrets (environment variables only)
+
+| Variable | Replaces (AA Credential Vault) |
+|---|---|
+| `SECR_DB_USER`, `SECR_DB_PASSWORD` | ESG Locker / ESGDB MySQL |
+| `SECR_S3_BUCKET`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | ESG Locker / AWS_S3 (region is in `config.yaml`) |
+| `SECR_ODIN_API_KEY`, `SECR_ODIN_API_SECRET` | ESG Locker / AA ESG EKB Credential |
+| `SECR_EM_CONNECTION_STRING` | global value `@sql_JupiterConnection` (ODBC string) |
+| `SECR_NAV_CONNECTION_STRING` | ESG Locker / NAV_ESGDB_ConnectionString (ODBC string) |
+| `SECR_SMTP_USER`, `SECR_SMTP_PASSWORD` | optional, for notification e-mails |
+
+## Running
+
+```powershell
+python -m secr --config config.yaml run --batch-ids 40 41 42 43
+python -m secr --config config.yaml run --batch-file batches.txt
+python -m secr --config config.yaml run --pending            # uses run.pending_batches_query
+python -m secr --config config.yaml run --batch-ids 40 --max-batches 1 --max-files 1 --debug
+```
+
+Exit code: `0` all files OK, `2` some files failed (batch still completed), `1` at least one batch failed.
+A summary table is printed and written to the log file in `run.log_dir`.
+
+## Calling it from Automation Anywhere
+
+Use **`aa_entry.py`**, function **`run_batches`**, with a Dictionary argument.
+
+| AA action | Settings |
+|---|---|
+| Python script: **Open** | Python file = `D:\Automation_Anywhere\SECR_Python\aa_entry.py`, session `SECR`, Python version 3 |
+| Dictionary: **Put** (×n) | build `dPythonArgs` (keys below) |
+| Python script: **Execute function** | session `SECR`, function `run_batches`, argument `$dPythonArgs$`, output to `sPythonOutput` |
+| Python script: **Close** | session `SECR` |
+| JSON: Start session / Get node value | read `$.status`, `$.message`, `$.batches[*]` from `sPythonOutput` |
+
+Dictionary keys (all values may be text):
+
+| Key | Required | Example | Meaning |
+|---|---|---|---|
+| `batch_ids` | yes | `40,41,42` | batch ids, separated by comma, semicolon or space (a list works too) |
+| `config_path` | no | `D:\Automation_Anywhere\SECR_Python\config.yaml` | default: `config.yaml` next to `aa_entry.py` |
+| `max_batches` | no | `10` | batches processed at the same time |
+| `max_files` | no | `4` | files of one batch processed at the same time |
+| `debug` | no | `true` | verbose log |
+| `secrets` | no | dictionary | `SECR_*` / `AWS_*` values, if the bot takes them from the Credential Vault instead of the machine's environment variables |
+
+The function never throws; it always returns JSON:
+
+```json
+{"status": "PARTIAL", "exit_code": 2, "message": "<summary table>", "log_file": "...\\logs\\SECR_....log",
+ "batches": [{"batch_id": "40", "state": "COMPLETED_WITH_FILE_ERRORS", "files": 3, "files_ok": 2,
+              "seconds": 512.4, "error": "",
+              "file_results": [{"file_id": "77", "file_name": "data.xlsx", "flow": "normalize",
+                                "status": "FAILED", "detail": "..."}]}]}
+```
+
+`status` is `SUCCESS` (every file OK), `PARTIAL` (some files failed, batches completed) or `FAILED`
+(a batch failed, or bad input / config — see `message`). In the bot, throw an error when
+`status = FAILED` so the work item is marked failed.
+
+Notes:
+* The bot runner needs Python 3.10+ with `requirements.txt` installed **in the interpreter AA uses**.
+* The call blocks until every batch is finished (AI polling can take ~10 min per file), so give the
+  AA work item / bot a long enough timeout.
+* Run one `run_batches` call per bot run; it already processes the batches in parallel.
+
+## How the parallel processing works
+
+```
+run_batches  ── ThreadPoolExecutor(max_parallel_batches = 10)
+   └─ BatchProcessor.process(batch)          one thread per running batch
+        ├─ MySQL GET_LOCK('secr_batch_<id>')  same batch never runs twice (any process/machine)
+        ├─ read all files of the batch        0..N rows, uploaded + 'Source: Daisy' mixed
+        └─ ThreadPoolExecutor(max_parallel_files_per_batch = 4)
+              ├─ NormalizeFlow.run_file   S3 → split → Odin submit+poll → download CSV → load
+              └─ DaisyFlow.run_file       Energy Manager / NAV → CSV → load
+```
+
+* **Batches**: at most `max_parallel_batches` (default 10) run at once; when one finishes the next starts.
+* **Files in a batch**: any number. They are queued into the batch's own pool, so a batch with 1 file
+  and a batch with 50 files both work; at most `max_parallel_files_per_batch` of them run at once.
+* **Per-file pipeline**: the bot ran each stage for every file before the next stage and polled the AI
+  one chat at a time (up to ~10 min each). Here each file moves through all stages on its own, and all
+  sheets of a file are polled together, so one slow AI answer no longer blocks the rest of the batch.
+* **Normalize and Daisy** files of the same batch run side by side (the bot ran them one after the other).
+* **Shared staging tables**: `Staging_*` tables and the `Load*` procedures are shared by all batches, so
+  by default only one load per staging table runs at a time (MySQL named lock, works across processes).
+  If the procedures only touch the rows of their own `FileId`, set `serialize_staging_loads: false`
+  for more speed.
+* **Limits**: total threads ≈ `batches × files_per_batch` (40 by default); DB connections are capped by
+  `max_db_connections`. Lower `max_parallel_files_per_batch` if the Odin API rate-limits you.
+
+## Module map (bot → Python)
+
+| AA bot | Python |
+|---|---|
+| MT Normalizer Uploaded Data | `secr/__main__.py`, `orchestrator.py`, `batch.py` |
+| MainTask_Normalize_RawData | `normalize.py` |
+| AWS S3 File Management | `storage.py` |
+| ST_SplitSheetsAndCreateIndividualExcel | `excel_split.py` |
+| ST_GetAIResponse_ParallelExecution | `ai_client.py` + `NormalizeFlow._submit/_poll` |
+| inline `download_file` script | `downloader.py` |
+| ST_InsertDataIntoDB, `fill_csv_blanks` | `loader.py`, `csv_clean.py` |
+| MainTask_Retrive_Data_Daisy_EM | `daisy.py` |
+| ST_Retrieve_and_Load_{Portfolio,Invoices,HH}Data | `source_systems.py` + `loader.py` (`DAISY_SPECS`) |
+| Framework ErrorHandler / SendEmailNotification | `notifier.py` + logging |
+
+Status codes written to `UploadedFile` and `FileUploadBatch` are the same as in the bots
+(`PARSING`, `PARSED`, `NORMALIZING`, `NORMALIZATION_COMPLETED`, `FAILED_WHILE_NORMALIZATION`,
+`PARTIAL_FAILURE`, `COMPLETED`, `FAILED`, `DATA_NOT_AVAILABLE`, batch `COMPLETE`).
+
+## Behaviour changes compared with the bot
+
+| Area | Bot | Python |
+|---|---|---|
+| Empty batch / batch with only one kind of file | `[0]` row read without a check → main task fails | Handled; empty batch is reported as `NO_FILES` |
+| Daisy errors | `throw` disabled → master reports *Completed* | File is `FAILED` and the batch is reported `COMPLETED_WITH_FILE_ERRORS` (exit code 2) |
+| Data source `Energy Manager` vs `EnergyManager` | UAT/PROD never loaded the query | Matched ignoring spaces and case |
+| Invoices in PROD | read `PROD_PORTFOLIO_EM_QUERY.txt` | reads `PROD_INVOICE_EM_QUERY.txt` (file must be created) |
+| Unknown Daisy category | silently skipped | file set to `FAILED` |
+| Batch `COMPLETE` | set before the Daisy sync ran | set after all files of the batch finished |
+| SQL | values pasted into SQL, quotes escaped by hand | parameterised queries everywhere |
+| AI answered without any CSV link | counted as success | counted as failed for that sheet |
+| A sheet failed in AI but the rest loaded | final status `COMPLETED` | final status `PARTIAL_FAILURE` |
+| CSV missing a mapped column | AA bulk insert fails | column loaded as NULL, warning logged |
+| Category of a normalized CSV | parsed from the file name | taken from the Odin response key |
+| Framework steps (kill apps, archive, folder upload/download) | AA framework bots | not needed: each batch gets its own temp folder that is deleted afterwards |
+
+## Not verified yet
+
+The tests in `tests/` run the whole pipeline with fake DB / S3 / Odin / source systems
+(`python -m pytest tests`). They prove the parallel scheduling, the per-file status flow and the CSV
+and Excel code, but **nothing has been run against the real ESG DB, S3, Odin, Energy Manager or NAV**.
+Before production, run a few known batches with `--max-batches 1 --debug` in DEV and check:
+
+* the stored procedures' OUT parameters come back as expected through PyMySQL `callproc`;
+* the Odin `json_response` shape and the CSV link download;
+* the UAT/PROD query files in `Docs/Config` (they are currently empty) and `PROD_INVOICE_EM_QUERY.txt`;
+* whether the `Load*` procedures are safe to run concurrently (then disable `serialize_staging_loads`).
