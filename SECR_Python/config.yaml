@@ -33,7 +33,7 @@ odin:
   base_uri: https://api.getodin.ai
   project_id: "356316e20dcb48658ce127"            # ProcessConfig Agent_Project_ID
   agent_id: "63622"              # ProcessConfig Agent_ID
-  submit_timeout_seconds: 300
+  submit_timeout_seconds: 600
   request_timeout_seconds: 120
   poll_interval_seconds: 40 # same as the bot
   max_poll_attempts: 15     # same as the bot (~10 minutes per file)
