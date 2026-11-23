@@ -29,6 +29,14 @@ class FakeCursor:
         n_in = len(args) - (2 if name == "CalculateInvoiceData" else 1)
         return tuple(args[:n_in]) + ((message, "OK") if name == "CalculateInvoiceData" else (message,))
 
+    def execute(self, sql, params):  # only the staging row count is executed directly
+        self.conn.counted.append((sql, params))
+        staged = [r for r in self.conn.inserted if r[-1] == params[0]]
+        self._count = 0 if (self.conn.procs_clear_staging and self.conn.calls) else len(staged)
+
+    def fetchone(self):
+        return (self._count,)
+
     def stored_results(self):
         return iter(())
 
@@ -37,8 +45,9 @@ class FakeCursor:
 
 
 class FakeConn:
-    def __init__(self, messages=None):
+    def __init__(self, messages=None, procs_clear_staging=False):
         self.inserted, self.calls, self.messages = [], [], messages or {}
+        self.counted, self.procs_clear_staging = [], procs_clear_staging
         self.sql = ""
         self.committed = self.closed = False
 
@@ -151,3 +160,20 @@ def test_dry_run_reports_missing_columns(tmp_path):
     csv_file.write_text("Company_Level_Metric_Type,Units\nA,1\n", encoding="utf-8")
     out = json.loads(st.insert_data_into_db(_args(tmp_path, ioCSVFilePath=str(csv_file), dry_run=True)))
     assert out["status"] == "FAILED" and "Date_From" in out["sErrorMessage"]
+
+
+def test_staging_counts_show_where_rows_went(tmp_path, monkeypatch):
+    conn = FakeConn(procs_clear_staging=True)
+    _patch_connect(monkeypatch, conn)
+    out = json.loads(st.insert_data_into_db(_args(tmp_path)))
+    assert out["status"] == "SUCCESS", out
+    assert out["nStagingRowsAfterInsert"] == 2 and out["nStagingRowsAfterProcs"] == 0
+    assert "`esgdb`.`Staging_Portfolio` WHERE FileId = %s" in conn.counted[0][0] and conn.counted[0][1] == ("77",)
+    log = Path(out["log_file"]).read_text(encoding="utf-8")
+    assert "moved/removed the staging rows" in log
+
+
+def test_dry_run_is_clearly_marked(tmp_path):
+    out = json.loads(st.insert_data_into_db(_args(tmp_path, dry_run=True)))
+    assert out["status"] == "DRY_RUN" and "nothing was written" in out["sBotComments"]
+    assert "DRY RUN - NOTHING IS WRITTEN" in Path(out["log_file"]).read_text(encoding="utf-8")

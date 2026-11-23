@@ -383,6 +383,20 @@ def batch_insert(conn, database: str, table: str, csv_path: str,
     return inserted
 
 
+def count_staging_rows(conn, database: str, table: str, file_id: str):
+    """Rows of this FileId in the staging table (diagnostic only; returns None if it cannot be read)."""
+    cur = conn.cursor()
+    try:
+        cur.execute(f"SELECT COUNT(*) FROM `{database}`.`{table}` WHERE FileId = %s", (file_id,))
+        row = cur.fetchone()
+        return int(row[0]) if row else 0
+    except Exception as exc:
+        log.warning("Could not count rows in %s.%s: %s", database, table, exc)
+        return None
+    finally:
+        cur.close()
+
+
 def call_proc(conn, database: str, proc: ProcCall, values: dict[str, str]) -> dict[str, str]:
     """Call a stored procedure with VARCHAR IN params and return its OUT params."""
     args = [values[p] for p in proc.inputs] + [None] * len(proc.outputs)
@@ -435,6 +449,7 @@ def run(csv_path: str, input_folder: str, file_id: str, report_id: str,
 
     outputs = {"sBotStatus": "", "sBotComments": "", "sErrorMessage": "",
                "nErrorLineNumber": 0, "sErrorType": "", "nInsertedRecords": 0,
+               "nStagingRowsAfterInsert": None, "nStagingRowsAfterProcs": None,
                "category": "", "cleaned_file": ""}
     conn = None
     sp_message = ""
@@ -505,11 +520,13 @@ def run(csv_path: str, input_folder: str, file_id: str, report_id: str,
                        if (m if isinstance(m, str) else m[0]) not in header]
             if missing:
                 raise BotException(f"CSV {cleaned_path} is missing mapped column(s): {missing}")
-            log.info("[dry-run] Would insert %s into %s.%s with %d mapped columns, then call %s",
-                     cleaned_path, database or "<db>", cat.table, len(mappings),
-                     ", ".join(p.name for p in cat.procs))
+            log.warning("DRY RUN - NOTHING IS WRITTEN TO THE DATABASE. Would insert %s into %s.%s with %d "
+                        "mapped columns, then call %s. Pass dry_run=false to load for real.",
+                        cleaned_path, database or "<db>", cat.table, len(mappings),
+                        ", ".join(p.name for p in cat.procs))
             outputs.update(sBotStatus="Dry Run",
-                           sBotComments=f"Cleaned file at {cleaned_path}; nothing loaded")
+                           sBotComments=f"DRY RUN: nothing was written to the database. Cleaned file at "
+                                        f"{cleaned_path}")
             return outputs
 
         user = os.environ.get("SECR_DB_USER") or os.environ.get("ESG_DB_USER")
@@ -525,7 +542,12 @@ def run(csv_path: str, input_folder: str, file_id: str, report_id: str,
 
         inserted = batch_insert(conn, database, cat.table, cleaned_path, mappings)
         outputs["nInsertedRecords"] = inserted
-        log.info("Inserted %d record(s) into %s (%s)", inserted, cat.table, ref)
+        log.info("Inserted and committed %d record(s) into %s (%s)", inserted, cat.table, ref)
+        outputs["nStagingRowsAfterInsert"] = count_staging_rows(conn, database, cat.table, file_id)
+        log.info("Check: %s.%s now has %s row(s) with FileId %s (%s)", database, cat.table,
+                 outputs["nStagingRowsAfterInsert"], file_id, ref)
+        if inserted == 0:
+            log.warning("No row was inserted although the CSV has data rows (%s)", ref)
 
         values = {"p_FileId": file_id, "p_ReportId": report_id,
                   "p_CreatedBy": created_by or getpass.getuser()}
@@ -534,6 +556,12 @@ def run(csv_path: str, input_folder: str, file_id: str, report_id: str,
             out = call_proc(conn, database, proc, values)
             sp_message = out.get("p_Message", "")
             log.info("Stored procedure %s finished. OUT: %s (%s)", proc.name, out, ref)
+            remaining = count_staging_rows(conn, database, cat.table, file_id)
+            outputs["nStagingRowsAfterProcs"] = remaining
+            log.info("Check: after %s, %s.%s has %s row(s) with FileId %s%s (%s)", proc.name, database,
+                     cat.table, remaining, file_id,
+                     " - the procedure moved/removed the staging rows; look in the target tables"
+                     if remaining == 0 and inserted else "", ref)
             if proc.success_text.lower() not in sp_message.lower():
                 log.error("Error in %s SP: %s (%s)", proc.name, sp_message, ref)
                 raise BotException(f"Error in {proc.name} SP: {sp_message}")
@@ -704,7 +732,7 @@ if __name__ == "__main__":
             "DatabaseName": "esgdb",
             "MySQL_Port": 3306,
             "created_by": "",                    # empty: Windows user
-            "dry_run": True,                     # set False to really load into the database
+            "dry_run": False,                    # True = clean + check only, NOTHING written to the database
             "debug": True,
             "log_dir": str(HERE / "tests" / "logs"),
             "secrets": {
