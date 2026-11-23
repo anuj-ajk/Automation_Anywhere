@@ -1,0 +1,51 @@
+# Copy to config.yaml and adjust. Do NOT put passwords or keys in this file:
+# secrets are read from environment variables (see README.md).
+
+run:
+  max_parallel_batches: 10          # batches processed at the same time
+  max_parallel_files_per_batch: 5   # files of ONE batch processed at the same time
+  max_db_connections: 60            # must be >= batches * (files_per_batch + 1)
+  work_dir: ./work                  # per-batch temp folders (deleted after each batch)
+  log_dir: ./logs
+  keep_work_files: false            # true = keep downloaded/split/CSV files for debugging
+  created_by: ""                    # passed to LoadHHData / CalculateInvoiceData; default = OS user
+  serialize_staging_loads: true     # one load per staging table at a time (MySQL GET_LOCK)
+  staging_lock_timeout_seconds: 900
+  insert_chunk_size: 1000
+  # Optional, used by "run --pending". Must return a BatchId column. Example only - adjust to
+  # however new batches are flagged in your DB:
+  pending_batches_query: "SELECT FB.BatchId FROM FileUploadBatch FB JOIN RefBatchStatus B ON B.BatchStatusId = FB.BatchStatusId WHERE B.Code = 'PROCESSING' ORDER BY FB.BatchId"
+
+
+esg_db:
+  host: esg-instance.cm18ojbg8cjx.eu-west-2.rds.amazonaws.com
+  port: 3306
+  database: esgdb
+  connect_timeout: 30
+
+s3:
+  region: eu-west-2
+  # bucket comes from SECR_S3_BUCKET
+
+odin:
+  base_uri: https://api.getodin.ai
+  project_id: "356316e20dcb48658ce127"            # ProcessConfig Agent_Project_ID
+  agent_id: "63622"              # ProcessConfig Agent_ID
+  submit_timeout_seconds: 300
+  request_timeout_seconds: 120
+  poll_interval_seconds: 40 # same as the bot
+  max_poll_attempts: 15     # same as the bot (~10 minutes per file)
+
+sources:
+  environment: DEV          # DEV / UAT / PROD -> <ENV>_<TYPE>_EM_QUERY.txt
+  query_dir: "../AAPackage/Automation Anywhere/Bots/Environmental Social and Governance/Streamlined Energy & Carbon Reporting/Docs/Config"
+  query_timeout_seconds: 600
+
+notify:
+  enabled: false
+  smtp_host: ""
+  smtp_port: 25
+  use_tls: false
+  from_address: ""
+  to_addresses: []
+  cc_addresses: []
