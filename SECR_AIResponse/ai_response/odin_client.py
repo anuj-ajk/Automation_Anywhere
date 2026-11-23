@@ -122,8 +122,13 @@ _NOT_A_LINK = {"", "na", "n/a", "n.a.", "none", "null", "nan", "-"}
 
 
 def is_real_link(value) -> bool:
-    """False for empty values and placeholders such as 'NA', 'N/A', 'null' (any case, any spaces)."""
-    return value is not None and str(value).strip().lower() not in _NOT_A_LINK
+    """True only for an http(s) URL. 'NA', 'N/A', 'null', 'Not available', empty ... are not links."""
+    if value is None or str(value).strip().lower() in _NOT_A_LINK:
+        return False
+    from urllib.parse import urlparse
+
+    parsed = urlparse(str(value).strip())
+    return parsed.scheme in ("http", "https") and bool(parsed.netloc)
 
 
 def parse_agent_response(body: dict[str, Any]) -> dict[str, str] | None:

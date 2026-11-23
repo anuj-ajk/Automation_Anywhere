@@ -172,6 +172,9 @@ def test_na_links_are_left_out(tmp_path):
         "portfolio": "https://x/p.csv", "metrics": "NA", "invoice": " n/a ", "transport": "", "landlord": None}}}]}
     assert parse_agent_response(body) == {"portfolio": "https://x/p.csv"}
     all_na = {"messages": [{"json_response": {"normalized_csv_file_links": {"portfolio": "NA"}}}]}
+    from ai_response.odin_client import is_real_link
+    for bad in ("Not available", "ftp://x/y.csv", "x.csv", "N/A"):
+        assert not is_real_link(bad), bad
     assert parse_agent_response(all_na) == {}
 
     class NAClient(FakeClient):  # a client that does not filter: the processor must still drop NA

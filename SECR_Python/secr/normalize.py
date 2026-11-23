@@ -28,7 +28,7 @@ from pathlib import Path
 from typing import Any
 
 from . import status as st
-from .ai_client import CATEGORY_DISPLAY_NAMES, OdinClient
+from .ai_client import CATEGORY_DISPLAY_NAMES, OdinClient, is_real_link
 from .db import EsgDb
 from .downloader import download_link, filename_from_url
 from .excel_split import split_workbook
@@ -250,6 +250,7 @@ class NormalizeFlow:
             if links is None:
                 log.debug("Sheet '%s' (chat %s): agent still working", sheet.name, sheet.chat_id)
                 return
+            links = {k: v for k, v in links.items() if is_real_link(v)}  # never keep "NA" links
             sheet.links = links
             sheet.answered = True
             if not links:

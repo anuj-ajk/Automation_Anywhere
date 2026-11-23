@@ -53,7 +53,8 @@ class FakeSession:
             self.db.batch_status[batch_id] = code
 
     def add_recognized_category(self, file_id, name):
-        pass
+        with self.db.lock:
+            self.db.categories.setdefault(file_id, []).append(name)
 
     def delete_staging_rows(self, table, file_id):
         with self.db.lock:
@@ -97,6 +98,7 @@ class FakeDb:
         self.status, self.history, self.batch_status = {}, {}, {}
         self.inserted, self.named_locks = {}, set()
         self.deleted = []
+        self.categories = {}
         self.batch_codes = {"COMPLETE", "PROCESSING", "PARTIAL_FAILURE"}
 
     @contextlib.contextmanager
@@ -117,7 +119,9 @@ class FakeStorage:
 
 class FakeAI:
     def __init__(self, csv_url):
-        self.csv_url = csv_url
+        from requests_stub import fake_url
+
+        self.csv_url = fake_url(csv_url)  # https://fake.test/<local file>, copied by requests_stub
         self.polls = {}
 
     def create_chat(self, name):
@@ -207,8 +211,9 @@ def test_split_skips_instruction_sheets(tmp_path):
 
 def test_parse_agent_response():
     assert parse_agent_response({"messages": []}) is None
-    body = {"messages": [{"json_response": '{"normalized_csv_file_links": {"invoice": "u", "metrics": ""}}'}]}
-    assert parse_agent_response(body) == {"invoice": "u"}
+    body = {"messages": [{"json_response":
+                          '{"normalized_csv_file_links": {"invoice": "https://x/u.csv", "metrics": ""}}'}]}
+    assert parse_agent_response(body) == {"invoice": "https://x/u.csv"}
 
 
 def test_em_query_binding():
@@ -546,3 +551,29 @@ def test_report_level_procs_run_after_staging_lock(tmp_path):
         ("lock", "secr_report_2_CalculateInvoiceData"), ("proc", "CalculateInvoiceData"),
         ("unlock", "secr_report_2_CalculateInvoiceData"),
     ]
+
+
+def test_na_links_are_not_downloaded_or_counted(tmp_path):
+    from secr.ai_client import is_real_link, parse_agent_response
+    from secr.models import BatchContext
+
+    keys = ["portfolio", "landlord", "transport", "other_fuels", "metrics", "energy_efficiency_narrative",
+            "invoice", "half_hourly_data"]
+    body = {"messages": [{"json_response": {"normalized_csv_file_links": {
+        k: ("https://x/p.csv" if k == "portfolio" else "NA") for k in keys}}}]}
+    assert parse_agent_response(body) == {"portfolio": "https://x/p.csv"}
+    for bad in ("NA", " n/a ", "", None, "null", "Not available", "ftp://x/y.csv", "x.csv"):
+        assert not is_real_link(bad), bad
+    assert is_real_link("https://bucket.s3.amazonaws.com/a.csv?sig=1")
+
+    class NAAI(CountingAI):  # the shape seen in batch 52: one real link per sheet, NA for the rest
+        def get_csv_links(self, chat_id):
+            return {k: (self.csv_url if k == "metrics" else "NA") for k in keys}
+
+    ai = NAAI(str(_metrics_csv(tmp_path / "m.csv")))
+    db, flow, _ = _flow(tmp_path, ai, sheets=3, per_file=3)
+    ctx = BatchContext("52", "5", "ACME", "2024-04-01", "2025-03-31", tmp_path / "w")
+    out = flow.run_file(ctx, _row("52", 77), get_logger())
+    assert out.status == st.COMPLETED and "NA" not in out.detail, out
+    assert db.categories["77"] == ["Metrics"]
+    assert db.inserted["Staging_Metrics"] == 3

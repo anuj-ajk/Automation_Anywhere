@@ -133,6 +133,19 @@ def _trace(call: str, resp, started: float) -> None:
         LOG.debug("Odin %s -> HTTP %s in %.1fs", call, resp.status_code, elapsed)
 
 
+_NOT_A_LINK = {"", "na", "n/a", "n.a.", "none", "null", "nan", "-"}
+
+
+def is_real_link(value) -> bool:
+    """True only for an http(s) URL. The agent writes 'NA' (or similar) for categories it did not find."""
+    if value is None or str(value).strip().lower() in _NOT_A_LINK:
+        return False
+    from urllib.parse import urlparse
+
+    parsed = urlparse(str(value).strip())
+    return parsed.scheme in ("http", "https") and bool(parsed.netloc)
+
+
 def parse_agent_response(body: dict[str, Any]) -> dict[str, str] | None:
     messages = (body or {}).get("messages") or []
     if not messages:
@@ -145,11 +158,17 @@ def parse_agent_response(body: dict[str, Any]) -> dict[str, str] | None:
             json_response = json.loads(json_response)
         except ValueError:
             raise AIError(f"Agent json_response is not valid JSON: {json_response[:300]}")
-    links = (json_response or {}).get("normalized_csv_file_links") or {}
-    unknown = [k for k, v in links.items() if v and k not in CATEGORY_KEYS]
+    raw_links = (json_response or {}).get("normalized_csv_file_links") or {}
+    # Categories the sheet does not contain come back as "NA": they are not links, so they are left out
+    # (no download, no load, not counted as a failure, not added to CategoryRecognized).
+    not_available = [k for k, v in raw_links.items() if not is_real_link(v)]
+    if not_available:
+        LOG.debug("Categories without a CSV link (NA), left out: %s", ", ".join(not_available))
+    links = {k: str(v).strip() for k, v in raw_links.items() if is_real_link(v)}
+    unknown = [k for k in links if k not in CATEGORY_KEYS]
     if unknown:
         LOG.warning("Agent returned link(s) for unknown categories, ignored: %s", unknown)
     if not links:
-        LOG.warning("Agent answered but normalized_csv_file_links is empty. Keys in json_response: %s",
+        LOG.warning("Agent answered without any CSV link (all NA or missing). Keys in json_response: %s",
                     list((json_response or {}).keys()))
-    return {key: str(links[key]) for key in CATEGORY_KEYS if links.get(key)}
+    return {key: links[key] for key in CATEGORY_KEYS if key in links}

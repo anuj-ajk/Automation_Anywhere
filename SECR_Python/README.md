@@ -225,6 +225,7 @@ Status codes written to `UploadedFile` and `FileUploadBatch` are the same as in 
 | Batch with failed files | `COMPLETE` | `PARTIAL_FAILURE` if that code exists in `RefBatchStatus`, else `COMPLETE` |
 | SQL | values pasted into SQL, quotes escaped by hand | parameterised queries everywhere |
 | AI answered without any CSV link | counted as success | counted as failed for that sheet |
+| AI returns `NA` for a category | — | only real `http(s)` links are used. `NA` / `N/A` / `null` / empty values are left out: not downloaded, not counted as failures, not added to `CategoryRecognized` |
 | A sheet failed in AI but the rest loaded | final status `COMPLETED` | final status `PARTIAL_FAILURE` |
 | CSV missing a mapped column | AA bulk insert fails | column loaded as NULL, warning logged |
 | Category of a normalized CSV | parsed from the file name | taken from the Odin response key |
