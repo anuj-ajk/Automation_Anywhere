@@ -1,0 +1,109 @@
+2026-11-23 16:00:52,182 INFO    [run f6ea8d7f5a0a] [MainThread] [secr] Log file: \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\logs\SECR_20261123_160052_f6ea8d7f5a0a.log (level DEBUG)
+2026-11-23 16:00:52,315 INFO    [run f6ea8d7f5a0a] [MainThread] [secr.runner] Python 3.14.10 on MAN-RDS-V10 (pid 19132)
+2026-11-23 16:00:52,317 INFO    [run f6ea8d7f5a0a] [MainThread] [secr.runner] Parallelism: 10 batch(es) x 4 file(s) per batch, max 60 DB connection(s)
+2026-11-23 16:00:52,325 INFO    [run f6ea8d7f5a0a] [MainThread] [secr.runner] Work folder \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\work (keep files: False), serialize staging loads: True, created by: anuj.kumar
+2026-11-23 16:00:52,329 INFO    [run f6ea8d7f5a0a] [MainThread] [secr.runner] Rerun: skip files already in COMPLETED/DATA_NOT_AVAILABLE: True; clear earlier staging rows before load: True
+2026-11-23 16:00:52,329 INFO    [run f6ea8d7f5a0a] [MainThread] [secr.runner] Odin polling: every 40s, up to 15 attempts; source environment: DEV
+2026-11-23 16:00:52,330 INFO    [run f6ea8d7f5a0a] [MainThread] [secr.runner] Secrets: SECR_DB_USER=set, SECR_DB_PASSWORD=set, SECR_S3_BUCKET=set, AWS_ACCESS_KEY_ID=set, AWS_SECRET_ACCESS_KEY=set, SECR_ODIN_API_KEY=set, SECR_ODIN_API_SECRET=set, SECR_EM_CONNECTION_STRING=set, SECR_NAV_CONNECTION_STRING=set
+2026-11-23 16:00:52,331 INFO    [run f6ea8d7f5a0a] [MainThread] [secr.db] ESG DB esg-instance.cm18ojbg8cjx.eu-west-2.rds.amazonaws.com:3306/esgdb, max 60 connection(s)
+2026-11-23 16:00:53,808 INFO    [run f6ea8d7f5a0a] [MainThread] [secr.storage] S3 storage ready: bucket appsmith-client-docs-ins-main-raw, region eu-west-2
+2026-11-23 16:00:53,809 INFO    [run f6ea8d7f5a0a] [MainThread] [secr.ai_client] Odin AI client ready: https://api.getodin.ai, project 356316e20dcb48658ce127, agent 63622
+2026-11-23 16:00:53,810 INFO    [run f6ea8d7f5a0a] [MainThread] [secr.source_systems] Source systems ready: environment DEV, EM query folder \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\queries, EM configured, NAV configured
+2026-11-23 16:00:53,812 INFO    [run f6ea8d7f5a0a] [MainThread] [secr.runner] Flows enabled: Normalize=True, Daisy=True
+2026-11-23 16:00:53,812 INFO    [run f6ea8d7f5a0a] [MainThread] [secr.aa_entry] Called from Automation Anywhere: config \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\config.yaml, batch ids 40, max_batches=10, max_files=4, debug=True, secrets passed: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, SECR_DB_PASSWORD, SECR_DB_USER, SECR_EM_CONNECTION_STRING, SECR_NAV_CONNECTION_STRING, SECR_ODIN_API_KEY, SECR_ODIN_API_SECRET, SECR_S3_BUCKET
+2026-11-23 16:00:53,814 INFO    [run f6ea8d7f5a0a] [MainThread] [secr.runner] Run started for 1 batch id(s): 40
+2026-11-23 16:00:53,822 DEBUG   [run f6ea8d7f5a0a] [MainThread] [secr.runner] E-mail 'SECR normalizer started' not sent (notifications disabled)
+2026-11-23 16:00:53,823 INFO    [run f6ea8d7f5a0a] [MainThread] [secr.orchestrator] Processing 1 batch(es), up to 1 in parallel
+2026-11-23 16:00:53,825 INFO    [run f6ea8d7f5a0a] [batch_0] [secr.batch] [batch 40] Batch started
+2026-11-23 16:00:54,165 DEBUG   [run f6ea8d7f5a0a] [batch_0] [secr.db] [batch 40] DB connection opened (1/60 in use)
+2026-11-23 16:00:54,166 DEBUG   [run f6ea8d7f5a0a] [batch_0] [secr.batch] [batch 40] Trying DB lock secr_batch_40
+2026-11-23 16:00:54,187 DEBUG   [run f6ea8d7f5a0a] [batch_0] [secr.db] [batch 40] SQL query (0.02s, 1 row(s)): SELECT GET_LOCK(%s, %s) AS got | params=('secr_batch_40', 0)
+2026-11-23 16:00:54,188 DEBUG   [run f6ea8d7f5a0a] [batch_0] [secr.db] [batch 40] Got DB lock secr_batch_40 after 0.0s
+2026-11-23 16:00:54,188 DEBUG   [run f6ea8d7f5a0a] [batch_0] [secr.batch] [batch 40] Got DB lock secr_batch_40; work folder \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\work\batch_40_20261123_160053_825716
+2026-11-23 16:00:54,189 INFO    [run f6ea8d7f5a0a] [batch_0] [secr.batch] [batch 40] Read batch files from ESG DB - started
+2026-11-23 16:00:54,284 DEBUG   [run f6ea8d7f5a0a] [batch_0] [secr.db] [batch 40] DB connection opened (2/60 in use)
+2026-11-23 16:00:54,332 DEBUG   [run f6ea8d7f5a0a] [batch_0] [secr.db] [batch 40] SQL query (0.05s, 3 row(s)): SELECT FB.BatchId, FB.ReportId, R.ClientId, R.ReportStart, R.ReportEnd, BP.BusinessPartnerName, UF.CategorySelected, UF.FileId, UF.FileName, UF.StoragePath, UF. | params=('40',)
+2026-11-23 16:00:54,334 INFO    [run f6ea8d7f5a0a] [batch_0] [secr.batch] [batch 40] Read batch files from ESG DB - done in 0.1s
+2026-11-23 16:00:54,334 INFO    [run f6ea8d7f5a0a] [batch_0] [secr.batch] [batch 40] 3 valid SECR file row(s) found
+2026-11-23 16:00:54,336 DEBUG   [run f6ea8d7f5a0a] [batch_0] [secr.batch] [batch 40]   FileId=47 Category=Portfolio FileName=Source: Daisy StoragePath=
+2026-11-23 16:00:54,337 DEBUG   [run f6ea8d7f5a0a] [batch_0] [secr.batch] [batch 40]   FileId=48 Category=Invoices FileName=Source: Daisy StoragePath=
+2026-11-23 16:00:54,338 DEBUG   [run f6ea8d7f5a0a] [batch_0] [secr.batch] [batch 40]   FileId=49 Category=Half Hourly Data FileName=Source: Daisy StoragePath=
+2026-11-23 16:00:54,338 INFO    [run f6ea8d7f5a0a] [batch_0] [secr.batch] [batch 40] File 47 (Source: Daisy (Portfolio)) is already COMPLETED; skipped
+2026-11-23 16:00:54,340 INFO    [run f6ea8d7f5a0a] [batch_0] [secr.batch] [batch 40] File 49 (Source: Daisy (Half Hourly Data)) is already COMPLETED; skipped
+2026-11-23 16:00:54,341 INFO    [run f6ea8d7f5a0a] [batch_0] [secr.batch] [batch 40] Rerun: 2 file(s) already completed are skipped, 1 file(s) to process
+2026-11-23 16:00:54,353 INFO    [run f6ea8d7f5a0a] [batch_0] [secr.batch] [batch 40] Client Heron Foods, report 2 (2024-04-01 to 2025-03-30): 0 uploaded file(s), 1 Daisy file(s)
+2026-11-23 16:00:54,354 INFO    [run f6ea8d7f5a0a] [batch_0] [secr.batch] [batch 40] Processing 1 file(s), up to 1 in parallel
+2026-11-23 16:00:54,357 INFO    [run f6ea8d7f5a0a] [b40-file_0] [secr.daisy] [batch 40][file 48] Daisy sync started (category: Invoices)
+2026-11-23 16:00:54,457 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.db] [batch 40][file 48] DB connection opened (2/60 in use)
+2026-11-23 16:00:54,469 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.db] [batch 40][file 48] SQL query (0.01s, 1 row(s)): SELECT DataSourceType FROM BusinessPartner WHERE BusinessPartnerName = %s | params=('Heron Foods',)
+2026-11-23 16:00:54,471 INFO    [run f6ea8d7f5a0a] [b40-file_0] [secr.daisy] [batch 40][file 48] Data source type for Heron Foods: NAV
+2026-11-23 16:00:54,472 INFO    [run f6ea8d7f5a0a] [b40-file_0] [secr.daisy] [batch 40][file 48] Invoices load from NAV for Heron Foods, 2024-04-01 to 2025-03-30
+2026-11-23 16:00:54,476 INFO    [run f6ea8d7f5a0a] [b40-file_0] [secr.daisy] [batch 40][file 48] Export Invoices from NAV - started
+2026-11-23 16:00:54,481 INFO    [run f6ea8d7f5a0a] [b40-file_0] [secr.source_systems] [batch 40][file 48] Querying nav (esg.InvoiceData) for client Heron Foods, 2024-04-01 to 2025-03-30
+2026-11-23 16:00:54,483 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.source_systems] [batch 40][file 48] Source SQL: {CALL esg.InvoiceData (?, ?, ?)} | params=['Heron Foods', '20240401', '20250330']
+2026-11-23 16:00:58,014 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.source_systems] [batch 40][file 48] nav query executed in 3.5s
+2026-11-23 16:00:58,015 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.source_systems] [batch 40][file 48] nav columns: ['Cust', 'Address1', 'Address2', 'Town', 'Postcode', 'Utility', 'Units', 'Reference Number', 'Supplier', 'M1 MPAN / MPR / Water SPID', 'Top Line', 'Estimated Invoice', 'Invoice Units', 'Cost', 'VAT', 'CCL', 'From Date', 'Date', 'Invoice Tax Date', 'InvType']
+2026-11-23 16:00:58,287 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.source_systems] [batch 40][file 48]   5000 row(s) fetched so far
+2026-11-23 16:00:58,330 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.source_systems] [batch 40][file 48]   6427 row(s) fetched so far
+2026-11-23 16:00:58,354 INFO    [run f6ea8d7f5a0a] [b40-file_0] [secr.source_systems] [batch 40][file 48] nav returned 6427 row(s) in 3.8s
+2026-11-23 16:00:58,497 INFO    [run f6ea8d7f5a0a] [b40-file_0] [secr.daisy] [batch 40][file 48] Export Invoices from NAV - done in 4.0s
+2026-11-23 16:00:58,498 INFO    [run f6ea8d7f5a0a] [b40-file_0] [secr.daisy] [batch 40][file 48] 6427 row(s) exported to Invoices_FileID48_ReportID2_20261123_160054.csv
+2026-11-23 16:00:58,499 INFO    [run f6ea8d7f5a0a] [b40-file_0] [secr.daisy] [batch 40][file 48] Load Invoices into Staging_Invoices - started
+2026-11-23 16:00:58,591 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.db] [batch 40][file 48] DB connection opened (2/60 in use)
+2026-11-23 16:00:58,599 INFO    [run f6ea8d7f5a0a] [b40-file_0] [secr.runner] [batch 40][file 48] Loading Invoices_FileID48_ReportID2_20261123_160054.csv into Staging_Invoices (procedures: LoadInvoiceData, CalculateInvoiceData)
+2026-11-23 16:00:59,111 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.csv_clean] [batch 40][file 48] Cleaned Invoices_FileID48_ReportID2_20261123_160054.csv -> Cleaned_Invoices_FileID48_ReportID2_20261123_160054.csv: 6428 line(s) incl. header, 9925 blank(s) filled, 0 newline(s), 0 quote(s) removed
+2026-11-23 16:00:59,116 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.runner] [batch 40][file 48] Cleaned Invoices_FileID48_ReportID2_20261123_160054.csv: 6428 rows, 9925 blanks filled
+2026-11-23 16:00:59,148 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.runner] [batch 40][file 48] Cleaned_Invoices_FileID48_ReportID2_20261123_160054.csv header: ['Cust', 'Address1', 'Address2', 'Town', 'Postcode', 'Utility', 'Units', 'Reference Number', 'Supplier', 'M1 MPAN / MPR / Water SPID', 'Top Line', 'Estimated Invoice', 'Invoice Units', 'Cost', 'VAT', 'CCL', 'From Date', 'Date', 'Invoice Tax Date', 'InvType', 'FileId']
+2026-11-23 16:00:59,268 INFO    [run f6ea8d7f5a0a] [b40-file_0] [secr.runner] [batch 40][file 48] 6427 data row(s), 21 mapped column(s)
+2026-11-23 16:00:59,271 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.runner] [batch 40][file 48] Waiting for staging lock secr_load_Staging_Invoices (only one load per staging table at a time)
+2026-11-23 16:00:59,272 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.db] [batch 40][file 48] Waiting up to 900s for DB lock secr_load_Staging_Invoices
+2026-11-23 16:00:59,285 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.db] [batch 40][file 48] SQL query (0.01s, 1 row(s)): SELECT GET_LOCK(%s, %s) AS got | params=('secr_load_Staging_Invoices', 900)
+2026-11-23 16:00:59,286 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.db] [batch 40][file 48] Got DB lock secr_load_Staging_Invoices after 0.0s
+2026-11-23 16:00:59,500 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.db] [batch 40][file 48] SQL execute (0.21s, 6427 row(s) affected): DELETE FROM `Staging_Invoices` WHERE FileId = %s | params=('48',)
+2026-11-23 16:00:59,502 WARNING [run f6ea8d7f5a0a] [b40-file_0] [secr.runner] [batch 40][file 48] Deleted 6427 row(s) left in Staging_Invoices for FileId 48 by an earlier run
+2026-11-23 16:00:59,503 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.db] [batch 40][file 48] Bulk insert into Staging_Invoices (21 column(s), chunks of 1000)
+2026-11-23 16:00:59,715 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.db] [batch 40][file 48]   Staging_Invoices: 1000 row(s) inserted so far
+2026-11-23 16:00:59,807 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.db] [batch 40][file 48]   Staging_Invoices: 2000 row(s) inserted so far
+2026-11-23 16:00:59,876 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.db] [batch 40][file 48]   Staging_Invoices: 3000 row(s) inserted so far
+2026-11-23 16:00:59,948 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.db] [batch 40][file 48]   Staging_Invoices: 4000 row(s) inserted so far
+2026-11-23 16:01:00,360 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.db] [batch 40][file 48]   Staging_Invoices: 5000 row(s) inserted so far
+2026-11-23 16:01:00,490 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.db] [batch 40][file 48]   Staging_Invoices: 6000 row(s) inserted so far
+2026-11-23 16:01:00,541 INFO    [run f6ea8d7f5a0a] [b40-file_0] [secr.db] [batch 40][file 48] Bulk insert into Staging_Invoices: 6427 row(s) in 1.0s
+2026-11-23 16:01:00,542 INFO    [run f6ea8d7f5a0a] [b40-file_0] [secr.runner] [batch 40][file 48] Inserted 6427 row(s) into Staging_Invoices
+2026-11-23 16:01:00,543 INFO    [run f6ea8d7f5a0a] [b40-file_0] [secr.db] [batch 40][file 48] Calling procedure LoadInvoiceData(48, 2)
+2026-11-23 16:01:02,992 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.db] [batch 40][file 48] Procedure LoadInvoiceData returned after 2.4s
+2026-11-23 16:01:03,013 INFO    [run f6ea8d7f5a0a] [b40-file_0] [secr.db] [batch 40][file 48] Procedure LoadInvoiceData finished in 2.5s, OUT=['LoadInvoiceData completed successfully']
+2026-11-23 16:01:03,014 INFO    [run f6ea8d7f5a0a] [b40-file_0] [secr.runner] [batch 40][file 48] LoadInvoiceData -> message='LoadInvoiceData completed successfully'
+2026-11-23 16:01:03,015 INFO    [run f6ea8d7f5a0a] [b40-file_0] [secr.db] [batch 40][file 48] Calling procedure CalculateInvoiceData(2, anuj.kumar)
+2026-11-23 16:02:57,797 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.db] [batch 40][file 48] Procedure CalculateInvoiceData returned after 114.8s
+2026-11-23 16:02:57,807 INFO    [run f6ea8d7f5a0a] [b40-file_0] [secr.db] [batch 40][file 48] Procedure CalculateInvoiceData finished in 114.8s, OUT=['CalculateInvoiceData completed successfully. Calculation rows inserted: 6428, rows changed by the recalculation: 3798.', 'SUCCESS']
+2026-11-23 16:02:57,808 INFO    [run f6ea8d7f5a0a] [b40-file_0] [secr.runner] [batch 40][file 48] CalculateInvoiceData -> message='CalculateInvoiceData completed successfully. Calculation rows inserted: 6428, rows changed by the recalculation: 3798.', status='SUCCESS'
+2026-11-23 16:02:57,831 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.db] [batch 40][file 48] SQL query (0.01s, 1 row(s)): SELECT RELEASE_LOCK(%s) AS released | params=('secr_load_Staging_Invoices',)
+2026-11-23 16:02:57,832 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.db] [batch 40][file 48] Released DB lock secr_load_Staging_Invoices
+2026-11-23 16:02:57,886 DEBUG   [run f6ea8d7f5a0a] [b40-file_0] [secr.db] [batch 40][file 48] SQL execute (0.05s, 1 row(s) affected): UPDATE UploadedFile SET ProcessingStatusId = (SELECT s.FileProcessingStatusId FROM RefFileProcessingStatus s WHERE s.Code = %s), StatusDescription = NULL WHERE  | params=('COMPLETED', '48')
+2026-11-23 16:02:57,889 INFO    [run f6ea8d7f5a0a] [b40-file_0] [secr.daisy] [batch 40][file 48] Load Invoices into Staging_Invoices - done in 119.4s
+2026-11-23 16:02:57,898 INFO    [run f6ea8d7f5a0a] [b40-file_0] [secr.daisy] [batch 40][file 48] Status -> COMPLETED
+2026-11-23 16:02:57,899 INFO    [run f6ea8d7f5a0a] [b40-file_0] [secr.daisy] [batch 40][file 48] Invoices loaded: 6427 row(s)
+2026-11-23 16:02:57,900 INFO    [run f6ea8d7f5a0a] [b40-file_0] [secr.daisy] [batch 40][file 48] Daisy sync finished: COMPLETED in 123.5s
+2026-11-23 16:02:57,901 INFO    [run f6ea8d7f5a0a] [batch_0] [secr.batch] [batch 40] All files done: 3 OK, 0 with errors
+2026-11-23 16:02:58,051 DEBUG   [run f6ea8d7f5a0a] [batch_0] [secr.db] [batch 40] DB connection opened (2/60 in use)
+2026-11-23 16:02:58,068 DEBUG   [run f6ea8d7f5a0a] [batch_0] [secr.db] [batch 40] SQL query (0.02s, 1 row(s)): SELECT BatchStatusId FROM RefBatchStatus WHERE Code = %s | params=('COMPLETE',)
+2026-11-23 16:02:58,069 DEBUG   [run f6ea8d7f5a0a] [batch_0] [secr.db] [batch 40] Setting batch 40 status to COMPLETE
+2026-11-23 16:02:58,080 DEBUG   [run f6ea8d7f5a0a] [batch_0] [secr.db] [batch 40] SQL execute (0.01s, 0 row(s) affected): UPDATE FileUploadBatch SET BatchStatusId = %s WHERE BatchId = %s | params=(5, '40')
+2026-11-23 16:02:58,081 INFO    [run f6ea8d7f5a0a] [batch_0] [secr.batch] [batch 40] Batch status set to COMPLETE
+2026-11-23 16:02:58,082 INFO    [run f6ea8d7f5a0a] [batch_0] [secr.batch] [batch 40] File 47 [daisy] Source: Daisy (Portfolio) -> COMPLETED skipped: already COMPLETED
+2026-11-23 16:03:01,006 INFO    [run f6ea8d7f5a0a] [batch_0] [secr.batch] [batch 40] File 49 [daisy] Source: Daisy (Half Hourly Data) -> COMPLETED skipped: already COMPLETED
+2026-11-23 16:03:01,007 INFO    [run f6ea8d7f5a0a] [batch_0] [secr.batch] [batch 40] File 48 [daisy] Source: Daisy (Invoices) -> COMPLETED 
+2026-11-23 16:03:01,030 DEBUG   [run f6ea8d7f5a0a] [batch_0] [secr.db] [batch 40] SQL query (0.02s, 1 row(s)): SELECT RELEASE_LOCK(%s) AS released | params=('secr_batch_40',)
+2026-11-23 16:03:01,032 DEBUG   [run f6ea8d7f5a0a] [batch_0] [secr.db] [batch 40] Released DB lock secr_batch_40
+2026-11-23 16:03:01,035 DEBUG   [run f6ea8d7f5a0a] [batch_0] [secr.batch] [batch 40] Released DB lock secr_batch_40
+2026-11-23 16:03:01,097 DEBUG   [run f6ea8d7f5a0a] [batch_0] [secr.batch] [batch 40] Removed work folder \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\work\batch_40_20261123_160053_825716
+2026-11-23 16:03:01,099 INFO    [run f6ea8d7f5a0a] [batch_0] [secr.batch] [batch 40] Batch finished: SUCCESS in 127.3s (3 file(s))
+2026-11-23 16:03:01,108 INFO    [run f6ea8d7f5a0a] [MainThread] [secr.orchestrator] Progress: 1/1 batch(es) done (batch 40: SUCCESS, 127.3s); 0 still running or queued
+2026-11-23 16:03:01,111 INFO    [run f6ea8d7f5a0a] [MainThread] [secr.orchestrator] All batches done in 127.3s
+2026-11-23 16:03:01,112 INFO    [run f6ea8d7f5a0a] [MainThread] [secr.runner] Summary
+   Batch  State                       Files   OK    Secs  Error
+      40  SUCCESS                         3    3   127.3  
+2026-11-23 16:03:01,114 INFO    [run f6ea8d7f5a0a] [MainThread] [secr.runner] Run finished with exit code 0 (0 = all OK, 2 = some files failed, 1 = a batch failed)
+2026-11-23 16:03:01,115 DEBUG   [run f6ea8d7f5a0a] [MainThread] [secr.runner] E-mail 'SECR normalizer completed' not sent (notifications disabled)
+2026-11-23 16:03:01,115 INFO    [run f6ea8d7f5a0a] [MainThread] [secr.aa_entry] Returning status SUCCESS to Automation Anywhere

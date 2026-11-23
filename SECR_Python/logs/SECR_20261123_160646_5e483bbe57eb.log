@@ -1,0 +1,48 @@
+2026-11-23 16:06:46,792 INFO    [run 5e483bbe57eb] [MainThread] [secr] Log file: \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\logs\SECR_20261123_160646_5e483bbe57eb.log (level DEBUG)
+2026-11-23 16:06:46,944 INFO    [run 5e483bbe57eb] [MainThread] [secr.runner] Python 3.14.10 on MAN-RDS-V10 (pid 34736)
+2026-11-23 16:06:46,952 INFO    [run 5e483bbe57eb] [MainThread] [secr.runner] Parallelism: 10 batch(es) x 4 file(s) per batch, max 60 DB connection(s)
+2026-11-23 16:06:46,953 INFO    [run 5e483bbe57eb] [MainThread] [secr.runner] Work folder \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\work (keep files: False), serialize staging loads: True, created by: anuj.kumar
+2026-11-23 16:06:46,954 INFO    [run 5e483bbe57eb] [MainThread] [secr.runner] Rerun: skip files already in COMPLETED/DATA_NOT_AVAILABLE: True; clear earlier staging rows before load: True
+2026-11-23 16:06:46,955 INFO    [run 5e483bbe57eb] [MainThread] [secr.runner] Odin polling: every 40s, up to 15 attempts; source environment: DEV
+2026-11-23 16:06:46,972 INFO    [run 5e483bbe57eb] [MainThread] [secr.runner] Secrets: SECR_DB_USER=set, SECR_DB_PASSWORD=set, SECR_S3_BUCKET=set, AWS_ACCESS_KEY_ID=set, AWS_SECRET_ACCESS_KEY=set, SECR_ODIN_API_KEY=set, SECR_ODIN_API_SECRET=set, SECR_EM_CONNECTION_STRING=set, SECR_NAV_CONNECTION_STRING=set
+2026-11-23 16:06:46,994 INFO    [run 5e483bbe57eb] [MainThread] [secr.db] ESG DB esg-instance.cm18ojbg8cjx.eu-west-2.rds.amazonaws.com:3306/esgdb, max 60 connection(s)
+2026-11-23 16:06:48,471 INFO    [run 5e483bbe57eb] [MainThread] [secr.storage] S3 storage ready: bucket appsmith-client-docs-ins-main-raw, region eu-west-2
+2026-11-23 16:06:48,473 INFO    [run 5e483bbe57eb] [MainThread] [secr.ai_client] Odin AI client ready: https://api.getodin.ai, project 356316e20dcb48658ce127, agent 63622
+2026-11-23 16:06:48,473 INFO    [run 5e483bbe57eb] [MainThread] [secr.source_systems] Source systems ready: environment DEV, EM query folder \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\queries, EM configured, NAV configured
+2026-11-23 16:06:48,474 INFO    [run 5e483bbe57eb] [MainThread] [secr.runner] Flows enabled: Normalize=True, Daisy=True
+2026-11-23 16:06:48,476 INFO    [run 5e483bbe57eb] [MainThread] [secr.aa_entry] Called from Automation Anywhere: config \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\config.yaml, batch ids 52, max_batches=10, max_files=4, debug=True, secrets passed: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, SECR_DB_PASSWORD, SECR_DB_USER, SECR_EM_CONNECTION_STRING, SECR_NAV_CONNECTION_STRING, SECR_ODIN_API_KEY, SECR_ODIN_API_SECRET, SECR_S3_BUCKET
+2026-11-23 16:06:48,478 INFO    [run 5e483bbe57eb] [MainThread] [secr.runner] Run started for 1 batch id(s): 52
+2026-11-23 16:06:48,479 DEBUG   [run 5e483bbe57eb] [MainThread] [secr.runner] E-mail 'SECR normalizer started' not sent (notifications disabled)
+2026-11-23 16:06:48,484 INFO    [run 5e483bbe57eb] [MainThread] [secr.orchestrator] Processing 1 batch(es), up to 1 in parallel
+2026-11-23 16:06:48,485 INFO    [run 5e483bbe57eb] [batch_0] [secr.batch] [batch 52] Batch started
+2026-11-23 16:06:48,863 DEBUG   [run 5e483bbe57eb] [batch_0] [secr.db] [batch 52] DB connection opened (1/60 in use)
+2026-11-23 16:06:48,864 DEBUG   [run 5e483bbe57eb] [batch_0] [secr.batch] [batch 52] Trying DB lock secr_batch_52
+2026-11-23 16:06:48,877 DEBUG   [run 5e483bbe57eb] [batch_0] [secr.db] [batch 52] SQL query (0.01s, 1 row(s)): SELECT GET_LOCK(%s, %s) AS got | params=('secr_batch_52', 0)
+2026-11-23 16:06:48,878 DEBUG   [run 5e483bbe57eb] [batch_0] [secr.db] [batch 52] Got DB lock secr_batch_52 after 0.0s
+2026-11-23 16:06:48,882 DEBUG   [run 5e483bbe57eb] [batch_0] [secr.batch] [batch 52] Got DB lock secr_batch_52; work folder \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\work\batch_52_20261123_160648_489064
+2026-11-23 16:06:48,884 INFO    [run 5e483bbe57eb] [batch_0] [secr.batch] [batch 52] Read batch files from ESG DB - started
+2026-11-23 16:06:49,058 DEBUG   [run 5e483bbe57eb] [batch_0] [secr.db] [batch 52] DB connection opened (2/60 in use)
+2026-11-23 16:06:49,117 DEBUG   [run 5e483bbe57eb] [batch_0] [secr.db] [batch 52] SQL query (0.06s, 1 row(s)): SELECT FB.BatchId, FB.ReportId, R.ClientId, R.ReportStart, R.ReportEnd, BP.BusinessPartnerName, UF.CategorySelected, UF.FileId, UF.FileName, UF.StoragePath, UF. | params=('52',)
+2026-11-23 16:06:49,121 INFO    [run 5e483bbe57eb] [batch_0] [secr.batch] [batch 52] Read batch files from ESG DB - done in 0.2s
+2026-11-23 16:06:49,122 INFO    [run 5e483bbe57eb] [batch_0] [secr.batch] [batch 52] 1 valid SECR file row(s) found
+2026-11-23 16:06:49,123 DEBUG   [run 5e483bbe57eb] [batch_0] [secr.batch] [batch 52]   FileId=77 Category=Auto-Detect FileName=Inspired ESG_SECR_DSF_Acorn Mobility_FY25_V1_20261103_161448552.xlsx StoragePath=B&M/Heron Foods Limited/SECR/FY24-25 Annual-2/Inspired ESG_SECR_DSF_Acorn Mobility_FY25_V1_20261103_161448552.xlsx
+2026-11-23 16:06:49,124 INFO    [run 5e483bbe57eb] [batch_0] [secr.batch] [batch 52] File 77 (Inspired ESG_SECR_DSF_Acorn Mobility_FY25_V1_20261103_161448552.xlsx) is already COMPLETED; skipped
+2026-11-23 16:06:49,125 INFO    [run 5e483bbe57eb] [batch_0] [secr.batch] [batch 52] Rerun: 1 file(s) already completed are skipped, 0 file(s) to process
+2026-11-23 16:06:49,130 INFO    [run 5e483bbe57eb] [batch_0] [secr.batch] [batch 52] Every file of this batch is already completed; nothing to do
+2026-11-23 16:06:49,237 DEBUG   [run 5e483bbe57eb] [batch_0] [secr.db] [batch 52] DB connection opened (2/60 in use)
+2026-11-23 16:06:49,254 DEBUG   [run 5e483bbe57eb] [batch_0] [secr.db] [batch 52] SQL query (0.02s, 1 row(s)): SELECT BatchStatusId FROM RefBatchStatus WHERE Code = %s | params=('COMPLETE',)
+2026-11-23 16:06:49,255 DEBUG   [run 5e483bbe57eb] [batch_0] [secr.db] [batch 52] Setting batch 52 status to COMPLETE
+2026-11-23 16:06:49,297 DEBUG   [run 5e483bbe57eb] [batch_0] [secr.db] [batch 52] SQL execute (0.04s, 1 row(s) affected): UPDATE FileUploadBatch SET BatchStatusId = %s WHERE BatchId = %s | params=(5, '52')
+2026-11-23 16:06:49,309 DEBUG   [run 5e483bbe57eb] [batch_0] [secr.db] [batch 52] SQL query (0.01s, 1 row(s)): SELECT RELEASE_LOCK(%s) AS released | params=('secr_batch_52',)
+2026-11-23 16:06:49,310 DEBUG   [run 5e483bbe57eb] [batch_0] [secr.db] [batch 52] Released DB lock secr_batch_52
+2026-11-23 16:06:49,310 DEBUG   [run 5e483bbe57eb] [batch_0] [secr.batch] [batch 52] Released DB lock secr_batch_52
+2026-11-23 16:06:49,315 DEBUG   [run 5e483bbe57eb] [batch_0] [secr.batch] [batch 52] Removed work folder \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\work\batch_52_20261123_160648_489064
+2026-11-23 16:06:49,318 INFO    [run 5e483bbe57eb] [batch_0] [secr.batch] [batch 52] Batch finished: ALREADY_COMPLETED in 0.8s (1 file(s))
+2026-11-23 16:06:49,321 INFO    [run 5e483bbe57eb] [MainThread] [secr.orchestrator] Progress: 1/1 batch(es) done (batch 52: ALREADY_COMPLETED, 0.8s); 0 still running or queued
+2026-11-23 16:06:49,327 INFO    [run 5e483bbe57eb] [MainThread] [secr.orchestrator] All batches done in 0.8s
+2026-11-23 16:06:49,327 INFO    [run 5e483bbe57eb] [MainThread] [secr.runner] Summary
+   Batch  State                       Files   OK    Secs  Error
+      52  ALREADY_COMPLETED               1    1     0.8  
+2026-11-23 16:06:49,331 INFO    [run 5e483bbe57eb] [MainThread] [secr.runner] Run finished with exit code 0 (0 = all OK, 2 = some files failed, 1 = a batch failed)
+2026-11-23 16:06:49,333 DEBUG   [run 5e483bbe57eb] [MainThread] [secr.runner] E-mail 'SECR normalizer completed' not sent (notifications disabled)
+2026-11-23 16:06:49,334 INFO    [run 5e483bbe57eb] [MainThread] [secr.aa_entry] Returning status SUCCESS to Automation Anywhere

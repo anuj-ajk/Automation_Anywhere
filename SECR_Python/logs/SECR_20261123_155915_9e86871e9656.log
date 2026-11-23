@@ -1,0 +1,41 @@
+2026-11-23 15:59:15,408 INFO    [run 9e86871e9656] [MainThread] [secr] Log file: \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\logs\SECR_20261123_155915_9e86871e9656.log (level DEBUG)
+2026-11-23 15:59:15,539 INFO    [run 9e86871e9656] [MainThread] [secr.runner] Python 3.14.10 on MAN-RDS-V10 (pid 32404)
+2026-11-23 15:59:15,541 INFO    [run 9e86871e9656] [MainThread] [secr.runner] Parallelism: 10 batch(es) x 4 file(s) per batch, max 60 DB connection(s)
+2026-11-23 15:59:15,544 INFO    [run 9e86871e9656] [MainThread] [secr.runner] Work folder \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\work (keep files: False), serialize staging loads: True, created by: anuj.kumar
+2026-11-23 15:59:15,547 INFO    [run 9e86871e9656] [MainThread] [secr.runner] Rerun: skip files already in COMPLETED/DATA_NOT_AVAILABLE: True; clear earlier staging rows before load: True
+2026-11-23 15:59:15,548 INFO    [run 9e86871e9656] [MainThread] [secr.runner] Odin polling: every 40s, up to 15 attempts; source environment: DEV
+2026-11-23 15:59:15,550 INFO    [run 9e86871e9656] [MainThread] [secr.runner] Secrets: SECR_DB_USER=set, SECR_DB_PASSWORD=set, SECR_S3_BUCKET=set, AWS_ACCESS_KEY_ID=set, AWS_SECRET_ACCESS_KEY=set, SECR_ODIN_API_KEY=set, SECR_ODIN_API_SECRET=set, SECR_EM_CONNECTION_STRING=set, SECR_NAV_CONNECTION_STRING=set
+2026-11-23 15:59:15,551 INFO    [run 9e86871e9656] [MainThread] [secr.db] ESG DB esg-instance.cm18ojbg8cjx.eu-west-2.rds.amazonaws.com:3306/esgdb, max 60 connection(s)
+2026-11-23 15:59:17,501 INFO    [run 9e86871e9656] [MainThread] [secr.storage] S3 storage ready: bucket appsmith-client-docs-ins-main-raw, region eu-west-2
+2026-11-23 15:59:17,503 INFO    [run 9e86871e9656] [MainThread] [secr.ai_client] Odin AI client ready: https://api.getodin.ai, project 356316e20dcb48658ce127, agent 63622
+2026-11-23 15:59:17,504 INFO    [run 9e86871e9656] [MainThread] [secr.source_systems] Source systems ready: environment DEV, EM query folder \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\queries, EM configured, NAV configured
+2026-11-23 15:59:17,505 INFO    [run 9e86871e9656] [MainThread] [secr.runner] Flows enabled: Normalize=True, Daisy=True
+2026-11-23 15:59:17,506 INFO    [run 9e86871e9656] [MainThread] [secr.aa_entry] Called from Automation Anywhere: config \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\config.yaml, batch ids 13, max_batches=10, max_files=4, debug=True, secrets passed: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, SECR_DB_PASSWORD, SECR_DB_USER, SECR_EM_CONNECTION_STRING, SECR_NAV_CONNECTION_STRING, SECR_ODIN_API_KEY, SECR_ODIN_API_SECRET, SECR_S3_BUCKET
+2026-11-23 15:59:17,507 INFO    [run 9e86871e9656] [MainThread] [secr.runner] Run started for 1 batch id(s): 13
+2026-11-23 15:59:17,507 DEBUG   [run 9e86871e9656] [MainThread] [secr.runner] E-mail 'SECR normalizer started' not sent (notifications disabled)
+2026-11-23 15:59:17,508 INFO    [run 9e86871e9656] [MainThread] [secr.orchestrator] Processing 1 batch(es), up to 1 in parallel
+2026-11-23 15:59:17,510 INFO    [run 9e86871e9656] [batch_0] [secr.batch] [batch 13] Batch started
+2026-11-23 15:59:18,033 DEBUG   [run 9e86871e9656] [batch_0] [secr.db] [batch 13] DB connection opened (1/60 in use)
+2026-11-23 15:59:18,035 DEBUG   [run 9e86871e9656] [batch_0] [secr.batch] [batch 13] Trying DB lock secr_batch_13
+2026-11-23 15:59:18,055 DEBUG   [run 9e86871e9656] [batch_0] [secr.db] [batch 13] SQL query (0.02s, 1 row(s)): SELECT GET_LOCK(%s, %s) AS got | params=('secr_batch_13', 0)
+2026-11-23 15:59:18,056 DEBUG   [run 9e86871e9656] [batch_0] [secr.db] [batch 13] Got DB lock secr_batch_13 after 0.0s
+2026-11-23 15:59:18,057 DEBUG   [run 9e86871e9656] [batch_0] [secr.batch] [batch 13] Got DB lock secr_batch_13; work folder \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\work\batch_13_20261123_155917_510894
+2026-11-23 15:59:18,061 INFO    [run 9e86871e9656] [batch_0] [secr.batch] [batch 13] Read batch files from ESG DB - started
+2026-11-23 15:59:18,166 DEBUG   [run 9e86871e9656] [batch_0] [secr.db] [batch 13] DB connection opened (2/60 in use)
+2026-11-23 15:59:18,211 DEBUG   [run 9e86871e9656] [batch_0] [secr.db] [batch 13] SQL query (0.04s, 0 row(s)): SELECT FB.BatchId, FB.ReportId, R.ClientId, R.ReportStart, R.ReportEnd, BP.BusinessPartnerName, UF.CategorySelected, UF.FileId, UF.FileName, UF.StoragePath, UF. | params=('13',)
+2026-11-23 15:59:18,212 INFO    [run 9e86871e9656] [batch_0] [secr.batch] [batch 13] Read batch files from ESG DB - done in 0.1s
+2026-11-23 15:59:18,214 INFO    [run 9e86871e9656] [batch_0] [secr.batch] [batch 13] 0 valid SECR file row(s) found
+2026-11-23 15:59:18,215 WARNING [run 9e86871e9656] [batch_0] [secr.batch] [batch 13] No valid SECR files found for this batch
+2026-11-23 15:59:18,225 DEBUG   [run 9e86871e9656] [batch_0] [secr.db] [batch 13] SQL query (0.01s, 1 row(s)): SELECT RELEASE_LOCK(%s) AS released | params=('secr_batch_13',)
+2026-11-23 15:59:18,226 DEBUG   [run 9e86871e9656] [batch_0] [secr.db] [batch 13] Released DB lock secr_batch_13
+2026-11-23 15:59:18,227 DEBUG   [run 9e86871e9656] [batch_0] [secr.batch] [batch 13] Released DB lock secr_batch_13
+2026-11-23 15:59:18,231 DEBUG   [run 9e86871e9656] [batch_0] [secr.batch] [batch 13] Removed work folder \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\work\batch_13_20261123_155917_510894
+2026-11-23 15:59:18,233 INFO    [run 9e86871e9656] [batch_0] [secr.batch] [batch 13] Batch finished: NO_FILES in 0.7s (0 file(s))
+2026-11-23 15:59:18,236 INFO    [run 9e86871e9656] [MainThread] [secr.orchestrator] Progress: 1/1 batch(es) done (batch 13: NO_FILES, 0.7s); 0 still running or queued
+2026-11-23 15:59:18,237 INFO    [run 9e86871e9656] [MainThread] [secr.orchestrator] All batches done in 0.7s
+2026-11-23 15:59:18,238 INFO    [run 9e86871e9656] [MainThread] [secr.runner] Summary
+   Batch  State                       Files   OK    Secs  Error
+      13  NO_FILES                        0    0     0.7  
+2026-11-23 15:59:18,249 INFO    [run 9e86871e9656] [MainThread] [secr.runner] Run finished with exit code 0 (0 = all OK, 2 = some files failed, 1 = a batch failed)
+2026-11-23 15:59:18,250 DEBUG   [run 9e86871e9656] [MainThread] [secr.runner] E-mail 'SECR normalizer completed' not sent (notifications disabled)
+2026-11-23 15:59:18,253 INFO    [run 9e86871e9656] [MainThread] [secr.aa_entry] Returning status SUCCESS to Automation Anywhere
