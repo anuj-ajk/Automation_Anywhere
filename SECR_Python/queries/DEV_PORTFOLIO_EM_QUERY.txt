@@ -1,0 +1,86 @@
+WITH secrmeters AS (
+    SELECT
+        l.lookup_name      AS [Client],
+        s.id               AS [SiteID],
+        p.id               AS [MeterId],
+        p.sug_internal_id  AS [SugarID],
+        s.code             AS [SiteCode],
+        LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(s.[name],    CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [SiteName],
+        LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(s.address1,  CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [Address1],
+        LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(s.address2,  CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [Address2],
+        LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(s.town,      CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [Town],
+        LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(s.county,    CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [County],
+        LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(s.postcode,  CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [PostCode],
+        LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(s.country,   CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [Country],
+        LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(p.[type],    CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [Utility],
+        LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(p.m1_code1,  CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [M1_Code1],
+        LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(p.m1_code3,  CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [M1_Code3],
+        p.user_date_4      AS [HeldFrom],
+        p.closed_date      AS [HeldTo]
+    FROM MasterEM_Dev.[local].lookup l
+    JOIN MasterEM_Dev.[local].vContacts s
+        ON s.group_1 = l.lookup_id
+       AND s.DBName  = l.DBName
+    JOIN MasterEM_Dev.[local].points p
+        ON p.contacts_id = s.id
+       AND p.DBName     = s.DBName
+    WHERE
+        l.lookup_group = '1'
+        AND l.lookup_name = '@ClientName'
+        AND p.[type] IN ('Electricity', 'Gas')
+        AND (p.closed_date > '@ReportStartDate' OR p.closed_date IS NULL)
+),
+secrcontracts AS (
+    SELECT
+        p.id               AS [MeterId],
+        LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(REPLACE(c.supplier, CHAR(9), ' '), CHAR(10), ' '), CHAR(13), ' '), ',', ''))) AS [Supplier],
+        c.StartDate        AS [ContractStartDate],
+        c.EndDate          AS [ContractEndDate],
+        c.[Status]         AS [ContractStatus]
+    FROM MasterEM_Dev.[local].points p
+    INNER JOIN MasterEM_Dev.[dbo].[combinedContractView] c
+        ON p.id     = c.MeterID
+       AND p.DBName = c.DBName
+    WHERE
+        p.[type] IN ('Electricity', 'Gas')
+        AND c.EndDate   > '@ReportStartDate'
+        AND c.StartDate < '@ReportEndDate'
+),
+rawdata AS (
+    SELECT
+        sm.[Client]                       AS [Client],
+        sm.[SiteID]                       AS [Site ID],
+        sm.[MeterId]                      AS [Meter Id],
+        sm.[SugarID]                      AS [Sugar ID],
+        sm.[SiteCode]                     AS [Site Code],
+        sm.[SiteName]                     AS [Site Name],
+        sm.[Address1]                     AS [Address1],
+        sm.[Address2]                     AS [Address2],
+        sm.[Town]                         AS [Town],
+        sm.[County]                       AS [County],
+        sm.[PostCode]                     AS [Post Code],
+        sm.[Country]                      AS [Country],
+        ''                                AS [Subsidiary Company],
+        sm.[Utility]                      AS [Utility],
+        ''                                AS [Utility Supplier / Landlord],
+        sm.[M1_Code1]                     AS [MPAN/MPR],
+        sm.[M1_Code3]                     AS [M1_Code3],
+        sc.[Supplier]                     AS [Current Supplier],
+        sc.[ContractStartDate]            AS [Contract Start Date],
+        sc.[ContractEndDate]              AS [Contract End Date],
+        sm.[HeldFrom]                     AS [Held From],
+        sm.[HeldTo]                       AS [Held To],
+        sc.[ContractStatus]               AS [Contract Status],
+        ROW_NUMBER() OVER (PARTITION BY sm.[MeterId] ORDER BY sc.[ContractStartDate] DESC) AS rn_latest
+    FROM secrmeters sm
+    LEFT JOIN secrcontracts sc
+        ON sm.[MeterId] = sc.[MeterId]
+)
+SELECT
+    [Client], [Site ID], [Meter Id], [Sugar ID], [Site Code], [Site Name], [Address1], [Address2],
+    [Town], [County], [Post Code], [Country], [Subsidiary Company], [Utility], [Utility Supplier / Landlord],
+    [MPAN/MPR], [M1_Code3], [Current Supplier], [Contract Start Date], [Contract End Date],
+    [Held From], [Held To], [Contract Status]
+FROM rawdata
+WHERE rn_latest = 1
+ORDER BY [MPAN/MPR];

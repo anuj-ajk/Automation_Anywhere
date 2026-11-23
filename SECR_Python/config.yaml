@@ -38,7 +38,7 @@ odin:
 
 sources:
   environment: DEV          # DEV / UAT / PROD -> <ENV>_<TYPE>_EM_QUERY.txt
-  query_dir: "../AAPackage/Automation Anywhere/Bots/Environmental Social and Governance/Streamlined Energy & Carbon Reporting/Docs/Config"
+  query_dir: "../SECR_Python/queries"
   query_timeout_seconds: 600
 
 notify:
