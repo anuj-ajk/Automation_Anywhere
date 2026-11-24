@@ -51,6 +51,13 @@ class FakeSession:
     def set_batch_status(self, batch_id, code):
         with self.db.lock:
             self.db.batch_status[batch_id] = code
+            self.db.batch_history.setdefault(batch_id, []).append(code)
+
+    def get_batch_status(self, batch_id):
+        return self.db.batch_status.get(batch_id, "PROCESSING")
+
+    def batch_status_codes(self):
+        return sorted(self.db.batch_codes)
 
     def add_recognized_category(self, file_id, name):
         with self.db.lock:
@@ -99,7 +106,8 @@ class FakeDb:
         self.inserted, self.named_locks = {}, set()
         self.deleted = []
         self.categories = {}
-        self.batch_codes = {"COMPLETE", "PROCESSING", "PARTIAL_FAILURE"}
+        self.batch_codes = {"COMPLETE", "PROCESSING", "PARTIAL_FAILURE", "IN_PROGRESS"}
+        self.batch_history = {}
 
     @contextlib.contextmanager
     def session(self):
@@ -577,3 +585,25 @@ def test_na_links_are_not_downloaded_or_counted(tmp_path):
     assert out.status == st.COMPLETED and "NA" not in out.detail, out
     assert db.categories["77"] == ["Metrics"]
     assert db.inserted["Staging_Metrics"] == 3
+
+
+def test_batch_marked_in_progress_when_picked_up(tmp_path):
+    db, processor = _build(tmp_path, {"40": [_row("40", 1)], "41": []})
+    processor.process("40")
+    assert db.batch_history["40"] == ["IN_PROGRESS", "COMPLETE"]   # in progress first, final status last
+    processor.process("41")                                         # no files: put back to PROCESSING
+    assert db.batch_history["41"] == ["IN_PROGRESS", "PROCESSING"]
+
+
+def test_failed_batch_gets_previous_status_back(tmp_path):
+    db, processor = _build(tmp_path, {"40": [_row("40", 1)]})
+    processor.normalize = None                                      # forces a batch-level failure
+    assert processor.process("40").state == "FAILED"
+    assert db.batch_history["40"] == ["IN_PROGRESS", "PROCESSING"]  # picked up again by --pending
+
+
+def test_missing_in_progress_code_leaves_status_alone(tmp_path):
+    db, processor = _build(tmp_path, {"40": [_row("40", 1)]})
+    db.batch_codes.discard("IN_PROGRESS")
+    processor.process("40")
+    assert db.batch_history["40"] == ["COMPLETE"]

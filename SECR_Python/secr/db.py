@@ -136,6 +136,18 @@ class EsgSession:
         )
         return self.execute(sql, (to_code, _clip(description), batch_id, from_code))
 
+    def get_batch_status(self, batch_id: str) -> str:
+        """Current RefBatchStatus.Code of the batch ('' if it has none)."""
+        rows = self.query(
+            "SELECT B.Code AS Code FROM FileUploadBatch FB "
+            "LEFT JOIN RefBatchStatus B ON B.BatchStatusId = FB.BatchStatusId WHERE FB.BatchId = %s",
+            (batch_id,),
+        )
+        return str(rows[0].get("Code") or "") if rows else ""
+
+    def batch_status_codes(self) -> list[str]:
+        return [str(r["Code"]) for r in self.query("SELECT Code FROM RefBatchStatus ORDER BY BatchStatusId")]
+
     def batch_status_exists(self, code: str) -> bool:
         return bool(self.query("SELECT 1 FROM RefBatchStatus WHERE Code = %s", (code,)))
 

@@ -23,7 +23,8 @@ class BatchProcessor:
     def __init__(self, db: EsgDb, normalize: NormalizeFlow | None, daisy: DaisyFlow | None,
                  work_root, files_per_batch: int, keep_work_files: bool, notifier=None,
                  skip_statuses=st.DEFAULT_COMPLETED_STATUSES,
-                 status_on_file_errors: str = st.BATCH_PARTIAL_FAILURE):
+                 status_on_file_errors: str = st.BATCH_PARTIAL_FAILURE,
+                 status_in_progress: str = st.BATCH_IN_PROGRESS):
         self.db = db
         self.normalize = normalize
         self.daisy = daisy
@@ -35,6 +36,38 @@ class BatchProcessor:
         self.skip_statuses = {str(s).upper() for s in (skip_statuses or ())}
         # Batch status when some files failed; falls back to COMPLETE if the code is not in RefBatchStatus.
         self.status_on_file_errors = (status_on_file_errors or st.BATCH_COMPLETE).strip().upper()
+        # Set as soon as the batch is picked up, so it no longer looks pending ("" = leave the status alone).
+        self.status_in_progress = (status_in_progress or "").strip().upper()
+
+    def _mark_batch_in_progress(self, batch_id: str, log) -> str | None:
+        """Set the in-progress status. Returns the previous status code (to put back if the batch does not
+        run), or None when nothing was changed."""
+        if not self.status_in_progress:
+            return None
+        try:
+            with self.db.session() as s:
+                if not s.batch_status_exists(self.status_in_progress):
+                    log.warning("Batch status %s is not in RefBatchStatus (codes: %s); batch status left unchanged",
+                                self.status_in_progress, ", ".join(s.batch_status_codes()) or "none")
+                    return None
+                previous = s.get_batch_status(batch_id)
+                s.set_batch_status(batch_id, self.status_in_progress)
+            log.info("Batch status %s -> %s", previous or "<none>", self.status_in_progress)
+            return previous
+        except Exception as exc:  # a status write must never stop the batch
+            log.error("Could not set batch status %s: %s", self.status_in_progress, exc)
+            return None
+
+    def _restore_batch_status(self, batch_id: str, previous: str | None, log) -> None:
+        """Put the status back when the batch did not run, so it is picked up again (e.g. by --pending)."""
+        if not previous:
+            return
+        try:
+            with self.db.session() as s:
+                s.set_batch_status(batch_id, previous)
+            log.info("Batch status set back to %s", previous)
+        except Exception as exc:
+            log.error("Could not set batch status back to %s: %s", previous, exc)
 
     def _finish_batch_status(self, batch_id: str, state: str, log) -> None:
         code = st.BATCH_COMPLETE
@@ -84,6 +117,8 @@ class BatchProcessor:
         return result
 
     def _process_locked(self, batch_id: str, work_dir, log) -> BatchResult:
+        # First thing once the batch is ours: mark it in progress.
+        previous_status = self._mark_batch_in_progress(batch_id, log)
         try:
             with timed_step(log, "Read batch files from ESG DB"), self.db.session() as s:
                 rows = s.fetch_batch_files(batch_id)
@@ -94,6 +129,7 @@ class BatchProcessor:
             if not rows:
                 # The bot read row [0] without checking and failed here; an empty batch is not an error.
                 log.warning("No valid SECR files found for this batch")
+                self._restore_batch_status(batch_id, previous_status, log)
                 return BatchResult(batch_id, "NO_FILES")
 
             first = rows[0]
@@ -165,6 +201,7 @@ class BatchProcessor:
         except Exception as exc:
             log.exception("Batch failed")
             self._mark_in_progress_failed(batch_id, f"Batch {batch_id} failed: {exc}", log)
+            self._restore_batch_status(batch_id, previous_status, log)
             if self.notifier:
                 self.notifier.send(f"SECR batch {batch_id} failed", f"Batch {batch_id} failed:\n{exc}")
             return BatchResult(batch_id, "FAILED", error=str(exc))

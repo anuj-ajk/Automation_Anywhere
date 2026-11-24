@@ -112,6 +112,11 @@ Notes:
   * `skip_completed_files: true`
   * `completed_statuses: [COMPLETED, DATA_NOT_AVAILABLE]`
   * `clear_staging_before_load: true`
+* **Batch picked up:** as soon as a batch is taken (after its `secr_batch_<id>` lock), it is set to
+  `IN_PROGRESS` (setting `batch_status_in_progress`), so it no longer looks pending.
+  * If that code is not in `RefBatchStatus`, the status is left unchanged and the log lists the codes that exist.
+  * If the batch then fails, or has no files, its previous status (e.g. `PROCESSING`) is put back, so it is picked
+    up again.
 * **Batch status:**
   * every file OK → `COMPLETE`;
   * some files failed → `PARTIAL_FAILURE` (setting `batch_status_on_file_errors`).

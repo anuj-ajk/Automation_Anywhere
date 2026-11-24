@@ -92,6 +92,8 @@ class RunConfig:
     clear_staging_before_load: bool = True
     # FileUploadBatch status when some files failed (COMPLETE is used if this code is not in RefBatchStatus).
     batch_status_on_file_errors: str = "PARTIAL_FAILURE"
+    # FileUploadBatch status set as soon as a batch is picked up ("" = do not change it).
+    batch_status_in_progress: str = "IN_PROGRESS"
 
 
 @dataclass
@@ -195,6 +197,7 @@ def load_config(path: str | Path) -> AppConfig:
                                  (r.get("completed_statuses") or ("COMPLETED", "DATA_NOT_AVAILABLE"))),
         clear_staging_before_load=bool(r.get("clear_staging_before_load", True)),
         batch_status_on_file_errors=str(r.get("batch_status_on_file_errors") or "PARTIAL_FAILURE").strip().upper(),
+        batch_status_in_progress=str(r.get("batch_status_in_progress", "IN_PROGRESS") or "").strip().upper(),
     )
 
     n = _section(raw, "notify")

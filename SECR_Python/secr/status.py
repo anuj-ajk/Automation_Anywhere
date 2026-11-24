@@ -13,6 +13,7 @@ DATA_NOT_AVAILABLE = "DATA_NOT_AVAILABLE"
 
 # FileUploadBatch.BatchStatusId
 BATCH_COMPLETE = "COMPLETE"
+BATCH_IN_PROGRESS = "IN_PROGRESS"  # set as soon as a batch is picked up (if it exists)
 BATCH_PARTIAL_FAILURE = "PARTIAL_FAILURE"  # used when some files failed, if it exists in RefBatchStatus
 
 # File outcomes that count as "fine" for the batch summary.

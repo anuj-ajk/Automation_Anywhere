@@ -68,7 +68,8 @@ def build(cfg: AppConfig, debug: bool = False) -> tuple[BatchProcessor, EsgDb, N
     processor = BatchProcessor(db, normalize, daisy, cfg.run.work_dir,
                                cfg.run.max_parallel_files_per_batch, cfg.run.keep_work_files, notifier,
                                skip_statuses=cfg.run.completed_statuses if cfg.run.skip_completed_files else (),
-                               status_on_file_errors=cfg.run.batch_status_on_file_errors)
+                               status_on_file_errors=cfg.run.batch_status_on_file_errors,
+                               status_in_progress=cfg.run.batch_status_in_progress)
     return processor, db, notifier, log_file
 
 
