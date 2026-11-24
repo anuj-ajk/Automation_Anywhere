@@ -5,6 +5,17 @@ Python version of the Automation Anywhere process **MT Normalizer Uploaded Data*
 `MainTask_Normalize_RawData`, `MainTask_Retrive_Data_Daisy_EM` and all their sub tasks.
 It processes **up to 10 batches at the same time**, and each batch can have any number of files.
 
+For the architecture, data flow, status model, concurrency design and risks, see
+**`docs/SECR_Python_Design_Document.docx`** (the older design document of the AA bots is `../SECR_Normalizer_Design.md`).
+
+**What a batch is:** a user uploads files for an SECR report; they are stored as one `FileUploadBatch` with one
+`UploadedFile` row per file. Two kinds of file rows exist and both are handled:
+
+* **Uploaded files** (Excel / CSV in S3) → split by sheet → normalized by the Odin AI agent into one CSV per
+  category → bulk-loaded into `Staging_*` tables → `Load*` stored procedures (`normalize.py`).
+* **`Source: Daisy` rows** (no file) → data for the client and report period is pulled from Energy Manager or NAV →
+  CSV → same staging load (`daisy.py`).
+
 ## Setup
 
 ```powershell
@@ -12,10 +23,12 @@ cd SECR_Python
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-copy config.example.yaml config.yaml   # then edit config.yaml
+# config.yaml is in the folder already: edit it for your environment (it never holds secrets)
 ```
 
 You also need the Microsoft ODBC Driver for SQL Server for the Energy Manager / NAV connections.
+
+Tests (no real DB / S3 / Odin needed, 46 tests): `python -m pytest tests`
 
 **Work folder:** set `run.work_dir` to a short **local** folder, for example `%TEMP%\SECR_work` or `C:\SECR_work`.
 Environment variables are expanded.
@@ -37,6 +50,19 @@ Environment variables are expanded.
 | `SECR_EM_CONNECTION_STRING` | global value `@sql_JupiterConnection` (ODBC string) |
 | `SECR_NAV_CONNECTION_STRING` | ESG Locker / NAV_ESGDB_ConnectionString (ODBC string) |
 
+Where the values come from:
+
+* **Machine / process environment variables** always work (CLI and AA).
+* **`.env` file** next to `aa_entry.py` (git-ignored): it is loaded by `aa_entry.py` only (`python-dotenv`), **not** by
+  `python -m secr`. For the command line, set the variables in the shell first. Values already set in the
+  environment are not overwritten by `.env`.
+* **AA `secrets` dictionary** (see below): values passed in are written to the process environment for that call.
+  Only keys starting with `SECR_` or `AWS_` are accepted.
+
+Only the sections of `config.yaml` that you need must be complete: the Normalize flow needs S3 + Odin settings,
+the Daisy flow needs the source settings. If one of them cannot be built, it is disabled with a warning and the
+other still works (a batch that contains files for the disabled flow then fails).
+
 ## Running
 
 ```powershell
@@ -45,10 +71,25 @@ python -m secr --config config.yaml run --batch-file batches.txt
 python -m secr --config config.yaml run --pending            # uses run.pending_batches_query
 python -m secr --config config.yaml run --batch-ids 40 --max-batches 1 --max-files 1 --debug
 python -m secr --config config.yaml run --batch-ids 40 --force       # also redo files already COMPLETED
+python -m secr --config config.yaml run --batch-ids 40 --work-dir C:\SECR_work --log-dir D:\logs
 ```
+
+Options of `run`: `--batch-ids` / `--batch-file` / `--pending` (one of them is required), `--max-batches`,
+`--max-files`, `--work-dir`, `--log-dir`, `--force`; global: `--config`, `--debug`.
 
 Exit code: `0` all files OK, `2` some files failed (batch still completed), `1` at least one batch failed.
 A summary table is printed and written to the log file in `run.log_dir`.
+
+Batch states in the summary / AA output:
+
+| State | Meaning |
+|---|---|
+| `SUCCESS` | every file finished `COMPLETED` or `DATA_NOT_AVAILABLE` |
+| `COMPLETED_WITH_FILE_ERRORS` | batch ran to the end, at least one file failed (exit code 2) |
+| `FAILED` | the batch itself crashed (exit code 1); its files still in progress are set to failed |
+| `NO_FILES` | no valid SECR file rows for the batch (not an error; status put back if the batch was claimed) |
+| `ALREADY_COMPLETED` | rerun and every file was already done; nothing loaded, batch set `COMPLETE` |
+| `SKIPPED` | another process holds the batch (DB lock) or it is `IN_PROGRESS` elsewhere |
 
 ## Calling it from Automation Anywhere
 
@@ -243,9 +284,9 @@ run_batches  ── ThreadPoolExecutor(max_parallel_batches = 10)
    └─ BatchProcessor.process(batch)          one thread per running batch
         ├─ MySQL GET_LOCK('secr_batch_<id>')  same batch never runs twice (any process/machine)
         ├─ read all files of the batch        0..N rows, uploaded + 'Source: Daisy' mixed
-        └─ ThreadPoolExecutor(max_parallel_files_per_batch = 4)
+        └─ ThreadPoolExecutor(max_parallel_files_per_batch)   code default 4, config.yaml sets 5
               ├─ NormalizeFlow.run_file   S3 → split → Odin submit+poll → download CSV → load
-              │    └─ ThreadPoolExecutor(odin.max_parallel_sheets = 5)   per file
+              │    └─ ThreadPoolExecutor(odin.max_parallel_sheets)   per file; code default 5, config.yaml sets 6
               │         submit all sheets │ poll all chats each round │ download all CSVs
               │         (then the CSVs are loaded one after the other)
               └─ DaisyFlow.run_file       Energy Manager / NAV → CSV → load
@@ -282,14 +323,42 @@ All Odin calls and CSV downloads share one cap: odin.max_parallel_requests = 20
   by default only one load per staging table runs at a time (MySQL named lock, works across processes).
   If the procedures only touch the rows of their own `FileId`, set `serialize_staging_loads: false`
   for more speed.
-* **Limits**: total threads ≈ `batches × files_per_batch` (40 by default); DB connections are capped by
-  `max_db_connections`. Lower `max_parallel_files_per_batch` if the Odin API rate-limits you.
+* **Limits**: total threads ≈ `batches × files_per_batch` (40 by default in code, 50 with the shipped
+  `config.yaml`); DB connections are capped by `max_db_connections`, which must be at least
+  `batches × (files_per_batch + 1)` (checked at start-up; `aa_entry`/CLI overrides raise it automatically).
+  Lower `max_parallel_files_per_batch` if the Odin API rate-limits you.
+
+## Configuration reference (`config.yaml`)
+
+| Section | Key | Default (code) | Meaning |
+|---|---|---|---|
+| `run` | `max_parallel_batches` / `max_parallel_files_per_batch` | 10 / 4 | batches at once / files of one batch at once |
+| `run` | `max_db_connections` | 60 | cap on open MySQL connections |
+| `run` | `work_dir`, `log_dir` | `work`, `logs` | local temp folder (deleted per batch) and log folder; `%VARS%` expanded, relative = from the config file's folder |
+| `run` | `keep_work_files` | false | keep downloaded / split / CSV files for debugging |
+| `run` | `created_by` | OS user | passed to `LoadHHData` / `CalculateInvoiceData` |
+| `run` | `serialize_staging_loads`, `staging_lock_timeout_seconds` | true, 900 | one load per staging table at a time (MySQL `GET_LOCK`) |
+| `run` | `insert_chunk_size`, `insert_connections`, `parallel_insert_min_rows` | 1000, 4, 20000 | bulk insert tuning |
+| `run` | `skip_completed_files`, `completed_statuses`, `clear_staging_before_load` | true, `[COMPLETED, DATA_NOT_AVAILABLE]`, true | rerun behaviour |
+| `run` | `batch_status_in_progress`, `batch_status_on_file_errors` | `IN_PROGRESS`, `PARTIAL_FAILURE` | batch status codes written to `RefBatchStatus` |
+| `run` | `claimable_statuses`, `pending_batches_query` | `[PROCESSING, PARTIAL_FAILURE]`, none | which batches pending mode takes |
+| `run` | `claim_procedure`, `claim_batch_procedure`, `release_stale_procedure` | empty | stored procedure names; empty = Python runs the same SQL (the shipped `config.yaml` sets all three) |
+| `run` | `pending_poll_seconds`, `pending_max_runtime_minutes` | 60, 0 | pending-mode polling / stop taking new batches (0 = no limit) |
+| `run` | `claim_heartbeat_seconds`, `stale_claim_minutes` | 60, 30 | claim tracking (0 minutes = never release) |
+| `esg_db` | `host`, `port`, `database`, `connect_timeout` | –, 3306, `esgdb`, 30 | user / password come from the environment |
+| `s3` | `region` | `eu-west-2` | bucket from `SECR_S3_BUCKET` |
+| `odin` | `base_uri`, `project_id`, `agent_id`, `message` | – | Odin REST API and agent |
+| `odin` | `submit_timeout_seconds`, `request_timeout_seconds` | 300, 120 | upload timeout (a timeout counts as accepted) / other calls |
+| `odin` | `poll_interval_seconds`, `max_poll_attempts` | 40, 15 | about 10 minutes per file |
+| `odin` | `max_parallel_sheets`, `max_parallel_requests` | 5, 20 | sheets of one file at once / Odin calls + CSV downloads in flight overall |
+| `sources` | `environment`, `query_dir`, `query_timeout_seconds` | `DEV`, `.`, 600 | `<ENV>_<TYPE>_EM_QUERY.txt` is read from `query_dir` |
+| `notify` | `enabled`, `smtp_host`, `smtp_port`, `use_tls`, `from_address`, `to_addresses`, `cc_addresses` | disabled | start / end / batch-failure e-mails through an SMTP relay (no login); a failed mail never fails a batch |
 
 ## Module map (bot → Python)
 
 | AA bot | Python |
 |---|---|
-| MT Normalizer Uploaded Data | `secr/__main__.py`, `orchestrator.py`, `batch.py` |
+| MT Normalizer Uploaded Data | `secr/__main__.py`, `orchestrator.py`, `batch.py`, `runner.py` (wiring), `aa_entry.py` |
 | MainTask_Normalize_RawData | `normalize.py` |
 | AWS S3 File Management | `storage.py` |
 | ST_SplitSheetsAndCreateIndividualExcel | `excel_split.py` |
@@ -299,6 +368,8 @@ All Odin calls and CSV downloads share one cap: odin.max_parallel_requests = 20
 | MainTask_Retrive_Data_Daisy_EM | `daisy.py` |
 | ST_Retrieve_and_Load_{Portfolio,Invoices,HH}Data | `source_systems.py` + `loader.py` (`DAISY_SPECS`) |
 | Framework ErrorHandler / SendEmailNotification | `notifier.py` + logging |
+| ReadMainConfig / ReadUserConfig / Credential Vault | `config.py` (YAML + environment variables) |
+| (DB access inside every bot) | `db.py` (PyMySQL sessions, locks, claims), `models.py`, `status.py`, `paths.py`, `logging_setup.py` |
 
 Status codes written to `UploadedFile` and `FileUploadBatch` are the same as in the bots
 (`PARSING`, `PARSED`, `NORMALIZING`, `NORMALIZATION_COMPLETED`, `FAILED_WHILE_NORMALIZATION`,
@@ -323,14 +394,19 @@ Status codes written to `UploadedFile` and `FileUploadBatch` are the same as in 
 | Category of a normalized CSV | parsed from the file name | taken from the Odin response key |
 | Framework steps (kill apps, archive, folder upload/download) | AA framework bots | not needed: each batch gets its own temp folder that is deleted afterwards |
 
-## Not verified yet
+## Verification status
 
-The tests in `tests/` run the whole pipeline with fake DB / S3 / Odin / source systems
-(`python -m pytest tests`). They prove the parallel scheduling, the per-file status flow and the CSV
-and Excel code, but **nothing has been run against the real ESG DB, S3, Odin, Energy Manager or NAV**.
-Before production, run a few known batches with `--max-batches 1 --debug` in DEV and check:
+The tests in `tests/` (`python -m pytest tests`, 46 tests) run the whole pipeline with fake DB / S3 / Odin /
+source systems. They prove the parallel scheduling, the per-file status flow, claiming, and the CSV and Excel code.
 
-* the stored procedures' OUT parameters come back as expected through PyMySQL `callproc`;
-* the Odin `json_response` shape and the CSV link download;
-* the UAT/PROD query files in `Docs/Config` (they are currently empty) and `PROD_INVOICE_EM_QUERY.txt`;
-* whether the `Load*` procedures are safe to run concurrently (then disable `serialize_staging_loads`).
+The logs in `logs/` show **runs against the real DEV environment** on 2026-11-23: batches 40 and 52 (S3 download,
+Odin normalization, loads of portfolio / landlord / transport / other fuels, NAV invoice export with
+`LoadInvoiceData` + `CalculateInvoiceData`), plus reruns, an empty batch (13) and an already-completed batch.
+Some of those runs ended with file errors (state `COMPLETED_WITH_FILE_ERRORS`); read the logs before relying on
+a category. Still to confirm in DEV / UAT before production:
+
+* Energy Manager extraction and Half Hourly (`LoadHHData`) loads, and large files over the parallel insert;
+* several batches at the same time, and pending mode with the installed `ClaimBatches.sql` procedures;
+* the UAT / PROD query files: only `queries/DEV_*_EM_QUERY.txt` exist. `UAT_*` / `PROD_*` files (including
+  `PROD_INVOICE_EM_QUERY.txt`) must be created before running with `sources.environment` set to UAT / PROD;
+* whether the `Load*` procedures are safe to run concurrently (then set `serialize_staging_loads: false`).

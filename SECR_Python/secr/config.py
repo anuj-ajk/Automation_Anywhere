@@ -1,6 +1,6 @@
 """Configuration.
 
-Non-secret settings come from a YAML file (see ``config.example.yaml``).
+Non-secret settings come from a YAML file (see ``config.yaml``).
 Secrets are read ONLY from environment variables, never from the YAML file:
 
     SECR_DB_USER, SECR_DB_PASSWORD             ESG MySQL (was CV "ESG Locker/ESGDB MySQL")
