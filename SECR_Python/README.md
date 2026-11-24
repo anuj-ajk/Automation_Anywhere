@@ -324,8 +324,10 @@ All Odin calls and CSV downloads share one cap: odin.max_parallel_requests = 20
   If the procedures only touch the rows of their own `FileId`, set `serialize_staging_loads: false`
   for more speed.
 * **Limits**: total threads ≈ `batches × files_per_batch` (40 by default in code, 50 with the shipped
-  `config.yaml`); DB connections are capped by `max_db_connections`, which must be at least
-  `batches × (files_per_batch + 1)` (checked at start-up; `aa_entry`/CLI overrides raise it automatically).
+  `config.yaml`); DB connections are capped by `max_db_connections` (20), which must be at least
+  `batches + 1` (checked at start-up; `aa_entry`/CLI overrides raise it to that minimum if needed). Each
+  batch holds one connection for its lock; when all connections are in use, a file worker waits for a free
+  one (logged as "All N DB connections are in use; waiting for a free one").
   Lower `max_parallel_files_per_batch` if the Odin API rate-limits you.
 
 ## Configuration reference (`config.yaml`)
@@ -333,7 +335,7 @@ All Odin calls and CSV downloads share one cap: odin.max_parallel_requests = 20
 | Section | Key | Default (code) | Meaning |
 |---|---|---|---|
 | `run` | `max_parallel_batches` / `max_parallel_files_per_batch` | 10 / 4 | batches at once / files of one batch at once |
-| `run` | `max_db_connections` | 60 | cap on open MySQL connections |
+| `run` | `max_db_connections` | 20 | cap on open MySQL connections (min `max_parallel_batches + 1`; workers wait for a free one) |
 | `run` | `work_dir`, `log_dir` | `work`, `logs` | local temp folder (deleted per batch) and log folder; `%VARS%` expanded, relative = from the config file's folder |
 | `run` | `keep_work_files` | false | keep downloaded / split / CSV files for debugging |
 | `run` | `created_by` | OS user | passed to `LoadHHData` / `CalculateInvoiceData` |

@@ -11,7 +11,7 @@ import sys
 from typing import Iterable
 
 from .batch import BatchProcessor
-from .config import AppConfig
+from .config import AppConfig, min_db_connections
 from .daisy import DaisyFlow
 from .db import EsgDb
 from .loader import StagingLoader
@@ -44,10 +44,13 @@ def apply_overrides(cfg: AppConfig, max_batches: int | None = None, max_files: i
         cfg.run.max_parallel_batches = int(max_batches)
     if max_files:
         cfg.run.max_parallel_files_per_batch = int(max_files)
-    cfg.run.max_db_connections = max(
-        cfg.run.max_db_connections,
-        cfg.run.max_parallel_batches * (cfg.run.max_parallel_files_per_batch + 1),
-    )
+    # Keep the configured cap; only raise it to the deadlock-free minimum if more batches were requested.
+    needed = min_db_connections(cfg)
+    if cfg.run.max_db_connections < needed:
+        get_logger(__name__).warning(
+            "max_db_connections %d is too low for %d parallel batch(es); raised to %d",
+            cfg.run.max_db_connections, cfg.run.max_parallel_batches, needed)
+        cfg.run.max_db_connections = needed
 
 
 def build(cfg: AppConfig, debug: bool = False) -> tuple[BatchProcessor, EsgDb, Notifier, str]:

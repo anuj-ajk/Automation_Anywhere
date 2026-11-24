@@ -4,7 +4,8 @@
 run:
   max_parallel_batches: 10          # batches processed at the same time
   max_parallel_files_per_batch: 5   # files of ONE batch processed at the same time
-  max_db_connections: 60            # must be >= batches * (files_per_batch + 1)
+  max_db_connections: 20            # cap on open MySQL connections; must be >= max_parallel_batches + 1.
+                                    # Below batches * (files_per_batch + 1) workers wait for a free connection.
   work_dir: "%TEMP%\\SECR_work"     # local per-batch temp folders (deleted after each batch); keep it short and local
   log_dir: ./logs
   keep_work_files: false            # true = keep downloaded/split/CSV files for debugging
@@ -54,7 +55,7 @@ odin:
 
 sources:
   environment: DEV          # DEV / UAT / PROD -> <ENV>_<TYPE>_EM_QUERY.txt
-  query_dir: "../SECR_Python/queries"
+  query_dir: "./queries"
   query_timeout_seconds: 600
 
 notify:

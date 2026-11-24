@@ -73,7 +73,7 @@ class SourceConfig:
 class RunConfig:
     max_parallel_batches: int = 10
     max_parallel_files_per_batch: int = 4
-    max_db_connections: int = 60
+    max_db_connections: int = 20
     work_dir: Path = Path("work")
     log_dir: Path = Path("logs")
     keep_work_files: bool = False
@@ -201,7 +201,7 @@ def load_config(path: str | Path) -> AppConfig:
     run = RunConfig(
         max_parallel_batches=int(r.get("max_parallel_batches", 10)),
         max_parallel_files_per_batch=int(r.get("max_parallel_files_per_batch", 4)),
-        max_db_connections=int(r.get("max_db_connections", 60)),
+        max_db_connections=int(r.get("max_db_connections", 20)),
         work_dir=resolve(r.get("work_dir", "work")),
         log_dir=resolve(r.get("log_dir", "logs")),
         keep_work_files=bool(r.get("keep_work_files", False)),
@@ -245,6 +245,18 @@ def load_config(path: str | Path) -> AppConfig:
     return cfg
 
 
+def min_db_connections(cfg: AppConfig) -> int:
+    """Smallest connection cap that can never deadlock.
+
+    Each running batch holds one connection for its whole run (duplicate-run lock) and needs one more
+    at a time for its own status updates. File workers hold at most one connection each and never wait
+    for a second one (extra bulk-insert connections are only taken when free). So as long as one slot is
+    left over after every batch has its lock connection, work always moves on; with fewer connections
+    than ``batches * (files_per_batch + 1)`` workers simply wait their turn for a free connection.
+    """
+    return cfg.run.max_parallel_batches + 1
+
+
 def validate(cfg: AppConfig) -> None:
     problems = []
     if not cfg.db.host:
@@ -255,13 +267,11 @@ def validate(cfg: AppConfig) -> None:
         problems.append("run.max_parallel_batches must be >= 1")
     if cfg.run.max_parallel_files_per_batch < 1:
         problems.append("run.max_parallel_files_per_batch must be >= 1")
-    # Each running batch holds one connection for its duplicate-run lock, and each file
-    # worker opens one more while it talks to the DB.
-    needed = cfg.run.max_parallel_batches * (cfg.run.max_parallel_files_per_batch + 1)
+    needed = min_db_connections(cfg)
     if cfg.run.max_db_connections < needed:
         problems.append(
-            f"run.max_db_connections ({cfg.run.max_db_connections}) should be at least "
-            f"max_parallel_batches * (max_parallel_files_per_batch + 1) = {needed}"
+            f"run.max_db_connections ({cfg.run.max_db_connections}) must be at least "
+            f"max_parallel_batches + 1 = {needed}"
         )
     if problems:
         raise ValueError("Invalid configuration:\n  - " + "\n  - ".join(problems))
