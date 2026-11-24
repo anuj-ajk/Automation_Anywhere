@@ -92,6 +92,8 @@ def build(cfg: AppConfig, debug: bool = False) -> tuple[BatchProcessor, EsgDb, N
     except Exception as exc:
         log.warning("Daisy flow disabled: %s", exc)
 
+    if normalize is not None and daisy is not None:  # one reporter: the column check happens once
+        daisy.progress = normalize.progress
     log.info("Flows enabled: Normalize=%s, Daisy=%s", normalize is not None, daisy is not None)
     processor = BatchProcessor(db, normalize, daisy, cfg.run.work_dir,
                                cfg.run.max_parallel_files_per_batch, cfg.run.keep_work_files, notifier,

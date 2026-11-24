@@ -270,6 +270,26 @@ must be missed before a batch counts as stale.
   removed from the stored reasons and from `StatusDescription`. A sheet that could not be split now also keeps
   the file out of `COMPLETED`, so a rerun retries it.
 
+## Progress per file (`UploadedFile.ProgressPercent`)
+
+Run `sql/AddProgressColumn.sql` once. Every file then shows an indicative 0–100 while it is processed. It
+only goes up during a run, starts at 0 again on a rerun, and is 100 when the file is finished whatever the
+outcome (the status column says how it ended). Without the column, a warning is logged once and nothing else
+changes.
+
+| Uploaded file (Normalize) | % | Daisy file | % |
+|---|---|---|---|
+| picked up | 0 | picked up | 0 |
+| downloading from S3 → downloaded | 5 → 10 | querying EM / NAV | 10 |
+| split into sheets | 20 | data exported | 60 |
+| sheets submitted to the AI agent | 30 | loaded / no data / failed | 100 |
+| AI answers arriving (per sheet) | 30 → 70 | | |
+| normalized CSVs downloaded | 75 | | |
+| loading each CSV | 75 → 99 | | |
+| finished | 100 | | |
+
+Batch progress = the average over its files (query in the SQL file).
+
 ## Logging
 
 Each run writes one log file to `run.log_dir` (its path is in the AA output as `log_file`), and the same lines go to the console.

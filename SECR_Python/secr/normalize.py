@@ -27,6 +27,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from . import progress as pg
 from . import sheet_results as sr
 from . import status as st
 from .ai_client import CATEGORY_DISPLAY_NAMES, OdinClient, is_real_link
@@ -72,6 +73,8 @@ class NormalizeFlow:
         self.resume_sheets = True
         # None until the first read: False when UploadedFile.SheetResults does not exist (column not added).
         self._sheet_results_available: bool | None = None
+        # UploadedFile.ProgressPercent (shared with the Daisy flow by runner.build)
+        self.progress = pg.ProgressReporter(db)
 
     # ------------------------------------------------------------------ concurrency helpers
     @contextlib.contextmanager
@@ -109,12 +112,14 @@ class NormalizeFlow:
         started = time.monotonic()
         with log_context(batch_id=ctx.batch_id, file_id=file_id):
             log.info("Normalize started for '%s' (category selected: %s)", file_name, row.get("CategorySelected"))
+            self.progress.start(file_id)
             try:
                 outcome = self._run(ctx, row, file_id, file_name, work, log)
             except Exception as exc:  # anything unexpected: fail this file only, never the batch
                 log.exception("Unexpected error")
                 self._status(file_id, st.FAILED, f"Unexpected error: {exc}", log=log)
                 outcome = FileOutcome(file_id, file_name, "normalize", st.FAILED, str(exc))
+            self.progress.set(file_id, pg.DONE, log)  # finished, whatever the outcome
             log.info("Normalize finished for '%s': %s in %.1fs", file_name, outcome.status,
                      time.monotonic() - started)
             return outcome
@@ -123,11 +128,13 @@ class NormalizeFlow:
     def _run(self, ctx, row, file_id, file_name, work: Path, log) -> FileOutcome:
         # 1. Download from S3
         self._status(file_id, st.PARSING, log=log)
+        self.progress.set(file_id, pg.S3_DOWNLOADING, log)
         try:
             with timed_step(log, "Step 1/4 download from S3"):
                 local = self.storage.download(str(row.get("StoragePath") or ""),
                                               work / "src" / short_name(Path(file_name).name))
             log.info("Downloaded %s (%d bytes)", row.get("StoragePath"), local.stat().st_size)
+            self.progress.set(file_id, pg.S3_DOWNLOADED, log)
         except Exception as exc:
             msg = f"Unable to download the file {row.get('StoragePath')} from S3: {exc}"
             log.error(msg)
@@ -162,6 +169,7 @@ class NormalizeFlow:
         sheets = [_Sheet(s.sheet_name, s.file_path) for s in split if s.ok]
         records = {s.name: results.record(s.name, s.path.name) for s in sheets}
         self._status(file_id, st.PARSED, log=log)
+        self.progress.set(file_id, pg.SPLIT_DONE, log)
         log.info("%d sheet(s) to normalize: %s", len(sheets), ", ".join(s.name for s in sheets) or "none")
         if not sheets:  # the data sheets were completed by earlier runs (or only failed to split)
             self._save_results(file_id, results, log)
@@ -173,7 +181,9 @@ class NormalizeFlow:
         # 3. AI normalization: submit every sheet, then poll all chats together
         with timed_step(log, "Step 3/4 AI normalization (submit + poll)"):
             self._submit(ctx, file_id, sheets, log)
+            self.progress.set(file_id, pg.SUBMITTED, log)
             self._poll(ctx, file_id, sheets, log)
+        self.progress.set(file_id, pg.AI_DONE, log)
         ai_ok = [s for s in sheets if s.links]
         ai_failed = [s for s in sheets if not s.links]
         ai_errors = "".join(f" {s.name}: {s.error or 'no CSV link returned'}." for s in ai_failed)
@@ -225,10 +235,12 @@ class NormalizeFlow:
                 return exc
 
         download_errors = self._parallel(tasks, download, ctx, file_id, "dl")
+        self.progress.set(file_id, pg.CSV_DOWNLOADED, log)
 
         # 4b. Load them one after the other (staging tables are shared and locked per table)
         loaded, load_failed, load_errors = 0, 0, []
-        for (sheet, key, _link, csv_path), error in zip(tasks, download_errors):
+        for n, ((sheet, key, _link, csv_path), error) in enumerate(zip(tasks, download_errors)):
+            self.progress.set(file_id, pg.between(pg.CSV_DOWNLOADED, pg.DONE - 1, n, len(tasks)), log)
             record = records[sheet.name]
             stage = sr.STAGE_DOWNLOAD if error is not None else sr.STAGE_LOAD
             try:
@@ -305,6 +317,7 @@ class NormalizeFlow:
     def _poll(self, ctx: BatchContext, file_id: str, sheets: list[_Sheet], log) -> None:
         """Every round polls all waiting chats in parallel, then waits ``poll_interval`` seconds."""
         pending = [s for s in sheets if s.chat_id]
+        total = len(pending)
         if not pending:
             log.warning("No sheet was submitted; skipping polling")
             return
@@ -334,6 +347,7 @@ class NormalizeFlow:
                       ", ".join(s.name for s in pending))
             self._parallel(pending, lambda sh, a=attempt: poll(sh, a), ctx, file_id, "poll")
             pending = [s for s in pending if not s.answered]
+            self.progress.set(file_id, pg.between(pg.SUBMITTED, pg.AI_DONE, total - len(pending), total), log)
             if not pending:
                 return
             if attempt % 10 == 0:

@@ -170,6 +170,10 @@ class EsgSession:
             value = value.decode("utf-8")
         return value or None
 
+    def set_file_progress(self, file_id: str, percent: int) -> int:
+        """UploadedFile.ProgressPercent (sql/AddProgressColumn.sql). Fails if the column does not exist."""
+        return self.execute("UPDATE UploadedFile SET ProgressPercent = %s WHERE FileId = %s", (int(percent), file_id))
+
     def save_sheet_results(self, file_id: str, results_json: str) -> int:
         return self.execute("UPDATE UploadedFile SET SheetResults = %s WHERE FileId = %s", (results_json, file_id))
 

@@ -64,6 +64,11 @@ UPDATE UploadedFile
 SET    SheetResults = NULL
 WHERE  FIND_IN_SET(BatchId, @batch_ids);
 
+-- Only if sql/AddProgressColumn.sql was run (otherwise remove it): no progress until the next run picks it up.
+UPDATE UploadedFile
+SET    ProgressPercent = NULL
+WHERE  FIND_IN_SET(BatchId, @batch_ids);
+
 -- Only if sql/AddClaimColumns.sql was run (otherwise this statement fails: remove it, nothing else changes):
 UPDATE FileUploadBatch
 SET    ClaimedAt = NULL, ClaimedBy = NULL, ClaimPreviousStatusId = NULL

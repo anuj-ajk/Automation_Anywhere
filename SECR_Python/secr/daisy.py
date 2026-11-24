@@ -11,6 +11,7 @@ import time
 from datetime import datetime
 from typing import Any
 
+from . import progress as pg
 from . import status as st
 from .db import EsgDb
 from .loader import StagingLoader, spec_for_daisy_category
@@ -24,6 +25,7 @@ class DaisyFlow:
         self.db = db
         self.sources = sources
         self.loader = loader
+        self.progress = pg.ProgressReporter(db)  # shared with the Normalize flow by runner.build
 
     def run_file(self, ctx: BatchContext, row: dict[str, Any], log: ContextLogger) -> FileOutcome:
         file_id = str(row["FileId"])
@@ -32,7 +34,9 @@ class DaisyFlow:
         started = time.monotonic()
         with log_context(batch_id=ctx.batch_id, file_id=file_id):
             log.info("Daisy sync started (category: %s)", category or "<empty>")
+            self.progress.start(file_id)
             outcome = self._run(ctx, file_id, category, log)
+            self.progress.set(file_id, pg.DONE, log)  # finished, whatever the outcome
             log.info("Daisy sync finished: %s in %.1fs", outcome.status, time.monotonic() - started)
             return outcome
 
@@ -52,6 +56,7 @@ class DaisyFlow:
             log.info("%s load from %s for %s, %s to %s", category, source_type, ctx.client_name,
                      ctx.report_start, ctx.report_end)
 
+            self.progress.set(file_id, pg.DAISY_QUERYING, log)
             work = ctx.work_dir / f"d{file_id}"
             csv_path = work / (f"{retrieve_spec.csv_prefix}_FileID{file_id}_ReportID{ctx.report_id}_"
                                f"{datetime.now():%Y%m%d_%H%M%S}.csv")
@@ -61,6 +66,7 @@ class DaisyFlow:
             log.info("%d row(s) exported to %s", rows, csv_path.name if rows else "<no file>")
             if rows == 0:
                 return self._no_data(file_id, name, category, source_type, log)
+            self.progress.set(file_id, pg.DAISY_EXPORTED, log)
 
             with timed_step(log, f"Load {category} into {load_spec.staging_table}"), self.db.session() as s:
                 result = self.loader.load(s, load_spec, csv_path, work, file_id, ctx.report_id)

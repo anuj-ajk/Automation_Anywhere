@@ -68,6 +68,11 @@ class FakeSession:
     def get_sheet_results(self, file_id):
         return self.db.sheet_results.get(str(file_id))
 
+    def set_file_progress(self, file_id, percent):
+        with self.db.lock:
+            self.db.progress.setdefault(str(file_id), []).append(percent)
+        return 1
+
     def save_sheet_results(self, file_id, results_json):
         with self.db.lock:
             self.db.sheet_results[str(file_id)] = results_json
@@ -124,6 +129,7 @@ class FakeDb:
         self.batch_history = {}
         self.claim_calls, self.heartbeats = [], []
         self.sheet_results = {}
+        self.progress = {}
 
     @contextlib.contextmanager
     def try_session(self):
@@ -1270,3 +1276,55 @@ def test_batch_skipped_when_setting_in_progress_hits_a_lock(tmp_path):
     finally:
         del FakeSession.set_batch_status
     assert result.state == "LOCKED" and db.history == {}
+
+
+# ---------------------------------------------------------------- UploadedFile.ProgressPercent
+def test_progress_rises_to_100_for_uploaded_and_daisy_files(tmp_path):
+    batches = {"40": [_row("40", 1), _row("40", 2, st.DAISY_FILE_NAME, "Portfolio"),
+                      _row("40", 3, st.DAISY_FILE_NAME, "Unknown Category")]}
+    db, processor = _build(tmp_path, batches)
+    processor.process("40")
+    upload = db.progress["1"]
+    assert upload[0] == 0 and upload[-1] == 100 and upload == sorted(set(upload))   # only goes up, no repeats
+    assert {5, 10, 20, 30, 70, 75}.issubset(upload)
+    assert db.progress["2"] == [0, 10, 60, 100]
+    assert db.progress["3"] == [0, 100]                    # failed early: still finished at 100
+
+
+def test_progress_restarts_from_zero_on_a_rerun(tmp_path):
+    ai = SheetAI(str(_metrics_csv(tmp_path / "m.csv")), broken={"S2"})
+    db, flow, _ = _flow(tmp_path, ai, sheets=2)
+    flow.run_file(_ctx(tmp_path), _row("52", 77), get_logger())
+    flow.run_file(_ctx(tmp_path), _row("52", 77), get_logger())
+    runs = db.progress["77"]
+    second = runs[runs.index(0, 1):]
+    assert second[0] == 0 and second[-1] == 100
+
+
+def test_progress_without_the_column_is_switched_off(tmp_path):
+    from secr.progress import ProgressReporter
+
+    class NoColumn(FakeSession):
+        def set_file_progress(self, file_id, percent):
+            raise RuntimeError(1054, "Unknown column 'ProgressPercent' in 'field list'")
+
+    calls = []
+
+    class Db(FakeDb):
+        @contextlib.contextmanager
+        def session(self):
+            calls.append(1)
+            yield NoColumn(self)
+
+    reporter = ProgressReporter(Db({}))
+    reporter.start("1")
+    reporter.set("1", 50)
+    reporter.set("2", 10)
+    assert calls == [1] and reporter._available is False   # tried once, then never again
+
+
+def test_progress_between():
+    from secr.progress import between
+
+    assert [between(30, 70, d, 4) for d in range(5)] == [30, 40, 50, 60, 70]
+    assert between(30, 70, 1, 1000) == 30 and between(75, 99, 0, 0) == 99
