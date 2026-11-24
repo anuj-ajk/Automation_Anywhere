@@ -30,6 +30,8 @@ def _parse(argv):
     src.add_argument("--pending", action="store_true", help="Use run.pending_batches_query from the config")
     run.add_argument("--max-batches", type=int, help="Override run.max_parallel_batches")
     run.add_argument("--max-files", type=int, help="Override run.max_parallel_files_per_batch")
+    run.add_argument("--work-dir", help="Override run.work_dir (temp folder, e.g. %%TEMP%%\\SECR_work)")
+    run.add_argument("--log-dir", help="Override run.log_dir")
     run.add_argument("--force", action="store_true",
                      help="Process every file again, also those already COMPLETED / DATA_NOT_AVAILABLE")
     return p.parse_args(argv)
@@ -50,7 +52,8 @@ def _batch_ids(args, cfg, db: EsgDb) -> list[str]:
 def main(argv=None) -> int:
     args = _parse(argv)
     cfg = load_config(args.config)
-    apply_overrides(cfg, args.max_batches, args.max_files, force=args.force)
+    apply_overrides(cfg, args.max_batches, args.max_files, force=args.force, work_dir=args.work_dir,
+                    log_dir=args.log_dir, base=Path(args.config).resolve().parent)
     processor, db, notifier, _ = build(cfg, debug=args.debug)
     _, code, _ = execute(processor, notifier, _batch_ids(args, cfg, db), cfg.run.max_parallel_batches)
     return code

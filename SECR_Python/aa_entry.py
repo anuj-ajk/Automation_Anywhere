@@ -14,6 +14,9 @@ Input dictionary keys (AA "Dictionary of String" is fine - every value may be te
     max_batches   optional  batches in parallel (default from config, normally 10)
     max_files     optional  files per batch in parallel (default from config, normally 4)
     debug         optional  "true" for verbose logging
+    work_dir      optional  temp folder for downloads / split sheets / CSVs (default: run.work_dir in config.yaml),
+                            e.g. "%TEMP%\\SECR_work"; keep it short and local
+    log_dir       optional  folder for the log file (default: run.log_dir in config.yaml)
     force         optional  "true" to process every file again, also those already COMPLETED
     pending       optional  "true": process the batches returned by run.pending_batches_query in config.yaml
                             (batch_ids is then optional; ids given in batch_ids are processed too)
@@ -132,7 +135,8 @@ def run_batches(args) -> str:
         config_path = Path(args.get("config_path") or HERE / "config.yaml")
         cfg = load_config(config_path)
         apply_overrides(cfg, _as_int(args.get("max_batches")), _as_int(args.get("max_files")),
-                        force=_as_bool(args.get("force", "false")))
+                        force=_as_bool(args.get("force", "false")),
+                        work_dir=args.get("work_dir"), log_dir=args.get("log_dir"), base=config_path.parent)
         processor, db, notifier, log_file = build(cfg, debug=_as_bool(args.get("debug", "false")))
         if pending:
             for b in pending_batch_ids(cfg, db, _as_int(args.get("pending_limit"))):
@@ -195,6 +199,8 @@ if __name__ == "__main__":
             "pending": not given_ids,       # no ids on the command line: take the pending batches
             "pending_limit": 10,            # at most 10 pending batches per call ("" = all)
             "config_path": str(HERE / "config.yaml"),
+            "work_dir": r"%TEMP%\SECR_work",   # local temp folder (deleted after each batch)
+            "log_dir": str(HERE / "logs"),
             "max_batches": 10,
             "max_files": 4,
             "debug": True,

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 import os
+from pathlib import Path
 import platform
 import sys
 from typing import Iterable
@@ -19,8 +20,21 @@ from .notifier import Notifier
 from .orchestrator import exit_code, run_batches, summarize
 
 
+def resolve_dir(value, base: Path | None = None) -> Path:
+    """Expand %TEMP% / ~ and make a relative folder relative to ``base`` (the config file's folder)."""
+    p = Path(os.path.expanduser(os.path.expandvars(str(value).strip())))
+    if not p.is_absolute() and base is not None:
+        p = base / p
+    return p.resolve()
+
+
 def apply_overrides(cfg: AppConfig, max_batches: int | None = None, max_files: int | None = None,
-                    force: bool = False) -> None:
+                    force: bool = False, work_dir=None, log_dir=None, base: Path | None = None) -> None:
+    """Values passed by the caller (AA dictionary / command line) win over config.yaml."""
+    if work_dir:
+        cfg.run.work_dir = resolve_dir(work_dir, base)
+    if log_dir:
+        cfg.run.log_dir = resolve_dir(log_dir, base)
     if force:  # process every file of the batch again, also those already completed
         cfg.run.skip_completed_files = False
     if max_batches:

@@ -71,6 +71,8 @@ Dictionary keys (all values may be text):
 | `max_batches` | no | `10` | batches processed at the same time |
 | `max_files` | no | `4` | files of one batch processed at the same time |
 | `debug` | no | `true` | verbose log |
+| `work_dir` | no | `%TEMP%\SECR_work` | temp folder for this call (overrides `run.work_dir`). `%VARS%` are expanded; a relative path is taken from the config file's folder |
+| `log_dir` | no | `D:\...\SECR_Python\logs` | log folder for this call (overrides `run.log_dir`) |
 | `pending` | no | `true` | process the batches returned by `run.pending_batches_query` (then `batch_ids` is optional; ids given there are processed too). `batch_ids = pending` does the same. No pending batch → `status SUCCESS`, message "No pending batches" |
 | `pending_limit` | no | `20` | take at most this many pending batches in one call |
 | `force` | no | `true` | process every file again, also those already `COMPLETED` (see "Running a batch again") |

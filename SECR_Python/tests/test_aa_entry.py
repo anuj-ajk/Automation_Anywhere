@@ -123,3 +123,29 @@ def test_pending_batch_ids_reads_the_query():
 
     assert runner.pending_batch_ids(Cfg, Db()) == ["52", "53", "54"]
     assert runner.pending_batch_ids(Cfg, Db(), limit=2) == ["52", "53"]
+
+
+def test_work_and_log_dir_from_aa(tmp_path, monkeypatch):
+    monkeypatch.setenv("SECR_DB_USER", "u")
+    monkeypatch.setenv("SECR_DB_PASSWORD", "p")
+    monkeypatch.setenv("SECR_TEST_ROOT", str(tmp_path / "local"))
+    _db, processor = _build(tmp_path, {"40": [_row("40", 1)]})
+    seen = {}
+
+    def fake_build(cfg, debug=False):
+        seen["work"], seen["log"] = cfg.run.work_dir, cfg.run.log_dir
+        return processor, None, runner.Notifier(cfg.notify, runner.get_logger()), "x.log"
+
+    monkeypatch.setattr(runner, "build", fake_build)
+    conf_dir = tmp_path / "conf"
+    conf_dir.mkdir()
+    config = conf_dir / "config.yaml"
+    config.write_text("esg_db:\n  host: localhost\nrun:\n  work_dir: ./work\n  log_dir: ./logs\n", encoding="utf-8")
+
+    aa_entry.run_batches({"batch_ids": "40", "config_path": str(config),
+                          "work_dir": "%SECR_TEST_ROOT%/SECR_work", "log_dir": "run_logs"})
+    assert seen["work"] == (tmp_path / "local" / "SECR_work").resolve()      # %VAR% expanded
+    assert seen["log"] == (conf_dir / "run_logs").resolve()                  # relative to the config folder
+
+    aa_entry.run_batches({"batch_ids": "40", "config_path": str(config)})   # not passed: config.yaml values
+    assert seen["work"] == (conf_dir / "work").resolve() and seen["log"] == (conf_dir / "logs").resolve()
