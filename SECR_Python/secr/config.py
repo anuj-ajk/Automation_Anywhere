@@ -41,6 +41,8 @@ class DbConfig:
 class S3Config:
     bucket: str = ""
     region: str = "eu-west-2"
+    download_attempts: int = 3          # transient errors (network, throttling, 5xx) are retried
+    retry_backoff_seconds: float = 5    # wait before retry n: backoff x 1, 2, 4 ... (max 120s)
 
 
 @dataclass
@@ -58,6 +60,8 @@ class OdinConfig:
     max_poll_attempts: int = 15
     max_parallel_sheets: int = 5        # sheets of ONE file submitted / polled / downloaded at the same time
     max_parallel_requests: int = 20     # Odin calls + CSV downloads in flight across ALL files and batches
+    submit_attempts: int = 3            # create chat + upload, retried with a NEW chat on transient errors
+    submit_retry_backoff_seconds: float = 10
 
 
 @dataclass
@@ -170,6 +174,8 @@ def load_config(path: str | Path) -> AppConfig:
     s3 = S3Config(
         bucket=_env("SECR_S3_BUCKET", s3_raw.get("bucket", "")),
         region=s3_raw.get("region", "eu-west-2"),
+        download_attempts=int(s3_raw.get("download_attempts", 3)),
+        retry_backoff_seconds=float(s3_raw.get("retry_backoff_seconds", 5)),
     )
 
     o = _section(raw, "odin")
@@ -186,6 +192,8 @@ def load_config(path: str | Path) -> AppConfig:
         max_poll_attempts=int(o.get("max_poll_attempts", 15)),
         max_parallel_sheets=int(o.get("max_parallel_sheets", 5)),
         max_parallel_requests=int(o.get("max_parallel_requests", 20)),
+        submit_attempts=int(o.get("submit_attempts", 3)),
+        submit_retry_backoff_seconds=float(o.get("submit_retry_backoff_seconds", 10)),
     )
 
     s = _section(raw, "sources")

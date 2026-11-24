@@ -36,6 +36,7 @@ from .loader import NORMALIZED_SPECS, StagingLoader
 from .logging_setup import ContextLogger, get_logger, log_context, timed_step
 from .models import BatchContext, FileOutcome
 from .paths import short_name
+from .retry import is_transient_http, retry_call
 from .storage import S3Storage
 
 
@@ -52,7 +53,8 @@ class _Sheet:
 class NormalizeFlow:
     def __init__(self, db: EsgDb, storage: S3Storage, ai: OdinClient, loader: StagingLoader,
                  poll_interval: int, max_poll_attempts: int, max_parallel_sheets: int = 5,
-                 max_parallel_requests: int = 20, sleep=time.sleep):
+                 max_parallel_requests: int = 20, sleep=time.sleep, submit_attempts: int = 3,
+                 submit_retry_backoff: float = 10):
         self.db = db
         self.storage = storage
         self.ai = ai
@@ -63,6 +65,8 @@ class NormalizeFlow:
         # Shared by every file and batch of the run: Odin calls / CSV downloads in flight at once.
         self._api_slots = threading.BoundedSemaphore(max(1, int(max_parallel_requests)))
         self._sleep = sleep
+        self.submit_attempts = max(1, int(submit_attempts))
+        self.submit_retry_backoff = float(submit_retry_backoff)
 
     # ------------------------------------------------------------------ concurrency helpers
     @contextlib.contextmanager
@@ -212,10 +216,22 @@ class NormalizeFlow:
         def submit(sheet: _Sheet) -> None:
             try:
                 log.info("Submitting sheet '%s' (%s) to the AI agent", sheet.name, sheet.path.name)
-                with self._api_call():
-                    sheet.chat_id = self.ai.create_chat(sheet.path.name)
-                with self._api_call():
-                    accepted = self.ai.send_file(sheet.chat_id, sheet.path)
+
+                def attempt() -> bool:
+                    # A retry starts over with a new chat, so a half-sent upload never leaves two
+                    # messages (and two answers) in the chat that is polled. The wait between
+                    # attempts happens outside the API slots.
+                    sheet.chat_id = ""
+                    with self._api_call():
+                        chat_id = self.ai.create_chat(sheet.path.name)
+                    with self._api_call():
+                        ok = self.ai.send_file(chat_id, sheet.path)
+                    sheet.chat_id = chat_id
+                    return ok
+
+                accepted = retry_call(attempt, attempts=self.submit_attempts,
+                                      backoff_seconds=self.submit_retry_backoff, is_retryable=is_transient_http,
+                                      what=f"Odin submit of sheet '{sheet.name}'", log=log, sleep=self._sleep)
                 if not accepted:
                     log.warning("Upload of %s timed out; assuming it was accepted and polling anyway", sheet.name)
                 log.info("Sheet %s submitted, chat id %s", sheet.name, sheet.chat_id)

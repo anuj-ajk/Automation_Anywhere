@@ -74,7 +74,9 @@ def build(cfg: AppConfig, debug: bool = False) -> tuple[BatchProcessor, EsgDb, N
 
         normalize = NormalizeFlow(db, S3Storage(cfg.s3), OdinClient(cfg.odin), loader,
                                   cfg.odin.poll_interval_seconds, cfg.odin.max_poll_attempts,
-                                  cfg.odin.max_parallel_sheets, cfg.odin.max_parallel_requests)
+                                  cfg.odin.max_parallel_sheets, cfg.odin.max_parallel_requests,
+                                  submit_attempts=cfg.odin.submit_attempts,
+                                  submit_retry_backoff=cfg.odin.submit_retry_backoff_seconds)
     except Exception as exc:
         log.warning("Normalize flow disabled: %s", exc)
     try:

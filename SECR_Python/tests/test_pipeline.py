@@ -937,3 +937,124 @@ def test_release_stale_uses_the_procedure_when_configured(tmp_path):
     runner.release_stale(processor, Cfg, Db())
     assert calls == [("proc", "ReleaseStaleClaims", "IN_PROGRESS", 30, "PROCESSING"),
                      ("python", "IN_PROGRESS", 30, "PROCESSING")]
+
+
+# ---------------------------------------------------------------- retries (S3 download, Odin submit)
+def _http_error(status):
+    import requests
+
+    resp = requests.Response()
+    resp.status_code = status
+    return requests.HTTPError(f"HTTP {status}", response=resp)
+
+
+class FlakyAI(CountingAI):
+    """create_chat / send_file fail with the given errors first, then work."""
+
+    def __init__(self, csv_url, chat_errors=(), send_errors=()):
+        super().__init__(csv_url, answer_after=1, delay=0)
+        self.chat_errors, self.send_errors = list(chat_errors), list(send_errors)
+        self.sent_to = []
+
+    def create_chat(self, name):
+        with self.lock:
+            if self.chat_errors:
+                raise self.chat_errors.pop(0)
+        return super().create_chat(name)
+
+    def send_file(self, chat_id, path):
+        with self.lock:
+            self.sent_to.append(chat_id)
+            if self.send_errors:
+                raise self.send_errors.pop(0)
+        return True
+
+
+def test_odin_submit_retries_transient_errors_in_a_new_chat(tmp_path):
+    import requests
+    from secr.models import BatchContext
+
+    ai = FlakyAI(str(_metrics_csv(tmp_path / "m.csv")), chat_errors=[requests.ConnectionError("reset")],
+                 send_errors=[_http_error(503)])
+    db, flow, sleeps = _flow(tmp_path, ai, sheets=1, per_file=1)
+    flow.submit_retry_backoff = 10
+    out = flow.run_file(BatchContext("40", "5", "ACME", "2024-04-01", "2025-03-31", tmp_path / "w"),
+                        _row("40", 1), get_logger())
+    assert out.status == st.COMPLETED, out
+    assert sleeps[:2] == [10, 20]               # backoff doubles
+    assert ai.sent_to == ["chat-1", "chat-2"]   # upload retried in a fresh chat
+    assert list(ai.polls) == ["chat-2"]         # only the chat that got the file is polled
+
+
+def test_odin_submit_does_not_retry_client_errors(tmp_path):
+    from secr.models import BatchContext
+
+    ai = FlakyAI(str(_metrics_csv(tmp_path / "m.csv")), chat_errors=[_http_error(401)])
+    db, flow, sleeps = _flow(tmp_path, ai, sheets=1, per_file=1)
+    out = flow.run_file(BatchContext("40", "5", "ACME", "2024-04-01", "2025-03-31", tmp_path / "w"),
+                        _row("40", 1), get_logger())
+    assert out.status == st.FAILED_WHILE_NORMALIZATION, out
+    assert ai.created == 0 and sleeps == []
+
+
+def test_odin_submit_gives_up_after_the_configured_attempts(tmp_path):
+    import requests
+    from secr.models import BatchContext
+
+    ai = FlakyAI(str(_metrics_csv(tmp_path / "m.csv")), chat_errors=[requests.Timeout("t")] * 5)
+    db, flow, sleeps = _flow(tmp_path, ai, sheets=1, per_file=1)
+    flow.submit_attempts = 3
+    out = flow.run_file(BatchContext("40", "5", "ACME", "2024-04-01", "2025-03-31", tmp_path / "w"),
+                        _row("40", 1), get_logger())
+    assert out.status == st.FAILED_WHILE_NORMALIZATION, out
+    assert len(ai.chat_errors) == 2 and len(sleeps) == 2
+
+
+def _s3_storage(client, attempts=3):
+    from secr.storage import S3Storage
+
+    storage = S3Storage.__new__(S3Storage)  # skip boto3 client creation
+    storage.bucket, storage._client = "bucket", client
+    storage.attempts, storage.backoff, storage.sleeps = attempts, 5, []
+    storage._sleep = storage.sleeps.append
+    return storage
+
+
+class _FlakyS3:
+    def __init__(self, errors):
+        self.errors, self.calls = list(errors), 0
+
+    def download_file(self, bucket, key, dest):
+        self.calls += 1
+        if self.errors:
+            err = self.errors.pop(0)
+            if err == "empty":
+                Path(dest).write_bytes(b"")
+                return
+            raise err
+        Path(dest).write_bytes(b"data")
+
+
+def test_s3_download_retries_transient_errors(tmp_path):
+    from botocore.exceptions import ClientError, EndpointConnectionError
+
+    client = _FlakyS3([EndpointConnectionError(endpoint_url="https://s3"),
+                       ClientError({"Error": {"Code": "SlowDown"}, "ResponseMetadata": {"HTTPStatusCode": 503}},
+                                   "GetObject"),
+                       "empty"])
+    storage = _s3_storage(client, attempts=4)
+    out = storage.download("k/a.xlsx", tmp_path / "a.xlsx")
+    assert out.read_bytes() == b"data" and client.calls == 4
+    assert storage.sleeps == [5, 10, 20]
+
+
+def test_s3_download_does_not_retry_missing_key(tmp_path):
+    import pytest
+    from botocore.exceptions import ClientError
+
+    client = _FlakyS3([ClientError({"Error": {"Code": "404"}, "ResponseMetadata": {"HTTPStatusCode": 404}},
+                                   "HeadObject")])
+    storage = _s3_storage(client)
+    with pytest.raises(ClientError):
+        storage.download("k/a.xlsx", tmp_path / "a.xlsx")
+    assert client.calls == 1 and storage.sleeps == []

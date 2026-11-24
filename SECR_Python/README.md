@@ -28,7 +28,7 @@ pip install -r requirements.txt
 
 You also need the Microsoft ODBC Driver for SQL Server for the Energy Manager / NAV connections.
 
-Tests (no real DB / S3 / Odin needed, 46 tests): `python -m pytest tests`
+Tests (no real DB / S3 / Odin needed, 51 tests): `python -m pytest tests`
 
 **Work folder:** set `run.work_dir` to a short **local** folder, for example `%TEMP%\SECR_work` or `C:\SECR_work`.
 Environment variables are expanded.
@@ -349,10 +349,12 @@ All Odin calls and CSV downloads share one cap: odin.max_parallel_requests = 20
 | `run` | `claim_heartbeat_seconds`, `stale_claim_minutes` | 60, 30 | claim tracking (0 minutes = never release) |
 | `esg_db` | `host`, `port`, `database`, `connect_timeout` | –, 3306, `esgdb`, 30 | user / password come from the environment |
 | `s3` | `region` | `eu-west-2` | bucket from `SECR_S3_BUCKET` |
+| `s3` | `download_attempts`, `retry_backoff_seconds` | 3, 5 | retries network errors / throttling / 5xx; waits 5s, 10s, ... (missing key / access denied fail at once) |
 | `odin` | `base_uri`, `project_id`, `agent_id`, `message` | – | Odin REST API and agent |
 | `odin` | `submit_timeout_seconds`, `request_timeout_seconds` | 300, 120 | upload timeout (a timeout counts as accepted) / other calls |
 | `odin` | `poll_interval_seconds`, `max_poll_attempts` | 40, 15 | about 10 minutes per file |
 | `odin` | `max_parallel_sheets`, `max_parallel_requests` | 5, 20 | sheets of one file at once / Odin calls + CSV downloads in flight overall |
+| `odin` | `submit_attempts`, `submit_retry_backoff_seconds` | 3, 10 | create chat + upload retried in a **new** chat on connection errors, timeouts, HTTP 408/429/5xx; other 4xx fail at once |
 | `sources` | `environment`, `query_dir`, `query_timeout_seconds` | `DEV`, `.`, 600 | `<ENV>_<TYPE>_EM_QUERY.txt` is read from `query_dir` |
 | `notify` | `enabled`, `smtp_host`, `smtp_port`, `use_tls`, `from_address`, `to_addresses`, `cc_addresses` | disabled | start / end / batch-failure e-mails through an SMTP relay (no login); a failed mail never fails a batch |
 
@@ -398,7 +400,7 @@ Status codes written to `UploadedFile` and `FileUploadBatch` are the same as in 
 
 ## Verification status
 
-The tests in `tests/` (`python -m pytest tests`, 46 tests) run the whole pipeline with fake DB / S3 / Odin /
+The tests in `tests/` (`python -m pytest tests`, 51 tests) run the whole pipeline with fake DB / S3 / Odin /
 source systems. They prove the parallel scheduling, the per-file status flow, claiming, and the CSV and Excel code.
 
 The logs in `logs/` show **runs against the real DEV environment** on 2026-11-23: batches 40 and 52 (S3 download,
