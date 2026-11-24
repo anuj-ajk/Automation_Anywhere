@@ -324,10 +324,17 @@ All Odin calls and CSV downloads share one cap: odin.max_parallel_requests = 20
   If the procedures only touch the rows of their own `FileId`, set `serialize_staging_loads: false`
   for more speed.
 * **Limits**: total threads ≈ `batches × files_per_batch` (40 by default in code, 50 with the shipped
-  `config.yaml`); DB connections are capped by `max_db_connections` (20), which must be at least
-  `batches + 1` (checked at start-up; `aa_entry`/CLI overrides raise it to that minimum if needed). Each
-  batch holds one connection for its lock; when all connections are in use, a file worker waits for a free
-  one (logged as "All N DB connections are in use; waiting for a free one").
+  `config.yaml`). DB connections have two limits, and both make a worker wait rather than fail:
+  - **This process**: at most `max_db_connections` (20) open at once, so other systems keep room in the
+    database. It must be at least `batches + 1` (checked at start-up; `aa_entry`/CLI overrides raise it to
+    that minimum if needed). Past it, a worker waits until one of our connections closes ("All 20 DB
+    connections allowed for this process are in use; waiting for a free one").
+  - **The database**: when MySQL refuses a new connection (1040 "Too many connections", or a per-user limit
+    1203 / 1226), the worker tries again every `connect_retry_seconds`, and at once when one of ours closes,
+    until the database accepts it ("ESG DB refused a new connection …; waiting for the database to have room").
+
+  Extra bulk-insert connections and heartbeats never wait: they are skipped if either limit is reached. The
+  DB's `max_connections` and current connection count are logged at start-up.
   Lower `max_parallel_files_per_batch` if the Odin API rate-limits you.
 
 ## Configuration reference (`config.yaml`)
@@ -335,7 +342,7 @@ All Odin calls and CSV downloads share one cap: odin.max_parallel_requests = 20
 | Section | Key | Default (code) | Meaning |
 |---|---|---|---|
 | `run` | `max_parallel_batches` / `max_parallel_files_per_batch` | 10 / 4 | batches at once / files of one batch at once |
-| `run` | `max_db_connections` | 20 | cap on open MySQL connections (min `max_parallel_batches + 1`; workers wait for a free one) |
+| `run` | `max_db_connections` | 20 | max connections this process opens (min `max_parallel_batches + 1`; past it workers wait) |
 | `run` | `work_dir`, `log_dir` | `work`, `logs` | local temp folder (deleted per batch) and log folder; `%VARS%` expanded, relative = from the config file's folder |
 | `run` | `keep_work_files` | false | keep downloaded / split / CSV files for debugging |
 | `run` | `created_by` | OS user | passed to `LoadHHData` / `CalculateInvoiceData` |
@@ -348,6 +355,7 @@ All Odin calls and CSV downloads share one cap: odin.max_parallel_requests = 20
 | `run` | `pending_poll_seconds`, `pending_max_runtime_minutes` | 60, 0 | pending-mode polling / stop taking new batches (0 = no limit) |
 | `run` | `claim_heartbeat_seconds`, `stale_claim_minutes` | 60, 30 | claim tracking (0 minutes = never release) |
 | `esg_db` | `host`, `port`, `database`, `connect_timeout` | –, 3306, `esgdb`, 30 | user / password come from the environment |
+| `esg_db` | `connect_retry_seconds` | 5 | DB full (too many connections): wait and retry this often until it accepts |
 | `s3` | `region` | `eu-west-2` | bucket from `SECR_S3_BUCKET` |
 | `s3` | `download_attempts`, `retry_backoff_seconds` | 3, 5 | retries network errors / throttling / 5xx; waits 5s, 10s, ... (missing key / access denied fail at once) |
 | `odin` | `base_uri`, `project_id`, `agent_id`, `message` | – | Odin REST API and agent |

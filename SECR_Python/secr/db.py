@@ -2,7 +2,9 @@
 
 Every query is parameterised, so the quote/backslash escaping the AA bots did by hand is
 not needed. Each unit of work opens its own short-lived connection (PyMySQL connections
-must not be shared between threads); a semaphore caps the total number of connections.
+must not be shared between threads). Connections are capped per process (run.max_db_connections)
+and, when the database itself has no free connection slot,
+opening waits until it has one (see ``EsgDb``).
 """
 from __future__ import annotations
 
@@ -395,16 +397,36 @@ class EsgSession:
             self.release_lock(name)
 
 
-class EsgDb:
-    """Connection factory with a global connection cap."""
+# MySQL refuses the login when it has no room for another connection:
+# 1040 Too many connections (server max_connections), 1203 / 1226 per-user limits (max_user_connections).
+_NO_FREE_CONNECTION = {1040, 1203, 1226}
 
-    def __init__(self, cfg: DbConfig, max_connections: int):
+
+def _is_no_free_connection(exc: BaseException) -> bool:
+    args = getattr(exc, "args", ())
+    return bool(args) and args[0] in _NO_FREE_CONNECTION
+
+
+class EsgDb:
+    """Connection factory with two limits, both of which make a worker WAIT (never fail):
+
+    1. This process's own cap, ``max_connections`` (run.max_db_connections), so other systems using the same
+       database always have room left. A worker past the cap waits until one of our connections closes.
+    2. The database itself: when MySQL refuses a login because it is full (1040 / 1203 / 1226), the worker
+       keeps its slot and tries again every ``connect_retry_seconds``, or at once when one of ours closes,
+       until the database accepts it.
+    """
+
+    WAIT_LOG_EVERY_SECONDS = 60
+
+    def __init__(self, cfg: DbConfig, max_connections: int = 20):
         self.cfg = cfg
-        self._slots = threading.BoundedSemaphore(max_connections)
-        self._max = max_connections
-        self._open_count = 0
-        self._count_lock = threading.Lock()
-        LOG.info("ESG DB %s:%s/%s, max %d connection(s)", cfg.host, cfg.port, cfg.database, max_connections)
+        self._max = max(1, int(max_connections))
+        self._retry_seconds = max(0.1, float(getattr(cfg, "connect_retry_seconds", 5)))
+        self._in_use = 0  # slots taken: connections open + being opened
+        self._freed = threading.Condition()  # notified whenever one of our slots is given back
+        LOG.info("ESG DB %s:%s/%s, max %d connection(s) from this process; retry every %.0fs when the DB is full",
+                 cfg.host, cfg.port, cfg.database, self._max, self._retry_seconds)
 
     def _open(self):
         import pymysql
@@ -422,49 +444,118 @@ class EsgDb:
             cursorclass=DictCursor,
         )
 
+    # ------------------------------------------------------------------ slots (this process's cap)
+    def _take_slot(self, wait: bool) -> bool:
+        started = next_log = None
+        with self._freed:
+            while self._in_use >= self._max:
+                if not wait:
+                    return False
+                now = time.monotonic()
+                if started is None:
+                    started, next_log = now, now + self.WAIT_LOG_EVERY_SECONDS
+                    LOG.warning("All %d DB connections allowed for this process are in use; waiting for a free one",
+                                self._max)
+                elif now >= next_log:
+                    next_log = now + self.WAIT_LOG_EVERY_SECONDS
+                    LOG.warning("Still waiting for one of the %d DB connections after %.0fs", self._max,
+                                now - started)
+                self._freed.wait(self.WAIT_LOG_EVERY_SECONDS)
+            self._in_use += 1
+        if started is not None:
+            LOG.info("Got a DB connection slot after waiting %.1fs", time.monotonic() - started)
+        return True
+
+    def _give_slot_back(self) -> None:
+        with self._freed:
+            self._in_use -= 1
+            self._freed.notify_all()
+
+    # ------------------------------------------------------------------ the database's own limit
+    def _connect(self, wait: bool):
+        """Open a connection (a slot is already taken). DB full: wait for room (``wait``) or return None."""
+        started = next_log = None
+        while True:
+            try:
+                conn = self._open()
+            except Exception as exc:
+                if not _is_no_free_connection(exc):
+                    LOG.error("Cannot connect to ESG DB %s:%s/%s: %s", self.cfg.host, self.cfg.port,
+                              self.cfg.database, exc)
+                    raise
+                if not wait:
+                    LOG.debug("ESG DB has no free connection right now (%s)", exc)
+                    return None
+                now = time.monotonic()
+                if started is None:
+                    started, next_log = now, now + self.WAIT_LOG_EVERY_SECONDS
+                    LOG.warning("ESG DB refused a new connection (%s); waiting for the database to have room "
+                                "(%d of %d connection(s) used by this process)", exc, self._in_use, self._max)
+                elif now >= next_log:
+                    next_log = now + self.WAIT_LOG_EVERY_SECONDS
+                    LOG.warning("Still waiting for the ESG DB to accept a connection after %.0fs", now - started)
+                with self._freed:
+                    self._freed.wait(self._retry_seconds)
+                continue
+            if started is not None:
+                LOG.info("ESG DB accepted the connection after waiting %.1fs", time.monotonic() - started)
+            return conn
+
+    # ------------------------------------------------------------------ public
     @contextlib.contextmanager
     def session(self) -> Iterator[EsgSession]:
-        started = time.monotonic()
-        if not self._slots.acquire(timeout=5):
-            LOG.warning("All %d DB connections are in use; waiting for a free one", self._max)
-            self._slots.acquire()
-            LOG.info("Got a DB connection after waiting %.1fs", time.monotonic() - started)
-        with self._opened() as s:
+        """A connection; waits as long as needed for a slot of this process and for room in the database."""
+        self._take_slot(wait=True)
+        try:
+            conn = self._connect(wait=True)
+        except BaseException:
+            self._give_slot_back()
+            raise
+        with self._opened(conn) as s:
             yield s
 
     @contextlib.contextmanager
     def try_session(self) -> Iterator[EsgSession | None]:
-        """An EXTRA connection only if one is free right now, else None (never waits).
+        """An EXTRA connection only if a slot is free AND the database accepts it right now, else None.
 
-        Used for parallel bulk inserts: a worker that already holds a connection must not wait for more,
-        or all workers could end up waiting for each other.
+        Never waits. Used for parallel bulk inserts and heartbeats: a worker that already holds a connection
+        must not wait for more, or all workers could end up waiting for each other.
         """
-        if not self._slots.acquire(blocking=False):
+        if not self._take_slot(wait=False):
             yield None
             return
-        with self._opened() as s:
+        try:
+            conn = self._connect(wait=False)
+        except BaseException:
+            self._give_slot_back()
+            raise
+        if conn is None:
+            self._give_slot_back()
+            yield None
+            return
+        with self._opened(conn) as s:
             yield s
 
     @contextlib.contextmanager
-    def _opened(self) -> Iterator[EsgSession]:
-        """Open a connection for a slot that is already taken; always gives the slot back."""
+    def _opened(self, conn) -> Iterator[EsgSession]:
+        """Use an open connection (its slot is taken); always closes it and gives the slot back."""
+        LOG.debug("DB connection opened (%d/%d in use)", self._in_use, self._max)
         try:
-            try:
-                conn = self._open()
-            except Exception as exc:
-                LOG.error("Cannot connect to ESG DB %s:%s/%s: %s", self.cfg.host, self.cfg.port,
-                          self.cfg.database, exc)
-                raise
-            with self._count_lock:
-                self._open_count += 1
-                in_use = self._open_count
-            LOG.debug("DB connection opened (%d/%d in use)", in_use, self._max)
-            try:
-                yield EsgSession(conn)
-            finally:
-                with contextlib.suppress(Exception):
-                    conn.close()
-                with self._count_lock:
-                    self._open_count -= 1
+            yield EsgSession(conn)
         finally:
-            self._slots.release()
+            with contextlib.suppress(Exception):
+                conn.close()
+            self._give_slot_back()
+
+    def log_server_limits(self) -> None:
+        """Log the database's connection limits and how many connections it has now (information only)."""
+        try:
+            with self.session() as s:
+                limits = s.query("SELECT @@max_connections AS max_connections, "
+                                 "@@max_user_connections AS max_user_connections")[0]
+                status = s.query("SHOW GLOBAL STATUS LIKE 'Threads_connected'")
+            connected = status[0].get("Value") if status else "?"
+            LOG.info("ESG DB connections: %s in use, server max_connections %s, max_user_connections %s (0 = no limit)",
+                     connected, limits.get("max_connections"), limits.get("max_user_connections"))
+        except Exception as exc:
+            LOG.warning("Could not read the ESG DB connection limits: %s", exc)

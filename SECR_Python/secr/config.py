@@ -35,6 +35,7 @@ class DbConfig:
     user: str = ""
     password: str = ""
     connect_timeout: int = 30
+    connect_retry_seconds: float = 5    # DB full (too many connections): try again this often until it accepts
 
 
 @dataclass
@@ -77,7 +78,7 @@ class SourceConfig:
 class RunConfig:
     max_parallel_batches: int = 10
     max_parallel_files_per_batch: int = 4
-    max_db_connections: int = 20
+    max_db_connections: int = 20        # cap for THIS process, leaves room in the DB for other systems
     work_dir: Path = Path("work")
     log_dir: Path = Path("logs")
     keep_work_files: bool = False
@@ -168,6 +169,7 @@ def load_config(path: str | Path) -> AppConfig:
         user=_env("SECR_DB_USER"),
         password=_env("SECR_DB_PASSWORD"),
         connect_timeout=int(db_raw.get("connect_timeout", 30)),
+        connect_retry_seconds=float(db_raw.get("connect_retry_seconds", 5)),
     )
 
     s3_raw = _section(raw, "s3")
@@ -254,13 +256,12 @@ def load_config(path: str | Path) -> AppConfig:
 
 
 def min_db_connections(cfg: AppConfig) -> int:
-    """Smallest connection cap that can never deadlock.
+    """Smallest per-process connection cap that can never deadlock.
 
-    Each running batch holds one connection for its whole run (duplicate-run lock) and needs one more
-    at a time for its own status updates. File workers hold at most one connection each and never wait
-    for a second one (extra bulk-insert connections are only taken when free). So as long as one slot is
-    left over after every batch has its lock connection, work always moves on; with fewer connections
-    than ``batches * (files_per_batch + 1)`` workers simply wait their turn for a free connection.
+    Each running batch holds one connection for its whole run (duplicate-run lock) and needs one more at a
+    time for its own status updates. File workers hold at most one connection each and never wait for a
+    second one (extra bulk-insert connections are only taken when free). So one slot left over after every
+    batch has its lock connection is enough for work to keep moving; other workers wait their turn.
     """
     return cfg.run.max_parallel_batches + 1
 
@@ -281,5 +282,7 @@ def validate(cfg: AppConfig) -> None:
             f"run.max_db_connections ({cfg.run.max_db_connections}) must be at least "
             f"max_parallel_batches + 1 = {needed}"
         )
+    if cfg.db.connect_retry_seconds <= 0:
+        problems.append("esg_db.connect_retry_seconds must be > 0")
     if problems:
         raise ValueError("Invalid configuration:\n  - " + "\n  - ".join(problems))

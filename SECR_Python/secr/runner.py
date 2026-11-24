@@ -60,6 +60,7 @@ def build(cfg: AppConfig, debug: bool = False) -> tuple[BatchProcessor, EsgDb, N
     _log_settings(cfg, log)
     notifier = Notifier(cfg.notify, log)
     db = EsgDb(cfg.db, cfg.run.max_db_connections)
+    db.log_server_limits()
     loader = StagingLoader(cfg.run.created_by, cfg.run.serialize_staging_loads,
                            cfg.run.staging_lock_timeout_seconds, cfg.run.insert_chunk_size, log,
                            clear_staging=cfg.run.clear_staging_before_load, db=db,
@@ -116,7 +117,7 @@ def _log_settings(cfg: AppConfig, log) -> None:
     """Write the effective settings at the start of the log. Secret values are never logged, only set/not set."""
     r = cfg.run
     log.info("Python %s on %s (pid %d)", sys.version.split()[0], platform.node(), os.getpid())
-    log.info("Parallelism: %d batch(es) x %d file(s) per batch, max %d DB connection(s)",
+    log.info("Parallelism: %d batch(es) x %d file(s) per batch, max %d DB connection(s) from this process",
              r.max_parallel_batches, r.max_parallel_files_per_batch, r.max_db_connections)
     log.info("Work folder %s (keep files: %s), serialize staging loads: %s, created by: %s",
              r.work_dir, r.keep_work_files, r.serialize_staging_loads, r.created_by)
