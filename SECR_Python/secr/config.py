@@ -119,6 +119,9 @@ class RunConfig:
     # Optional stored procedure that releases stale claims (sql/ClaimBatches.sql), e.g. "ReleaseStaleClaims".
     # Empty: the same release from Python.
     release_stale_procedure: str = ""
+    # Test process: only insert into the Staging_* tables; the Load* / Calculate* (and other post-load)
+    # stored procedures are NOT called. Set from the AA dictionary key "test_process".
+    test_process: bool = False
 
 
 @dataclass

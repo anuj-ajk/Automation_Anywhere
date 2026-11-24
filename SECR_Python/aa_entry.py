@@ -25,6 +25,8 @@ Input dictionary keys (AA "Dictionary of String" is fine - every value may be te
     pending_limit optional  take at most this many batches in total in one call (default: no limit)
     poll_seconds  optional  pending mode: look for new batches at least this often (default 60)
     max_runtime_minutes optional  pending mode: stop taking NEW batches after this many minutes (default: none)
+    test_process  optional  "true": only insert into the Staging_* tables; the load / calculate stored
+                            procedures are skipped (default false)
     secrets       optional  dictionary of the SECR_* / AWS_* environment variables, if the bot
                             reads them from the Credential Vault instead of the machine environment
 
@@ -145,15 +147,16 @@ def run_batches(args) -> str:
             cfg.run.pending_poll_seconds = _as_int(args.get("poll_seconds"))
         if args.get("max_runtime_minutes") not in (None, ""):
             cfg.run.pending_max_runtime_minutes = _as_int(args.get("max_runtime_minutes")) or 0
+        cfg.run.test_process = _as_bool(args.get("test_process", "false"))
         processor, db, notifier, log_file = build(cfg, debug=_as_bool(args.get("debug", "false")))
 
         from secr.logging_setup import get_logger
 
         log = get_logger("secr.aa_entry")
         log.info("Called from Automation Anywhere: config %s, batch ids %s, pending=%s, max_batches=%s, "
-                 "max_files=%s, debug=%s, secrets passed: %s", config_path, ", ".join(batch_ids) or "none",
-                 pending, args.get("max_batches"), args.get("max_files"), args.get("debug"),
-                 _secret_keys(args.get("secrets")) or "none")
+                 "max_files=%s, debug=%s, test_process=%s, secrets passed: %s", config_path,
+                 ", ".join(batch_ids) or "none", pending, args.get("max_batches"), args.get("max_files"),
+                 args.get("debug"), cfg.run.test_process, _secret_keys(args.get("secrets")) or "none")
         if pending:
             results, code, summary = execute_pending(processor, notifier, cfg, db, batch_ids,
                                                      _as_int(args.get("pending_limit")) or 0)
@@ -213,6 +216,7 @@ if __name__ == "__main__":
             "max_batches": 10,
             "max_files": 4,
             "debug": True,
+            "test_process": False,          # True: insert into Staging_* only, skip load/calculate procs
             "secrets": {
                 "SECR_DB_USER": SECR_DB_USER,
                 "SECR_DB_PASSWORD": SECR_DB_PASSWORD,

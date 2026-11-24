@@ -180,8 +180,10 @@ class LoadResult:
 class StagingLoader:
     def __init__(self, created_by: str, serialize: bool, lock_timeout: int, chunk_size: int, log,
                  clear_staging: bool = True, db=None, insert_connections: int = 1,
-                 parallel_insert_min_rows: int = 20000):
+                 parallel_insert_min_rows: int = 20000, test_process: bool = False):
         self.created_by = created_by
+        # Test process: insert into the staging table only, never call the Load* / Calculate* procedures.
+        self.test_process = test_process
         self.serialize = serialize
         self.lock_timeout = lock_timeout
         self.chunk_size = chunk_size
@@ -214,6 +216,10 @@ class StagingLoader:
 
         file_procs = tuple(p for p in spec.procs if not p.report_level)
         report_procs = tuple(p for p in spec.procs if p.report_level)
+        if self.test_process and spec.procs:
+            self.log.info("Test process: skipping stored procedure(s) %s; rows stay in %s only",
+                          ", ".join(p.name for p in spec.procs), spec.staging_table)
+            file_procs = report_procs = ()
 
         # 1. Staging part: the staging tables and the Load* procedures are shared by every batch, so only one
         #    worker (across all processes, via a MySQL named lock) inserts + runs Load* for a table at a time.

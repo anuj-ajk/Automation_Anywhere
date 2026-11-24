@@ -65,7 +65,11 @@ def build(cfg: AppConfig, debug: bool = False) -> tuple[BatchProcessor, EsgDb, N
                            cfg.run.staging_lock_timeout_seconds, cfg.run.insert_chunk_size, log,
                            clear_staging=cfg.run.clear_staging_before_load, db=db,
                            insert_connections=cfg.run.insert_connections,
-                           parallel_insert_min_rows=cfg.run.parallel_insert_min_rows)
+                           parallel_insert_min_rows=cfg.run.parallel_insert_min_rows,
+                           test_process=cfg.run.test_process)
+    if cfg.run.test_process:
+        log.warning("TEST PROCESS: data is inserted into the Staging_* tables only; the load / calculate "
+                    "stored procedures are NOT called")
 
     # Created separately so a Daisy-only setup does not need S3/Odin settings and vice versa.
     normalize = daisy = None
