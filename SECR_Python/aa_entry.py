@@ -207,6 +207,7 @@ if __name__ == "__main__":
     given_ids = " ".join(sys.argv[1:])
     print(run_batches(
         {
+            "batch_ids": given_ids,
             "pending": not given_ids,       # no ids on the command line: take the pending batches
             "pending_limit": 10,            # at most 10 pending batches per call ("" = all)
             "config_path": str(HERE / "config.yaml"),
