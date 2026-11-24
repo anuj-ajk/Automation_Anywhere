@@ -48,10 +48,16 @@ class FakeSession:
     def batch_status_exists(self, code):
         return code in self.db.batch_codes
 
-    def set_batch_status(self, batch_id, code):
+    def set_batch_status(self, batch_id, code, **claim):
         with self.db.lock:
             self.db.batch_status[batch_id] = code
             self.db.batch_history.setdefault(batch_id, []).append(code)
+            self.db.claim_calls.append((batch_id, code, claim))
+
+    def heartbeat(self, batch_id, owner):
+        with self.db.lock:
+            self.db.heartbeats.append((batch_id, owner))
+        return 1
 
     def get_batch_status(self, batch_id):
         return self.db.batch_status.get(batch_id, "PROCESSING")
@@ -108,6 +114,11 @@ class FakeDb:
         self.categories = {}
         self.batch_codes = {"COMPLETE", "PROCESSING", "PARTIAL_FAILURE", "IN_PROGRESS"}
         self.batch_history = {}
+        self.claim_calls, self.heartbeats = [], []
+
+    @contextlib.contextmanager
+    def try_session(self):
+        yield FakeSession(self)
 
     @contextlib.contextmanager
     def session(self):
@@ -607,3 +618,322 @@ def test_missing_in_progress_code_leaves_status_alone(tmp_path):
     db.batch_codes.discard("IN_PROGRESS")
     processor.process("40")
     assert db.batch_history["40"] == ["COMPLETE"]
+
+
+def test_claimed_batch_restores_its_previous_status_on_failure(tmp_path):
+    db, processor = _build(tmp_path, {"40": [_row("40", 1)]})
+    processor.note_claimed("40", "PARTIAL_FAILURE")        # the pending loop already set it IN_PROGRESS
+    processor.normalize = None                              # forces a batch-level failure
+    assert processor.process("40").state == "FAILED"
+    assert db.batch_history["40"] == ["PARTIAL_FAILURE"]    # not set IN_PROGRESS again; old status back
+
+
+
+# ---------------------------------------------------------------- claim tracking (ClaimedAt / ClaimedBy)
+def test_claim_is_recorded_refreshed_and_cleared(tmp_path):
+    class SlowAI(FakeAI):
+        def get_csv_links(self, chat_id):
+            time.sleep(0.3)                                  # keep the batch busy for a few heartbeats
+            return {"metrics": self.csv_url}
+
+    db, processor = _build(tmp_path, {"40": [_row("40", 1)]})
+    processor.normalize.ai = SlowAI(str(_metrics_csv(tmp_path / "m.csv")))
+    processor.track_claims, processor.claim_owner, processor.heartbeat_seconds = True, "host:1:abc", 0.05
+    assert processor.process("40").state == "SUCCESS"
+    assert db.claim_calls[0] == ("40", "IN_PROGRESS", {"claim_owner": "host:1:abc"})   # claimed with owner
+    assert db.claim_calls[-1] == ("40", "COMPLETE", {"clear_claim": True})             # claim emptied
+    assert len(db.heartbeats) >= 2 and set(db.heartbeats) == {("40", "host:1:abc")}
+    n = len(db.heartbeats)
+    time.sleep(0.2)
+    assert len(db.heartbeats) == n                           # heartbeat stopped with the batch
+
+
+def test_failed_batch_clears_claim_when_put_back(tmp_path):
+    db, processor = _build(tmp_path, {"40": [_row("40", 1)]})
+    processor.track_claims, processor.claim_owner = True, "host:1:abc"
+    processor.normalize = None
+    processor.process("40")
+    assert db.claim_calls[-1] == ("40", "PROCESSING", {"clear_claim": True})
+
+
+class _SqlRecorder:
+    """Fake EsgSession base: answers RefBatchStatus lookups and records the SQL that was run."""
+
+    def __init__(self, stale=(), changed=(1,)):
+        self.sql, self.stale, self.changed = [], list(stale), list(changed)
+
+    def query(self, sql, params=None):
+        if "FROM RefBatchStatus WHERE Code IN" in sql:
+            return [{"Code": "IN_PROGRESS", "BatchStatusId": 4}, {"Code": "PROCESSING", "BatchStatusId": 3}]
+        if "FROM RefBatchStatus WHERE Code" in sql:
+            return [{"BatchStatusId": 4}]
+        if "ClaimedAt < NOW()" in sql:
+            return self.stale
+        return [{"StatusId": 3, "Code": "PROCESSING"}]
+
+    def execute(self, sql, params=None):
+        self.sql.append((" ".join(sql.split()), params))
+        return self.changed.pop(0) if self.changed else 1
+
+
+def test_claim_sql_records_owner_and_previous_status():
+    from secr.db import EsgSession
+
+    s = _SqlRecorder()
+    assert EsgSession.claim_batch(s, "52", ("PROCESSING",), "IN_PROGRESS", "host:1:abc") == "PROCESSING"
+    sql, params = s.sql[0]
+    assert "ClaimPreviousStatusId = BatchStatusId, BatchStatusId = %s" in sql and "ClaimedAt = NOW()" in sql
+    assert sql.endswith("WHERE BatchId = %s AND BatchStatusId = %s") and params == (4, "host:1:abc", "52", 3)
+
+    s = _SqlRecorder()
+    EsgSession.set_batch_status(s, "52", "COMPLETE", clear_claim=True)
+    assert "ClaimedAt = NULL, ClaimedBy = NULL, ClaimPreviousStatusId = NULL" in s.sql[0][0]
+
+
+def test_stale_claims_are_released_unless_a_heartbeat_arrived():
+    from secr.db import EsgSession
+
+    stale = [{"BatchId": 52, "ClaimedBy": "deadhost:9:x", "ClaimedAt": "2026-11-24 09:00"},
+             {"BatchId": 53, "ClaimedBy": "livehost:7:y", "ClaimedAt": "2026-11-24 09:00"}]
+    s = _SqlRecorder(stale=stale, changed=[1, 0])            # 53 got a heartbeat between SELECT and UPDATE
+    released = EsgSession.release_stale_claims(s, "IN_PROGRESS", 30, "PROCESSING")
+    assert [r["BatchId"] for r in released] == [52]
+    sql, params = s.sql[0]
+    assert "COALESCE(ClaimPreviousStatusId, %s)" in sql and "ClaimedAt < NOW() - INTERVAL %s MINUTE" in sql
+    assert params == (3, 52, 4, 30)                          # fallback PROCESSING, only while still IN_PROGRESS
+
+
+def test_claimer_releases_stale_claims_first(tmp_path):
+    import contextlib
+    from secr import runner
+
+    _db, processor = _build(tmp_path, {})
+    processor.track_claims, processor.claim_owner = True, "host:1:abc"
+    order = []
+
+    class S:
+        def release_stale_claims(self, code, minutes, fallback):
+            order.append(("release", code, minutes, fallback))
+            return [{"BatchId": 52}]
+
+        def batch_status_exists(self, code):
+            return True
+
+        def claim_batch(self, b, codes, code, owner=None, procedure=""):
+            order.append(("claim", b, owner, procedure))
+            return "PROCESSING"
+
+    class Db:
+        @contextlib.contextmanager
+        def session(self):
+            yield S()
+
+    class Cfg:
+        class run:
+            pending_batches_query, claim_procedure, claim_batch_procedure = "SELECT 1", "", "ClaimBatch"
+            batch_status_in_progress, claimable_statuses = "IN_PROGRESS", ("PROCESSING", "PARTIAL_FAILURE")
+            stale_claim_minutes, release_stale_procedure = 30, ""
+
+    original = runner.pending_batch_ids
+    runner.pending_batch_ids = lambda cfg, db, limit=None: ["52"]
+    try:
+        assert runner.make_claimer(Cfg, Db(), processor)(5, set()) == ["52"]
+    finally:
+        runner.pending_batch_ids = original
+    assert order == [("release", "IN_PROGRESS", 30, "PROCESSING"), ("claim", "52", "host:1:abc", "ClaimBatch")]
+
+
+# ---------------------------------------------------------------- ClaimBatch stored procedure
+class _ProcCursor:
+    """Fake PyMySQL cursor: CALL ClaimBatch sets the OUT values, SELECT @_ClaimBatch_n reads them back."""
+
+    def __init__(self, conn):
+        self.conn = conn
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def callproc(self, name, args):
+        self.conn.calls.append((name, args))
+
+    def nextset(self):
+        return None
+
+    def execute(self, sql, params=None):
+        self.conn.calls.append(sql)
+
+    def fetchone(self):
+        return {"PreviousCode": self.conn.previous, "Claimed": self.conn.claimed}
+
+
+class _ProcConn:
+    def __init__(self, previous, claimed):
+        self.previous, self.claimed, self.calls = previous, claimed, []
+
+    def cursor(self):
+        return _ProcCursor(self)
+
+
+def test_claim_batch_calls_the_procedure():
+    from secr.db import EsgSession
+
+    class S:
+        conn = _ProcConn(b"PARTIAL_FAILURE", 1)
+        claim_batch_via_proc = EsgSession.claim_batch_via_proc
+
+    s = S()
+    previous = EsgSession.claim_batch(s, "52", ("PROCESSING", "PARTIAL_FAILURE"), "IN_PROGRESS", "host:1:abc",
+                                      procedure="ClaimBatch")
+    assert previous == "PARTIAL_FAILURE"
+    assert s.conn.calls[0] == ("ClaimBatch", (52, "PROCESSING,PARTIAL_FAILURE", "IN_PROGRESS", "host:1:abc",
+                                              None, None))
+    assert s.conn.calls[1] == "SELECT @_ClaimBatch_4 AS PreviousCode, @_ClaimBatch_5 AS Claimed"
+
+    s.conn = _ProcConn("IN_PROGRESS", 0)                     # another system owns it
+    assert EsgSession.claim_batch(s, "52", ("PROCESSING",), "IN_PROGRESS", procedure="ClaimBatch") is None
+
+
+def test_claim_batch_procedure_name_is_checked():
+    import pytest
+    from secr.db import EsgSession
+
+    class S:
+        conn = _ProcConn("PROCESSING", 1)
+
+    with pytest.raises(ValueError):
+        EsgSession.claim_batch_via_proc(S(), "ClaimBatch; DROP TABLE x", "52", ("PROCESSING",), "IN_PROGRESS")
+    assert S.conn.calls == []
+
+
+# ---------------------------------------------------------------- explicit batch ids claimed through ClaimBatch
+def _claiming_processor(tmp_path, status, take_in_progress=False):
+    db, processor = _build(tmp_path, {"40": [_row("40", 1)]})
+    db.batch_status["40"] = status
+    db.proc_calls = []
+
+    def claim_batch(self, batch_id, codes, in_progress, owner=None, procedure=""):
+        db.proc_calls.append((batch_id, tuple(codes), in_progress, owner, procedure))
+        current = db.batch_status.get(batch_id, "PROCESSING")
+        if current not in codes:
+            return None
+        db.batch_status[batch_id] = in_progress
+        db.batch_history.setdefault(batch_id, []).append(in_progress)
+        return current
+
+    FakeSession.claim_batch = claim_batch
+    processor.claim_batch_procedure = "ClaimBatch"
+    processor.claimable_statuses = ("PROCESSING", "PARTIAL_FAILURE")
+    processor.take_in_progress = take_in_progress
+    return db, processor
+
+
+def test_explicit_batch_is_claimed_through_claim_batch(tmp_path):
+    db, processor = _claiming_processor(tmp_path, "PARTIAL_FAILURE")
+    try:
+        assert processor.process("40").state == "SUCCESS"
+    finally:
+        del FakeSession.claim_batch
+    assert db.proc_calls == [("40", ("PROCESSING", "PARTIAL_FAILURE"), "IN_PROGRESS", None, "ClaimBatch")]
+    assert db.batch_history["40"] == ["IN_PROGRESS", "COMPLETE"]   # IN_PROGRESS came from the procedure only
+
+
+def test_explicit_batch_in_progress_elsewhere_is_skipped(tmp_path):
+    db, processor = _claiming_processor(tmp_path, "IN_PROGRESS")
+    try:
+        result = processor.process("40")
+    finally:
+        del FakeSession.claim_batch
+    assert result.state == "SKIPPED" and "IN_PROGRESS" in result.error
+    assert db.batch_status["40"] == "IN_PROGRESS" and "40" not in db.batch_history   # left alone
+
+
+def test_force_takes_a_batch_in_progress(tmp_path):
+    db, processor = _claiming_processor(tmp_path, "IN_PROGRESS", take_in_progress=True)
+    processor.normalize = None                                  # make it fail: the status is put back
+    try:
+        processor.process("40")
+    finally:
+        del FakeSession.claim_batch
+    assert db.batch_history["40"] == ["IN_PROGRESS", "PROCESSING"]   # back to a claimable status, not IN_PROGRESS
+
+
+def test_explicit_rerun_of_completed_batch_sets_status_directly(tmp_path):
+    db, processor = _claiming_processor(tmp_path, "COMPLETE")
+    try:
+        assert processor.process("40").state == "SUCCESS"
+    finally:
+        del FakeSession.claim_batch
+    assert len(db.proc_calls) == 1                               # tried the procedure first
+    assert db.batch_history["40"] == ["IN_PROGRESS", "COMPLETE"]
+
+
+# ---------------------------------------------------------------- ReleaseStaleClaims stored procedure
+def test_release_stale_calls_the_procedure():
+    from secr.db import EsgSession
+
+    class Cursor:
+        def __init__(self, calls):
+            self.calls = calls
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def callproc(self, name, args):
+            self.calls.append((name, args))
+
+        def fetchall(self):
+            return [{"BatchId": 52, "ClaimedBy": "deadhost:9:x", "ClaimedAt": "2026-11-24 09:00"}]
+
+        def nextset(self):
+            return None
+
+    class S:
+        calls = []
+        conn = type("Conn", (), {"cursor": lambda self: Cursor(S.calls)})()
+
+    rows = EsgSession.release_stale_via_proc(S(), "ReleaseStaleClaims", "IN_PROGRESS", 30, "PROCESSING")
+    assert [r["BatchId"] for r in rows] == [52]
+    assert S.calls == [("ReleaseStaleClaims", ("IN_PROGRESS", 30, "PROCESSING"))]
+    import pytest
+    with pytest.raises(ValueError):
+        EsgSession.release_stale_via_proc(S(), "x; DROP TABLE y", "IN_PROGRESS", 30, "PROCESSING")
+
+
+def test_release_stale_uses_the_procedure_when_configured(tmp_path):
+    import contextlib
+    from secr import runner
+
+    _db, processor = _build(tmp_path, {})
+    processor.track_claims = True
+    calls = []
+
+    class S:
+        def release_stale_via_proc(self, proc, code, minutes, fallback):
+            calls.append(("proc", proc, code, minutes, fallback))
+            return []
+
+        def release_stale_claims(self, code, minutes, fallback):
+            calls.append(("python", code, minutes, fallback))
+            return []
+
+    class Db:
+        @contextlib.contextmanager
+        def session(self):
+            yield S()
+
+    class Cfg:
+        class run:
+            batch_status_in_progress, claimable_statuses = "IN_PROGRESS", ("PROCESSING", "PARTIAL_FAILURE")
+            stale_claim_minutes, release_stale_procedure = 30, "ReleaseStaleClaims"
+
+    runner.release_stale(processor, Cfg, Db())
+    Cfg.run.release_stale_procedure = ""
+    runner.release_stale(processor, Cfg, Db())
+    assert calls == [("proc", "ReleaseStaleClaims", "IN_PROGRESS", 30, "PROCESSING"),
+                     ("python", "IN_PROGRESS", 30, "PROCESSING")]

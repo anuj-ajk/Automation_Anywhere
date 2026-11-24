@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, as_completed, wait
 from typing import Callable, Iterable
 
 from .logging_setup import get_logger
@@ -57,6 +57,85 @@ def run_batches(
 
     log.info("All batches done in %.1fs", time.monotonic() - started)
     return [results[b] for b in ids]
+
+
+def run_pending(
+    process_batch: Callable[[str], BatchResult],
+    fetch_new: Callable[[int, set], list],
+    max_parallel_batches: int = 10,
+    poll_seconds: float = 60,
+    max_runtime_seconds: float = 0,
+    max_batches: int = 0,
+    initial_ids: Iterable = (),
+    clock: Callable[[], float] = time.monotonic,
+) -> list[BatchResult]:
+    """Keep up to ``max_parallel_batches`` batches running and top up free slots with new pending batches.
+
+    * ``fetch_new(n, exclude)`` claims up to ``n`` new batch ids (never one in ``exclude``).
+    * While batches are running, new ones are looked for whenever a batch finishes and at least every
+      ``poll_seconds``: with 2 running and a cap of 10, up to 8 more are taken.
+    * Stops taking new batches after ``max_runtime_seconds`` (0 = no limit) or ``max_batches`` in total
+      (0 = no limit); the running ones always finish. Ends when nothing runs and nothing is pending.
+    Results are returned in the order the batches were started.
+    """
+    log = get_logger(__name__)
+    started = clock()
+    queue = unique_ids(initial_ids)
+    seen: set[str] = set()
+    order: list[str] = []
+    results: dict[str, BatchResult] = {}
+    log.info("Pending mode: up to %d batch(es) at a time, looking for new ones every %ss%s%s",
+             max_parallel_batches, poll_seconds,
+             f", taking new batches for {max_runtime_seconds:.0f}s" if max_runtime_seconds else "",
+             f", at most {max_batches} batch(es)" if max_batches else "")
+
+    with ThreadPoolExecutor(max_workers=max(1, max_parallel_batches), thread_name_prefix="batch") as pool:
+        running: dict = {}
+        while True:
+            accepting = (not max_runtime_seconds or clock() - started < max_runtime_seconds) and \
+                        (not max_batches or len(seen) < max_batches)
+            free = max_parallel_batches - len(running)
+            if max_batches:
+                free = min(free, max_batches - len(seen))
+            new: list[str] = []
+            if accepting and free > 0:
+                while queue and len(new) < free:
+                    b = queue.pop(0)
+                    if b not in seen:
+                        new.append(b)
+                if len(new) < free:
+                    try:
+                        fetched = fetch_new(free - len(new), seen | set(new))
+                    except Exception:
+                        log.exception("Could not look for pending batches; will try again")
+                        fetched = []
+                    new += [b for b in unique_ids(fetched) if b not in seen and b not in new]
+            for b in new:
+                seen.add(b)
+                order.append(b)
+                running[pool.submit(process_batch, b)] = b
+            if new:
+                log.info("Started %d batch(es): %s (%d running, %d free slot(s))", len(new), ", ".join(new),
+                         len(running), max_parallel_batches - len(running))
+
+            if not running:
+                if accepting and queue:
+                    continue
+                break  # nothing running and nothing new: done
+
+            done, _ = wait(running, timeout=poll_seconds, return_when=FIRST_COMPLETED)
+            for fut in done:
+                b = running.pop(fut)
+                try:
+                    results[b] = fut.result()
+                except Exception as exc:  # defensive: process_batch already catches its own errors
+                    log.exception("Batch %s crashed", b)
+                    results[b] = BatchResult(b, "FAILED", error=str(exc))
+                log.info("Batch %s finished: %s (%.1fs); %d still running", b, results[b].state,
+                         results[b].seconds, len(running))
+
+    log.info("Pending mode done: %d batch(es) in %.1fs", len(order), clock() - started)
+    return [results[b] for b in order]
 
 
 def summarize(results: list[BatchResult]) -> str:

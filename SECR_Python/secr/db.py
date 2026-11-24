@@ -7,6 +7,7 @@ must not be shared between threads); a semaphore caps the total number of connec
 from __future__ import annotations
 
 import contextlib
+import re
 import threading
 import time
 from typing import Any, Iterable, Iterator, Sequence
@@ -15,6 +16,7 @@ from .config import DbConfig
 from .logging_setup import module_logger
 
 LOG = module_logger(__name__)
+_IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,63}$")
 SLOW_QUERY_SECONDS = 5.0
 
 
@@ -148,17 +150,155 @@ class EsgSession:
     def batch_status_codes(self) -> list[str]:
         return [str(r["Code"]) for r in self.query("SELECT Code FROM RefBatchStatus ORDER BY BatchStatusId")]
 
+    def claim_batch(self, batch_id: str, claimable_codes, in_progress_code: str,
+                    owner: str | None = None, procedure: str = "") -> str | None:
+        """Atomically take a pending batch (compare-and-set, same logic as the ClaimBatch procedure).
+
+        ``procedure``: call that stored procedure (sql/ClaimBatches.sql ClaimBatch) instead of running the
+        UPDATE from Python. Returns the status it had (to put back on failure), or None when it is not
+        claimable or another system took it first.
+        """
+        if procedure:
+            return self.claim_batch_via_proc(procedure, batch_id, claimable_codes, in_progress_code, owner or "")
+        rows = self.query(
+            "SELECT FB.BatchStatusId AS StatusId, B.Code AS Code FROM FileUploadBatch FB "
+            "LEFT JOIN RefBatchStatus B ON B.BatchStatusId = FB.BatchStatusId WHERE FB.BatchId = %s",
+            (batch_id,),
+        )
+        if not rows or str(rows[0].get("Code") or "").upper() not in {c.upper() for c in claimable_codes}:
+            return None
+        target = self.query("SELECT BatchStatusId FROM RefBatchStatus WHERE Code = %s", (in_progress_code,))
+        if not target:
+            raise ValueError(f"Batch status code '{in_progress_code}' does not exist in RefBatchStatus")
+        if owner:  # claim tracking (sql/AddClaimColumns.sql): owner, time and the status to go back to
+            changed = self.execute(
+                "UPDATE FileUploadBatch SET ClaimPreviousStatusId = BatchStatusId, BatchStatusId = %s, "
+                "ClaimedAt = NOW(), ClaimedBy = %s WHERE BatchId = %s AND BatchStatusId = %s",
+                (target[0]["BatchStatusId"], owner, batch_id, rows[0]["StatusId"]),
+            )
+        else:
+            changed = self.execute(
+                "UPDATE FileUploadBatch SET BatchStatusId = %s WHERE BatchId = %s AND BatchStatusId = %s",
+                (target[0]["BatchStatusId"], batch_id, rows[0]["StatusId"]),
+            )
+        return str(rows[0]["Code"]) if changed == 1 else None
+
+    def claim_batch_via_proc(self, proc: str, batch_id: str, claimable_codes, in_progress_code: str,
+                             owner: str = "") -> str | None:
+        """CALL ClaimBatch(id, codes, in_progress, owner, @previous, @claimed): the previous code, or None."""
+        if not _IDENTIFIER.match(proc):  # the name is also used in the @_<proc>_n variable names below
+            raise ValueError(f"Invalid procedure name: {proc!r}")
+        args = (int(batch_id), ",".join(claimable_codes), in_progress_code, owner, None, None)
+        with self.conn.cursor() as cur:
+            cur.callproc(proc, args)
+            while cur.nextset():
+                pass
+            # PyMySQL keeps the arguments in @_<proc>_<n>; the procedure wrote its OUT values there
+            cur.execute(f"SELECT @_{proc}_4 AS PreviousCode, @_{proc}_5 AS Claimed")
+            row = cur.fetchone() or {}
+        if isinstance(row, (tuple, list)):
+            row = {"PreviousCode": row[0], "Claimed": row[1]}
+        claimed = int(row.get("Claimed") or 0) == 1
+        previous = row.get("PreviousCode")
+        if isinstance(previous, (bytes, bytearray)):
+            previous = previous.decode()
+        LOG.info("%s(%s): %s", proc, batch_id,
+                 f"claimed from {previous or '<none>'}" if claimed else f"not claimed (status {previous or '<none>'})")
+        return str(previous or "") if claimed else None
+
+    def claim_pending_via_proc(self, proc: str, limit: int, claimable_codes, in_progress_code: str,
+                               exclude, owner: str = "") -> list[tuple[str, str]]:
+        """CALL ClaimPendingBatches(...) (sql/ClaimBatches.sql): returns [(BatchId, PreviousCode), ...]."""
+        args = (int(limit), ",".join(claimable_codes), in_progress_code, ",".join(sorted(map(str, exclude))),
+                owner)
+        with self.conn.cursor() as cur:
+            cur.callproc(proc, args)
+            rows = list(cur.fetchall())
+            while cur.nextset():
+                pass
+        LOG.info("%s claimed %d batch(es): %s", proc, len(rows), ", ".join(str(r["BatchId"]) for r in rows) or "none")
+        return [(str(r["BatchId"]), str(r.get("PreviousCode") or "")) for r in rows]
+
     def batch_status_exists(self, code: str) -> bool:
         return bool(self.query("SELECT 1 FROM RefBatchStatus WHERE Code = %s", (code,)))
 
-    def set_batch_status(self, batch_id: str, code: str) -> None:
+    def set_batch_status(self, batch_id: str, code: str, *, claim_owner: str | None = None,
+                         clear_claim: bool = False) -> None:
+        """Set the batch status. ``claim_owner``: also record the claim (ClaimedAt/By, previous status);
+        ``clear_claim``: also empty the claim columns (the batch is finished or released)."""
         # Look the code up first: with a sub-select, an unknown code would silently set BatchStatusId to NULL.
         rows = self.query("SELECT BatchStatusId FROM RefBatchStatus WHERE Code = %s", (code,))
         if not rows:
             raise ValueError(f"Batch status code '{code}' does not exist in RefBatchStatus")
         LOG.debug("Setting batch %s status to %s", batch_id, code)
-        self.execute("UPDATE FileUploadBatch SET BatchStatusId = %s WHERE BatchId = %s",
-                     (rows[0]["BatchStatusId"], batch_id))
+        if claim_owner:
+            # MySQL evaluates SET left to right: ClaimPreviousStatusId gets the status from BEFORE this update
+            self.execute("UPDATE FileUploadBatch SET ClaimPreviousStatusId = BatchStatusId, BatchStatusId = %s, "
+                         "ClaimedAt = NOW(), ClaimedBy = %s WHERE BatchId = %s",
+                         (rows[0]["BatchStatusId"], claim_owner, batch_id))
+        elif clear_claim:
+            self.execute("UPDATE FileUploadBatch SET BatchStatusId = %s, ClaimedAt = NULL, ClaimedBy = NULL, "
+                         "ClaimPreviousStatusId = NULL WHERE BatchId = %s", (rows[0]["BatchStatusId"], batch_id))
+        else:
+            self.execute("UPDATE FileUploadBatch SET BatchStatusId = %s WHERE BatchId = %s",
+                         (rows[0]["BatchStatusId"], batch_id))
+
+    # ---------- claim tracking (sql/AddClaimColumns.sql) ----------
+    def has_claim_columns(self) -> bool:
+        rows = self.query(
+            "SELECT COUNT(*) AS n FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() "
+            "AND TABLE_NAME = 'FileUploadBatch' AND COLUMN_NAME IN ('ClaimedAt', 'ClaimedBy', 'ClaimPreviousStatusId')"
+        )
+        return bool(rows) and int(rows[0]["n"]) == 3
+
+    def heartbeat(self, batch_id: str, owner: str) -> int:
+        """Refresh ClaimedAt while the batch runs, so it is not taken for a stale claim."""
+        return self.execute("UPDATE FileUploadBatch SET ClaimedAt = NOW() WHERE BatchId = %s AND ClaimedBy = %s",
+                            (batch_id, owner))
+
+    def release_stale_via_proc(self, proc: str, in_progress_code: str, stale_minutes: int,
+                               fallback_code: str) -> list[dict[str, Any]]:
+        """CALL ReleaseStaleClaims(in_progress, minutes, fallback) (sql/ClaimBatches.sql): the released batches
+        as [{BatchId, ClaimedBy, ClaimedAt}, ...]."""
+        if not _IDENTIFIER.match(proc):
+            raise ValueError(f"Invalid procedure name: {proc!r}")
+        with self.conn.cursor() as cur:
+            cur.callproc(proc, (in_progress_code, int(stale_minutes), fallback_code))
+            rows = list(cur.fetchall() or [])
+            while cur.nextset():
+                pass
+        for r in rows:
+            LOG.warning("Stale claim released by %s: batch %s (claimed by %s at %s)", proc, r.get("BatchId"),
+                        r.get("ClaimedBy"), r.get("ClaimedAt"))
+        return rows
+
+    def release_stale_claims(self, in_progress_code: str, stale_minutes: int,
+                             fallback_code: str) -> list[dict[str, Any]]:
+        """Put IN_PROGRESS batches whose ClaimedAt is older than ``stale_minutes`` back to their previous status
+        (``fallback_code`` if that is unknown). Same logic as the ReleaseStaleClaims procedure."""
+        ids = self.query("SELECT Code, BatchStatusId FROM RefBatchStatus WHERE Code IN (%s, %s)",
+                         (in_progress_code, fallback_code))
+        by_code = {str(r["Code"]).upper(): r["BatchStatusId"] for r in ids}
+        if in_progress_code.upper() not in by_code or fallback_code.upper() not in by_code:
+            raise ValueError(f"'{in_progress_code}' or '{fallback_code}' does not exist in RefBatchStatus")
+        stale = self.query(
+            "SELECT BatchId, ClaimedBy, ClaimedAt FROM FileUploadBatch WHERE BatchStatusId = %s "
+            "AND ClaimedAt IS NOT NULL AND ClaimedAt < NOW() - INTERVAL %s MINUTE",
+            (by_code[in_progress_code.upper()], int(stale_minutes)),
+        )
+        released = []
+        for row in stale:
+            # repeat the age check per row: a heartbeat that arrived meanwhile keeps the batch claimed
+            if self.execute(
+                "UPDATE FileUploadBatch SET BatchStatusId = COALESCE(ClaimPreviousStatusId, %s), ClaimedAt = NULL, "
+                "ClaimedBy = NULL, ClaimPreviousStatusId = NULL WHERE BatchId = %s AND BatchStatusId = %s "
+                "AND ClaimedAt < NOW() - INTERVAL %s MINUTE",
+                (by_code[fallback_code.upper()], row["BatchId"], by_code[in_progress_code.upper()], int(stale_minutes)),
+            ) == 1:
+                released.append(row)
+                LOG.warning("Released stale claim on batch %s (claimed by %s at %s, no heartbeat for over %d min)",
+                            row["BatchId"], row.get("ClaimedBy"), row.get("ClaimedAt"), stale_minutes)
+        return released
 
     def add_recognized_category(self, file_id: str, category_name: str) -> None:
         """Append to UploadedFile.CategoryRecognized (comma list, no duplicates)."""

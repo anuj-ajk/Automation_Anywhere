@@ -94,6 +94,26 @@ class RunConfig:
     batch_status_on_file_errors: str = "PARTIAL_FAILURE"
     # FileUploadBatch status set as soon as a batch is picked up ("" = do not change it).
     batch_status_in_progress: str = "IN_PROGRESS"
+    # Pending mode: batches in one of these statuses may be claimed (must match pending_batches_query).
+    claimable_statuses: tuple = ("PROCESSING", "PARTIAL_FAILURE")
+    # Optional stored procedure that claims pending batches atomically (sql/ClaimBatches.sql), e.g.
+    # "ClaimPendingBatches". Empty: pending_batches_query + the same compare-and-set UPDATE from Python.
+    claim_procedure: str = ""
+    # Optional stored procedure that claims ONE batch (sql/ClaimBatches.sql), e.g. "ClaimBatch". Used in
+    # pending mode when claim_procedure is empty. Empty: the same compare-and-set UPDATE from Python.
+    claim_batch_procedure: str = ""
+    # Explicit batch ids with claim_batch_procedure: also take a batch that is already IN_PROGRESS
+    # (set by force / --force). Otherwise such a batch is skipped.
+    take_in_progress_batches: bool = False
+    pending_poll_seconds: int = 60       # pending mode: look for new batches at least this often
+    pending_max_runtime_minutes: int = 0  # pending mode: stop taking NEW batches after this (0 = no limit)
+    # Claim tracking (needs sql/AddClaimColumns.sql): a running batch refreshes ClaimedAt every
+    # claim_heartbeat_seconds; an IN_PROGRESS batch without a refresh for stale_claim_minutes is released.
+    claim_heartbeat_seconds: int = 60
+    stale_claim_minutes: int = 30         # 0 = never release stale claims
+    # Optional stored procedure that releases stale claims (sql/ClaimBatches.sql), e.g. "ReleaseStaleClaims".
+    # Empty: the same release from Python.
+    release_stale_procedure: str = ""
 
 
 @dataclass
@@ -198,6 +218,15 @@ def load_config(path: str | Path) -> AppConfig:
         clear_staging_before_load=bool(r.get("clear_staging_before_load", True)),
         batch_status_on_file_errors=str(r.get("batch_status_on_file_errors") or "PARTIAL_FAILURE").strip().upper(),
         batch_status_in_progress=str(r.get("batch_status_in_progress", "IN_PROGRESS") or "").strip().upper(),
+        claimable_statuses=tuple(str(c).strip().upper() for c in
+                                 (r.get("claimable_statuses") or ("PROCESSING", "PARTIAL_FAILURE"))),
+        claim_procedure=str(r.get("claim_procedure") or "").strip(),
+        claim_batch_procedure=str(r.get("claim_batch_procedure") or "").strip(),
+        pending_poll_seconds=int(r.get("pending_poll_seconds", 60)),
+        pending_max_runtime_minutes=int(r.get("pending_max_runtime_minutes", 0)),
+        claim_heartbeat_seconds=int(r.get("claim_heartbeat_seconds", 60)),
+        stale_claim_minutes=int(r.get("stale_claim_minutes", 30)),
+        release_stale_procedure=str(r.get("release_stale_procedure") or "").strip(),
     )
 
     n = _section(raw, "notify")

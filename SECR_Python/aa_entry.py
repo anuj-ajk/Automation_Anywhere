@@ -18,9 +18,13 @@ Input dictionary keys (AA "Dictionary of String" is fine - every value may be te
                             e.g. "%TEMP%\\SECR_work"; keep it short and local
     log_dir       optional  folder for the log file (default: run.log_dir in config.yaml)
     force         optional  "true" to process every file again, also those already COMPLETED
-    pending       optional  "true": process the batches returned by run.pending_batches_query in config.yaml
-                            (batch_ids is then optional; ids given in batch_ids are processed too)
-    pending_limit optional  take at most this many pending batches in one call
+    pending       optional  "true": pending mode. Pending batches are claimed atomically (set IN_PROGRESS) and
+                            every free slot (max_batches) is kept busy: while batches run, new pending ones are
+                            looked for, so with 2 running and a cap of 10, 8 more can start. Ends when nothing
+                            runs and nothing is pending. batch_ids is then optional (they run first).
+    pending_limit optional  take at most this many batches in total in one call (default: no limit)
+    poll_seconds  optional  pending mode: look for new batches at least this often (default 60)
+    max_runtime_minutes optional  pending mode: stop taking NEW batches after this many minutes (default: none)
     secrets       optional  dictionary of the SECR_* / AWS_* environment variables, if the bot
                             reads them from the Credential Vault instead of the machine environment
 
@@ -130,28 +134,33 @@ def run_batches(args) -> str:
         _apply_secrets(args.get("secrets"))
 
         from secr.config import load_config
-        from secr.runner import apply_overrides, build, execute, pending_batch_ids
+        from secr.runner import apply_overrides, build, execute, execute_pending
 
         config_path = Path(args.get("config_path") or HERE / "config.yaml")
         cfg = load_config(config_path)
         apply_overrides(cfg, _as_int(args.get("max_batches")), _as_int(args.get("max_files")),
                         force=_as_bool(args.get("force", "false")),
                         work_dir=args.get("work_dir"), log_dir=args.get("log_dir"), base=config_path.parent)
+        if _as_int(args.get("poll_seconds")):
+            cfg.run.pending_poll_seconds = _as_int(args.get("poll_seconds"))
+        if args.get("max_runtime_minutes") not in (None, ""):
+            cfg.run.pending_max_runtime_minutes = _as_int(args.get("max_runtime_minutes")) or 0
         processor, db, notifier, log_file = build(cfg, debug=_as_bool(args.get("debug", "false")))
-        if pending:
-            for b in pending_batch_ids(cfg, db, _as_int(args.get("pending_limit"))):
-                if b not in batch_ids:
-                    batch_ids.append(b)
-            if not batch_ids:  # nothing waiting is a normal outcome for a scheduled bot, not a failure
-                return _result("SUCCESS", 0, "No pending batches", log_file)
 
         from secr.logging_setup import get_logger
 
         log = get_logger("secr.aa_entry")
-        log.info("Called from Automation Anywhere: config %s, batch ids %s, max_batches=%s, max_files=%s, "
-                 "debug=%s, secrets passed: %s", config_path, ", ".join(batch_ids), args.get("max_batches"),
-                 args.get("max_files"), args.get("debug"), _secret_keys(args.get("secrets")) or "none")
-        results, code, summary = execute(processor, notifier, batch_ids, cfg.run.max_parallel_batches)
+        log.info("Called from Automation Anywhere: config %s, batch ids %s, pending=%s, max_batches=%s, "
+                 "max_files=%s, debug=%s, secrets passed: %s", config_path, ", ".join(batch_ids) or "none",
+                 pending, args.get("max_batches"), args.get("max_files"), args.get("debug"),
+                 _secret_keys(args.get("secrets")) or "none")
+        if pending:
+            results, code, summary = execute_pending(processor, notifier, cfg, db, batch_ids,
+                                                     _as_int(args.get("pending_limit")) or 0)
+            if not results:  # nothing waiting is a normal outcome for a scheduled bot, not a failure
+                return _result("SUCCESS", 0, "No pending batches", log_file)
+        else:
+            results, code, summary = execute(processor, notifier, batch_ids, cfg.run.max_parallel_batches)
         log.info("Returning status %s to Automation Anywhere", _STATUS_BY_CODE.get(code, "FAILED"))
 
         return _result(

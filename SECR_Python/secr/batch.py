@@ -7,6 +7,7 @@ files therefore run side by side instead of one main task after the other.
 from __future__ import annotations
 
 import shutil
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
@@ -17,6 +18,10 @@ from .db import EsgDb
 from .logging_setup import get_logger, log_context, timed_step
 from .models import BatchContext, BatchResult, FileOutcome
 from .normalize import NormalizeFlow
+
+
+# _mark_batch_in_progress result: another system owns the batch, do not process it
+CLAIMED_ELSEWHERE = object()
 
 
 class BatchProcessor:
@@ -38,10 +43,66 @@ class BatchProcessor:
         self.status_on_file_errors = (status_on_file_errors or st.BATCH_COMPLETE).strip().upper()
         # Set as soon as the batch is picked up, so it no longer looks pending ("" = leave the status alone).
         self.status_in_progress = (status_in_progress or "").strip().upper()
+        # Batches already claimed (set IN_PROGRESS atomically) by the pending loop: batch id -> previous status.
+        self._claimed: dict[str, str] = {}
+        self._claimed_lock = threading.Lock()
+        # Claim tracking (sql/AddClaimColumns.sql), switched on by the runner when the columns exist:
+        # ClaimedAt/ClaimedBy are written on claim, refreshed every heartbeat_seconds, emptied at the end.
+        self.track_claims = False
+        self.claim_owner = ""
+        self.heartbeat_seconds = 60
+        # Batches run by explicit id are claimed through this stored procedure (e.g. "ClaimBatch") when set.
+        # A batch already IN_PROGRESS (another system owns it) is then skipped, unless take_in_progress.
+        self.claim_batch_procedure = ""
+        self.claimable_statuses: tuple = ()
+        self.take_in_progress = False
+
+    def _claim_kw(self, finished: bool) -> dict:
+        """Extra set_batch_status arguments: record the claim when it starts, clear it when the batch ends."""
+        if not self.track_claims:
+            return {}
+        return {"clear_claim": True} if finished else {"claim_owner": self.claim_owner}
+
+    def _start_heartbeat(self, batch_id: str, log):
+        """Refresh ClaimedAt every heartbeat_seconds while the batch runs. Returns a function that stops it."""
+        if not (self.track_claims and self.status_in_progress):
+            return lambda: None
+        stop = threading.Event()
+        context = {"batch_id": batch_id}
+
+        def beat():
+            with log_context(**context):
+                while not stop.wait(self.heartbeat_seconds):
+                    try:
+                        with self.db.try_session() as s:  # never wait for a connection just for a heartbeat
+                            if s is None:
+                                log.debug("Heartbeat skipped: no free DB connection")
+                                continue
+                            s.heartbeat(batch_id, self.claim_owner)
+                        log.debug("Heartbeat: ClaimedAt refreshed")
+                    except Exception as exc:
+                        log.warning("Heartbeat failed (will retry): %s", exc)
+
+        thread = threading.Thread(target=beat, name=f"b{batch_id}-heartbeat", daemon=True)
+        thread.start()
+
+        def stop_heartbeat():
+            stop.set()
+            thread.join(timeout=5)
+        return stop_heartbeat
+
+    def note_claimed(self, batch_id: str, previous_status: str) -> None:
+        with self._claimed_lock:
+            self._claimed[str(batch_id)] = previous_status
 
     def _mark_batch_in_progress(self, batch_id: str, log) -> str | None:
         """Set the in-progress status. Returns the previous status code (to put back if the batch does not
         run), or None when nothing was changed."""
+        with self._claimed_lock:
+            claimed_from = self._claimed.pop(str(batch_id), None)
+        if claimed_from is not None:
+            log.info("Batch was claimed from %s (already %s)", claimed_from or "<none>", self.status_in_progress)
+            return claimed_from
         if not self.status_in_progress:
             return None
         try:
@@ -50,13 +111,44 @@ class BatchProcessor:
                     log.warning("Batch status %s is not in RefBatchStatus (codes: %s); batch status left unchanged",
                                 self.status_in_progress, ", ".join(s.batch_status_codes()) or "none")
                     return None
+                if self.claim_batch_procedure:
+                    claimed = self._claim_through_procedure(s, batch_id, log)
+                    if claimed is not None:
+                        return claimed
                 previous = s.get_batch_status(batch_id)
-                s.set_batch_status(batch_id, self.status_in_progress)
+                if self.claim_batch_procedure and previous.upper() == self.status_in_progress:
+                    # Only reached with take_in_progress: put the batch back to a claimable status on failure
+                    previous = self.claimable_statuses[0] if self.claimable_statuses else ""
+                s.set_batch_status(batch_id, self.status_in_progress, **self._claim_kw(finished=False))
             log.info("Batch status %s -> %s", previous or "<none>", self.status_in_progress)
             return previous
         except Exception as exc:  # a status write must never stop the batch
             log.error("Could not set batch status %s: %s", self.status_in_progress, exc)
             return None
+
+    def _claim_through_procedure(self, s, batch_id: str, log):
+        """Claim the batch with the ClaimBatch procedure. Returns the previous status when claimed,
+        CLAIMED_ELSEWHERE when another system owns it, or None to fall back to setting the status directly."""
+        owner = self.claim_owner if self.track_claims else None
+        try:
+            previous = s.claim_batch(batch_id, self.claimable_statuses, self.status_in_progress, owner,
+                                     procedure=self.claim_batch_procedure)
+        except Exception as exc:
+            log.error("%s failed (%s); setting %s directly", self.claim_batch_procedure, exc,
+                      self.status_in_progress)
+            return None
+        if previous is not None:
+            log.info("Batch claimed through %s: %s -> %s", self.claim_batch_procedure, previous or "<none>",
+                     self.status_in_progress)
+            return previous
+        current = s.get_batch_status(batch_id)
+        if current.upper() == self.status_in_progress and not self.take_in_progress:
+            log.warning("Batch is already %s (claimed by another system or run); skipped. Run with force to "
+                        "take it anyway", current)
+            return CLAIMED_ELSEWHERE
+        log.info("Batch status %s is not claimable (%s); setting %s directly for this explicit run",
+                 current or "<none>", ", ".join(self.claimable_statuses) or "none", self.status_in_progress)
+        return None
 
     def _restore_batch_status(self, batch_id: str, previous: str | None, log) -> None:
         """Put the status back when the batch did not run, so it is picked up again (e.g. by --pending)."""
@@ -64,7 +156,7 @@ class BatchProcessor:
             return
         try:
             with self.db.session() as s:
-                s.set_batch_status(batch_id, previous)
+                s.set_batch_status(batch_id, previous, **self._claim_kw(finished=True))
             log.info("Batch status set back to %s", previous)
         except Exception as exc:
             log.error("Could not set batch status back to %s: %s", previous, exc)
@@ -79,7 +171,7 @@ class BatchProcessor:
                     log.warning("Batch status %s is not in RefBatchStatus; using %s instead",
                                 self.status_on_file_errors, st.BATCH_COMPLETE)
         with self.db.session() as s:
-            s.set_batch_status(batch_id, code)
+            s.set_batch_status(batch_id, code, **self._claim_kw(finished=True))
         log.info("Batch status set to %s", code)
 
     def process(self, batch_id: str) -> BatchResult:
@@ -103,7 +195,11 @@ class BatchProcessor:
                 return BatchResult(batch_id, "SKIPPED", error="already running")
             try:
                 log.debug("Got DB lock %s; work folder %s", lock_name, work_dir)
-                result = self._process_locked(batch_id, work_dir, log)
+                stop_heartbeat = self._start_heartbeat(batch_id, log)
+                try:
+                    result = self._process_locked(batch_id, work_dir, log)
+                finally:
+                    stop_heartbeat()
             finally:
                 lock_session.release_lock(lock_name)
                 log.debug("Released DB lock %s", lock_name)
@@ -119,6 +215,8 @@ class BatchProcessor:
     def _process_locked(self, batch_id: str, work_dir, log) -> BatchResult:
         # First thing once the batch is ours: mark it in progress.
         previous_status = self._mark_batch_in_progress(batch_id, log)
+        if previous_status is CLAIMED_ELSEWHERE:
+            return BatchResult(batch_id, "SKIPPED", error="already IN_PROGRESS (claimed elsewhere)")
         try:
             with timed_step(log, "Read batch files from ESG DB"), self.db.session() as s:
                 rows = s.fetch_batch_files(batch_id)
@@ -166,7 +264,7 @@ class BatchProcessor:
             if not rows:
                 log.info("Every file of this batch is already completed; nothing to do")
                 with self.db.session() as s:
-                    s.set_batch_status(batch_id, st.BATCH_COMPLETE)
+                    s.set_batch_status(batch_id, st.BATCH_COMPLETE, **self._claim_kw(finished=True))
                 return BatchResult(batch_id, "ALREADY_COMPLETED", skipped)
 
             daisy_rows = [r for r in rows if is_daisy(r)]

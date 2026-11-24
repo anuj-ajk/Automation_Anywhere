@@ -14,7 +14,7 @@ from pathlib import Path
 
 from .config import load_config
 from .db import EsgDb
-from .runner import apply_overrides, build, execute, pending_batch_ids
+from .runner import apply_overrides, build, execute, execute_pending
 
 
 def _parse(argv):
@@ -40,13 +40,8 @@ def _parse(argv):
 def _batch_ids(args, cfg, db: EsgDb) -> list[str]:
     if args.batch_ids:
         return args.batch_ids
-    if args.batch_file:
-        return [ln.strip() for ln in args.batch_file.read_text(encoding="utf-8").splitlines()
-                if ln.strip() and not ln.startswith("#")]
-    try:
-        return pending_batch_ids(cfg, db)
-    except ValueError as exc:
-        raise SystemExit(f"--pending: {exc}")
+    return [ln.strip() for ln in args.batch_file.read_text(encoding="utf-8").splitlines()
+            if ln.strip() and not ln.startswith("#")]
 
 
 def main(argv=None) -> int:
@@ -55,6 +50,11 @@ def main(argv=None) -> int:
     apply_overrides(cfg, args.max_batches, args.max_files, force=args.force, work_dir=args.work_dir,
                     log_dir=args.log_dir, base=Path(args.config).resolve().parent)
     processor, db, notifier, _ = build(cfg, debug=args.debug)
+    if args.pending:  # claim pending batches and keep every free slot busy until nothing is pending
+        if not cfg.run.pending_batches_query and not cfg.run.claim_procedure:
+            raise SystemExit("--pending needs run.pending_batches_query (or run.claim_procedure) in the config")
+        _, code, _ = execute_pending(processor, notifier, cfg, db)
+        return code
     _, code, _ = execute(processor, notifier, _batch_ids(args, cfg, db), cfg.run.max_parallel_batches)
     return code
 

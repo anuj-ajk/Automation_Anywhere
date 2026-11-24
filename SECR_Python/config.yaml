@@ -16,6 +16,16 @@ run:
   parallel_insert_min_rows: 20000   # rows per extra connection; smaller files use one connection
   batch_status_in_progress: IN_PROGRESS   # RefBatchStatus code set when a batch is picked up ("" = leave it)
   batch_status_on_file_errors: PARTIAL_FAILURE   # final batch status when some files failed (else COMPLETE)
+  # Pending mode (AA pending = true / CLI --pending): batches are claimed atomically and free slots are refilled
+  claimable_statuses: [PROCESSING, PARTIAL_FAILURE]   # must match pending_batches_query below
+  claim_procedure: ClaimPendingBatches   # pending mode: claim up to N batches in one call ("" = one by one, see below)
+  claim_batch_procedure: ClaimBatch      # explicit batch ids (and pending ones when claim_procedure is "") are claimed through it
+  pending_poll_seconds: 60          # while batches run, look for new pending ones at least this often
+  pending_max_runtime_minutes: 0    # stop taking NEW batches after this many minutes (0 = until nothing is pending)
+  # Stale claims: uses FileUploadBatch.ClaimedAt / ClaimedBy / ClaimPreviousStatusId (installed)
+  claim_heartbeat_seconds: 60       # a running batch refreshes FileUploadBatch.ClaimedAt this often
+  stale_claim_minutes: 30           # IN_PROGRESS without a refresh for this long = left behind -> released (0 = never)
+  release_stale_procedure: ReleaseStaleClaims   # releases stale claims in the DB ("" = same release from Python)
   # Optional, used by "run --pending". Must return a BatchId column. Example only - adjust to
   # however new batches are flagged in your DB:
   pending_batches_query: "SELECT FB.BatchId FROM FileUploadBatch FB JOIN RefBatchStatus B ON B.BatchStatusId = FB.BatchStatusId WHERE B.Code = 'PROCESSING' OR B.Code = 'PARTIAL_FAILURE' ORDER BY FB.BatchId"

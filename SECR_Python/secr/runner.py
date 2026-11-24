@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import logging
 import os
+import socket
+import uuid
 from pathlib import Path
 import platform
 import sys
@@ -17,7 +19,7 @@ from .logging_setup import get_logger, setup_logging
 from .models import BatchResult
 from .normalize import NormalizeFlow
 from .notifier import Notifier
-from .orchestrator import exit_code, run_batches, summarize
+from .orchestrator import exit_code, run_batches, run_pending, summarize
 
 
 def resolve_dir(value, base: Path | None = None) -> Path:
@@ -37,6 +39,7 @@ def apply_overrides(cfg: AppConfig, max_batches: int | None = None, max_files: i
         cfg.run.log_dir = resolve_dir(log_dir, base)
     if force:  # process every file of the batch again, also those already completed
         cfg.run.skip_completed_files = False
+        cfg.run.take_in_progress_batches = True  # and take a batch even if it is IN_PROGRESS
     if max_batches:
         cfg.run.max_parallel_batches = int(max_batches)
     if max_files:
@@ -84,6 +87,18 @@ def build(cfg: AppConfig, debug: bool = False) -> tuple[BatchProcessor, EsgDb, N
                                skip_statuses=cfg.run.completed_statuses if cfg.run.skip_completed_files else (),
                                status_on_file_errors=cfg.run.batch_status_on_file_errors,
                                status_in_progress=cfg.run.batch_status_in_progress)
+    processor.claim_batch_procedure = cfg.run.claim_batch_procedure
+    processor.claimable_statuses = tuple(cfg.run.claimable_statuses)
+    processor.take_in_progress = cfg.run.take_in_progress_batches
+    apply_claim_tracking(processor, cfg, db, log)  # ClaimedAt / ClaimedBy, if sql/AddClaimColumns.sql was run
+    if processor.track_claims:  # a batch left IN_PROGRESS by a process that died must not block this run
+        try:
+            released = release_stale(processor, cfg, db)
+            if released:
+                log.warning("Released %d stale claim(s): %s", len(released),
+                            ", ".join(str(x["BatchId"]) for x in released))
+        except Exception as exc:
+            log.warning("Could not release stale claims: %s", exc)
     return processor, db, notifier, log_file
 
 
@@ -114,6 +129,45 @@ def _log_settings(cfg: AppConfig, log) -> None:
     log.info("Secrets: %s", ", ".join(f"{v}={'set' if os.environ.get(v) else 'NOT SET'}" for v in _SECRET_VARS))
 
 
+def apply_claim_tracking(processor: BatchProcessor, cfg: AppConfig, db: EsgDb, log) -> bool:
+    """Switch on ClaimedAt / ClaimedBy handling when sql/AddClaimColumns.sql has been run."""
+    r = cfg.run
+    if not r.batch_status_in_progress:
+        return False
+    try:
+        with db.session() as s:
+            available = s.has_claim_columns()
+    except Exception as exc:
+        log.warning("Could not check for the claim columns: %s", exc)
+        available = False
+    if not available:
+        log.warning("FileUploadBatch has no ClaimedAt/ClaimedBy/ClaimPreviousStatusId columns: stale IN_PROGRESS "
+                    "batches cannot be detected (run sql/AddClaimColumns.sql)")
+        return False
+    processor.track_claims = True
+    processor.claim_owner = f"{socket.gethostname()}:{os.getpid()}:{uuid.uuid4().hex[:8]}"[:100]
+    processor.heartbeat_seconds = max(5, r.claim_heartbeat_seconds)
+    if r.stale_claim_minutes and r.stale_claim_minutes * 60 < 3 * processor.heartbeat_seconds:
+        log.warning("stale_claim_minutes (%d) is short compared with claim_heartbeat_seconds (%d): running "
+                    "batches could be released", r.stale_claim_minutes, processor.heartbeat_seconds)
+    log.info("Claim tracking on: owner %s, heartbeat every %ds, stale after %s", processor.claim_owner,
+             processor.heartbeat_seconds, f"{r.stale_claim_minutes} min" if r.stale_claim_minutes else "never")
+    return True
+
+
+def release_stale(processor: BatchProcessor, cfg: AppConfig, db: EsgDb) -> list:
+    """Put IN_PROGRESS batches whose claim went stale back to their previous status."""
+    r = cfg.run
+    if not (processor.track_claims and r.stale_claim_minutes):
+        return []
+    fallback = r.claimable_statuses[0] if r.claimable_statuses else "PROCESSING"
+    with db.session() as s:
+        if r.release_stale_procedure:
+            return s.release_stale_via_proc(r.release_stale_procedure, r.batch_status_in_progress,
+                                            r.stale_claim_minutes, fallback)
+        return s.release_stale_claims(r.batch_status_in_progress, r.stale_claim_minutes, fallback)
+
+
 def pending_batch_ids(cfg: AppConfig, db: EsgDb, limit: int | None = None) -> list[str]:
     """Batch ids returned by run.pending_batches_query (first column, or the BatchId column)."""
     log = get_logger(__name__)
@@ -127,6 +181,80 @@ def pending_batch_ids(cfg: AppConfig, db: EsgDb, limit: int | None = None) -> li
         ids = ids[:limit]
     log.info("Pending batches: %s", ", ".join(ids) or "none")
     return ids
+
+
+def make_claimer(cfg: AppConfig, db: EsgDb, processor: BatchProcessor):
+    """fetch_new(n, exclude) for the pending loop: claims up to n pending batches atomically."""
+    log = get_logger(__name__)
+    r = cfg.run
+    state = {"warned": False}
+
+    owner = processor.claim_owner if processor.track_claims else None
+
+    def fetch_new(n: int, exclude: set) -> list[str]:
+        if n <= 0:
+            return []
+        try:  # batches left IN_PROGRESS by a process that died become pending again
+            released = release_stale(processor, cfg, db)
+            if released:
+                log.warning("Released %d stale claim(s): %s", len(released),
+                            ", ".join(str(x["BatchId"]) for x in released))
+        except Exception as exc:
+            log.warning("Could not release stale claims: %s", exc)
+        if r.claim_procedure:  # one database call claims them all
+            with db.session() as s:
+                claimed = s.claim_pending_via_proc(r.claim_procedure, n, r.claimable_statuses,
+                                                   r.batch_status_in_progress, exclude, owner or "")
+            for b, previous in claimed:
+                processor.note_claimed(b, previous)
+            return [b for b, _ in claimed]
+
+        candidates = [b for b in pending_batch_ids(cfg, db) if b not in exclude]
+        if not r.batch_status_in_progress:  # nothing to claim with: rely on the per-batch DB lock only
+            return candidates[:n]
+        claimed = []
+        with db.session() as s:
+            if not s.batch_status_exists(r.batch_status_in_progress):
+                if not state["warned"]:
+                    log.warning("%s is not in RefBatchStatus: batches cannot be claimed atomically; only the "
+                                "per-batch DB lock protects them", r.batch_status_in_progress)
+                    state["warned"] = True
+                return candidates[:n]
+            for b in candidates:
+                previous = s.claim_batch(b, r.claimable_statuses, r.batch_status_in_progress, owner,
+                                        procedure=r.claim_batch_procedure)
+                if previous is None:
+                    log.info("Batch %s was taken by another system (or is no longer pending); skipped", b)
+                    continue
+                processor.note_claimed(b, previous)
+                claimed.append(b)
+                if len(claimed) >= n:
+                    break
+        if claimed:
+            log.info("Claimed batch(es) %s", ", ".join(claimed))
+        return claimed
+
+    return fetch_new
+
+
+def execute_pending(processor: BatchProcessor, notifier: Notifier, cfg: AppConfig, db: EsgDb,
+                    initial_ids: Iterable = (), max_batches: int = 0) -> tuple[list[BatchResult], int, str]:
+    """Pending mode: claim pending batches and keep every free slot busy until nothing is pending."""
+    log = get_logger(__name__)
+    r = cfg.run
+    log.info("Run started in pending mode%s", f" (plus batch id(s) {', '.join(map(str, initial_ids))})"
+             if initial_ids else "")
+    results = run_pending(processor.process, make_claimer(cfg, db, processor), r.max_parallel_batches,
+                          poll_seconds=r.pending_poll_seconds,
+                          max_runtime_seconds=r.pending_max_runtime_minutes * 60,
+                          max_batches=max_batches, initial_ids=initial_ids)
+    summary = summarize(results)
+    log.info("Summary\n%s", summary)
+    code = exit_code(results)
+    log.info("Run finished with exit code %d (0 = all OK, 2 = some files failed, 1 = a batch failed)", code)
+    if results:
+        notifier.send(f"SECR normalizer {'completed' if code == 0 else 'finished with errors'}", summary)
+    return results, code, summary
 
 
 def execute(processor: BatchProcessor, notifier: Notifier, batch_ids: Iterable, max_parallel_batches: int

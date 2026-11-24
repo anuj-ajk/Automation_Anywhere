@@ -74,8 +74,10 @@ Dictionary keys (all values may be text):
 | `work_dir` | no | `%TEMP%\SECR_work` | temp folder for this call (overrides `run.work_dir`). `%VARS%` are expanded; a relative path is taken from the config file's folder |
 | `log_dir` | no | `D:\...\SECR_Python\logs` | log folder for this call (overrides `run.log_dir`) |
 | `pending` | no | `true` | process the batches returned by `run.pending_batches_query` (then `batch_ids` is optional; ids given there are processed too). `batch_ids = pending` does the same. No pending batch → `status SUCCESS`, message "No pending batches" |
-| `pending_limit` | no | `20` | take at most this many pending batches in one call |
-| `force` | no | `true` | process every file again, also those already `COMPLETED` (see "Running a batch again") |
+| `pending_limit` | no | `20` | take at most this many batches in total in one call |
+| `poll_seconds` | no | `60` | pending mode: look for new batches at least this often while batches run |
+| `max_runtime_minutes` | no | `120` | pending mode: stop taking new batches after this many minutes (running ones finish) |
+| `force` | no | `true` | process every file again, also those already `COMPLETED` (see "Running a batch again"), and take a batch even if it is `IN_PROGRESS` |
 | `secrets` | no | dictionary | `SECR_*` / `AWS_*` values, if the bot takes them from the Credential Vault instead of the machine's environment variables |
 
 The function never throws; it always returns JSON:
@@ -97,6 +99,87 @@ Notes:
 * The call blocks until every batch is finished (AI polling can take ~10 min per file), so give the
   AA work item / bot a long enough timeout.
 * Run one `run_batches` call per bot run; it already processes the batches in parallel.
+
+## Pending mode: claiming batches and refilling free slots
+
+Start it with `pending: true` from AA, or `run --pending` on the command line.
+
+1. **Free slots are refilled.** Up to `max_parallel_batches` (10) batches run at once. When a batch finishes, and at
+   least every `pending_poll_seconds` (60) while batches run, new pending batches are looked for. For example,
+   with 2 running, up to 8 more are taken.
+   * The run ends when nothing is running and nothing is pending.
+   * It also stops taking new batches after `pending_max_runtime_minutes` (AA: `max_runtime_minutes`) or
+     `pending_limit` batches in total. The batches already running always finish.
+   * A batch that has already run in this call is not taken again in the same call.
+2. **Each batch is claimed atomically before it starts.** The claim is a compare-and-set:
+   ```sql
+   UPDATE FileUploadBatch SET BatchStatusId = <IN_PROGRESS>
+   WHERE BatchId = ? AND BatchStatusId = <the status just read>
+   ```
+   Only one session can change the row. A second system, or a second bot, gets 0 rows and moves on to the next
+   batch. The status the batch had is kept and put back if the batch fails or has no files.
+3. **Stored procedures** (`sql/ClaimBatches.sql`, not installed automatically):
+   * `ClaimPendingBatches(limit, codes, in_progress_code, exclude_ids, claimed_by)` claims up to `limit`
+     batches and returns them as a result set (`BatchId`, `PreviousCode`). SECR calls it when
+     `claim_procedure: ClaimPendingBatches` is set, so all claims happen in one database call.
+   * `ClaimBatch(batch_id, codes, in_progress_code, claimed_by, OUT previous_code, OUT claimed)` claims one
+     specific batch. SECR calls it when `claim_batch_procedure: ClaimBatch` is set (see "Explicit batch ids"
+     below). In pending mode it is used when `claim_procedure` is empty: the batches found by
+     `pending_batches_query` are then claimed one by one through it. Other systems that take one batch at a
+     time can call it too.
+   * `ReleaseStaleClaims(in_progress_code, stale_minutes, fallback_code)` (see "Stale claims" below). SECR calls
+     it when `release_stale_procedure: ReleaseStaleClaims` is set; otherwise Python runs the same release.
+
+   `codes` and `exclude_ids` are comma-separated lists, for example `'PROCESSING,PARTIAL_FAILURE'` and `'52,53'`.
+   `claimed_by` is written to `ClaimedBy`, for example `'host:1234:abc'`. The procedures write the claim
+   columns, so run `sql/AddClaimColumns.sql` before installing them.
+
+   Other systems that pick up batches should use these procedures, so they cannot take a batch SECR has already
+   claimed. With neither `claim_procedure` nor `claim_batch_procedure`, Python runs the same compare-and-set
+   itself.
+
+**Explicit batch ids** (`batch_ids` / `--batch-ids`), with `claim_batch_procedure: ClaimBatch` set:
+
+* A batch in one of the `claimable_statuses` is claimed through `ClaimBatch`, like in pending mode.
+* A batch that is already `IN_PROGRESS` belongs to another system or run. It is skipped (`SKIPPED`) and its
+  status is left alone. Stale claims are released at start-up first, so a batch left behind by a process that
+  died is not blocked. With `force` (`--force` / `force: true`) the batch is taken anyway; if it then fails,
+  it goes back to the first `claimable_statuses` entry.
+* Any other status (for example `COMPLETE` when a batch is rerun on purpose) is not claimable. The batch is set
+  to `IN_PROGRESS` directly and processed, as before.
+* If the procedure call itself fails (for example it is not installed), the error is logged and the status is
+  set directly.
+
+Without `claim_batch_procedure`, explicit batch ids are set to `IN_PROGRESS` whatever their status.
+
+**Requirements:**
+
+* `IN_PROGRESS` must exist in `RefBatchStatus`. Without it, batches cannot be claimed, and only the per-batch DB
+  lock protects them (that lock works between SECR processes only).
+* `claimable_statuses` must match the statuses in `pending_batches_query`.
+
+### Stale claims (`ClaimedAt` / `ClaimedBy`)
+
+If the process is killed (the machine restarts, or the bot is stopped), its batches would stay in `IN_PROGRESS`
+for ever. Run `sql/AddClaimColumns.sql` once, then `sql/ClaimBatches.sql`, and this is handled:
+
+* **On claim:** `ClaimedAt = NOW()` and `ClaimedBy = <host>:<pid>:<run id>` are written, and
+  `ClaimPreviousStatusId` keeps the status to go back to.
+* **While the batch runs:** a heartbeat refreshes `ClaimedAt` every `claim_heartbeat_seconds` (60). A long batch
+  (AI, `CalculateInvoiceData`) therefore never looks stale.
+* **When the batch ends or is put back:** the three columns are emptied.
+* **Before claiming new batches,** pending mode releases stale ones. These are `IN_PROGRESS` batches whose
+  `ClaimedAt` is older than `stale_claim_minutes` (30).
+  * They go back to `ClaimPreviousStatusId`, or to the first `claimable_statuses` entry if that is unknown.
+  * The age is checked again in the same `UPDATE`, so a heartbeat that arrives at that moment keeps the batch.
+  * Each release is logged as a warning, with the old owner.
+  * With `release_stale_procedure: ReleaseStaleClaims` this is done by one `CALL ReleaseStaleClaims('IN_PROGRESS',
+    30, 'PROCESSING')`; with `""` Python runs the same statements. Stale claims are released at the start of
+    every run and, in pending mode, before each claim.
+
+The code checks for the columns at start-up. Without them it works as before, and logs a warning that stale
+claims cannot be detected. Keep `stale_claim_minutes` well above the heartbeat interval: at least 3 heartbeats
+must be missed before a batch counts as stale.
 
 ## Running a batch again
 
