@@ -39,6 +39,8 @@ esg_db:
   connect_timeout: 30
   connect_retry_seconds: 5      # when the DB itself refuses a login (too many connections), wait and try
                                 # again this often (and as soon as one of ours closes) until it accepts
+  lock_wait_timeout_seconds: 0  # a write blocked by another session's row lock fails after this long
+                                # (0 = server default innodb_lock_wait_timeout, normally 50s)
 
 s3:
   region: eu-west-2

@@ -90,6 +90,7 @@ Batch states in the summary / AA output:
 | `NO_FILES` | no valid SECR file rows for the batch (not an error; status put back if the batch was claimed) |
 | `ALREADY_COMPLETED` | rerun and every file was already done; nothing loaded, batch set `COMPLETE` |
 | `SKIPPED` | another process holds the batch (DB lock) or it is `IN_PROGRESS` elsewhere |
+| `LOCKED` | its `FileUploadBatch` row is locked by another DB session (MySQL 1205, e.g. an uncommitted Workbench transaction): skipped completely, nothing read or loaded, status unchanged (exit code 2). `COMMIT`/`ROLLBACK` that session and run again |
 
 ## Calling it from Automation Anywhere
 

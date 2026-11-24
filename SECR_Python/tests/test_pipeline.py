@@ -792,6 +792,7 @@ def test_claim_batch_calls_the_procedure():
     class S:
         conn = _ProcConn(b"PARTIAL_FAILURE", 1)
         claim_batch_via_proc = EsgSession.claim_batch_via_proc
+        _cursor = EsgSession._cursor
 
     s = S()
     previous = EsgSession.claim_batch(s, "52", ("PROCESSING", "PARTIAL_FAILURE"), "IN_PROGRESS", "host:1:abc",
@@ -905,6 +906,7 @@ def test_release_stale_calls_the_procedure():
     class S:
         calls = []
         conn = type("Conn", (), {"cursor": lambda self: Cursor(S.calls)})()
+        _cursor = EsgSession._cursor
 
     rows = EsgSession.release_stale_via_proc(S(), "ReleaseStaleClaims", "IN_PROGRESS", 30, "PROCESSING")
     assert [r["BatchId"] for r in rows] == [52]
@@ -1202,3 +1204,69 @@ def test_sheet_results_json_round_trip():
     assert again.file_version == "3" and back.status == sr.FAILED and back.stage == sr.STAGE_DOWNLOAD
     assert back.reason == "transport: 400 Client Error for url: https://api.getodin.ai/x/T.csv"
     assert again.completed() == {} and sr.FileSheetResults.parse(None).sheets == {}
+
+
+def test_lock_wait_timeout_names_the_likely_cause():
+    import pymysql
+    import pytest
+
+    from secr.db import LOCK_WAIT_HINT, EsgSession
+
+    class Cursor:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def execute(self, sql, params):
+            raise pymysql.err.OperationalError(1205, "Lock wait timeout exceeded; try restarting transaction")
+
+    class Conn:
+        def cursor(self):
+            return Cursor()
+
+    with pytest.raises(pymysql.err.OperationalError) as err:
+        EsgSession(Conn()).execute("UPDATE UploadedFile SET ProcessingStatusId = 1 WHERE FileId = %s", (77,))
+    assert err.value.args[0] == 1205 and "never committed" in str(err.value) and "innodb_trx" in LOCK_WAIT_HINT
+
+    class OtherError(Cursor):
+        def execute(self, sql, params):
+            raise pymysql.err.OperationalError(1054, "Unknown column")
+
+    Conn.cursor = lambda self: OtherError()
+    with pytest.raises(pymysql.err.OperationalError) as err:
+        EsgSession(Conn()).query("SELECT x")
+    assert err.value.args == (1054, "Unknown column")              # other errors are untouched
+
+
+def _locked(*_a, **_k):
+    import pymysql
+
+    raise pymysql.err.OperationalError(1205, "Lock wait timeout exceeded; try restarting transaction")
+
+
+def test_batch_with_locked_row_is_skipped_completely(tmp_path):
+    db, processor = _claiming_processor(tmp_path, "PROCESSING")
+    FakeSession.claim_batch = _locked                         # ClaimBatch waits on the locked row
+    calls = []
+    FakeSession.set_batch_status = lambda self, *a, **k: calls.append(a)
+    try:
+        result = processor.process("40")
+    finally:
+        del FakeSession.claim_batch
+        del FakeSession.set_batch_status
+    assert result.state == "LOCKED" and "locked" in result.error
+    assert calls == []                                        # no second wait on the same lock
+    assert db.history == {} and db.inserted == {}             # no file touched, nothing loaded
+    assert exit_code([result]) == 2                           # AA sees PARTIAL, not SUCCESS
+
+
+def test_batch_skipped_when_setting_in_progress_hits_a_lock(tmp_path):
+    db, processor = _build(tmp_path, {"40": [_row("40", 1)]})
+    FakeSession.set_batch_status = _locked
+    try:
+        result = processor.process("40")
+    finally:
+        del FakeSession.set_batch_status
+    assert result.state == "LOCKED" and db.history == {}

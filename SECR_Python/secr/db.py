@@ -21,6 +21,23 @@ LOG = module_logger(__name__)
 _IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,63}$")
 SLOW_QUERY_SECONDS = 5.0
 
+LOCK_WAIT_TIMEOUT = 1205  # MySQL: "Lock wait timeout exceeded; try restarting transaction"
+LOCK_WAIT_HINT = (
+    "another database session holds a lock on these rows - most likely a transaction that was never committed "
+    "(e.g. a MySQL Workbench tab that ran an UPDATE/DELETE without COMMIT). Run COMMIT or ROLLBACK in that "
+    "session, or find it with SELECT * FROM information_schema.innodb_trx and KILL its trx_mysql_thread_id"
+)
+
+
+def _error_code(exc) -> int | None:
+    code = exc.args[0] if getattr(exc, "args", None) else None
+    return code if isinstance(code, int) else None
+
+
+def is_lock_wait_timeout(exc) -> bool:
+    """True for MySQL 1205: the row is locked by another session (e.g. an uncommitted transaction)."""
+    return _error_code(exc) == LOCK_WAIT_TIMEOUT
+
 
 def _short(sql: str) -> str:
     return " ".join(sql.split())[:160]
@@ -66,9 +83,21 @@ class EsgSession:
         self.conn = conn
 
     # ---------- generic helpers ----------
+    @contextlib.contextmanager
+    def _cursor(self, what: str):
+        """A cursor whose lock wait timeouts (1205) say what usually causes them."""
+        try:
+            with self.conn.cursor() as cur:
+                yield cur
+        except Exception as exc:
+            if _error_code(exc) != LOCK_WAIT_TIMEOUT:
+                raise
+            LOG.error("Lock wait timeout on %s: %s", _short(what), LOCK_WAIT_HINT)
+            raise type(exc)(LOCK_WAIT_TIMEOUT, f"Lock wait timeout exceeded: {LOCK_WAIT_HINT}") from exc
+
     def query(self, sql: str, params: Sequence[Any] | None = None) -> list[dict[str, Any]]:
         started = time.monotonic()
-        with self.conn.cursor() as cur:
+        with self._cursor(sql) as cur:
             cur.execute(sql, params)
             rows = list(cur.fetchall())
         self._trace("query", sql, params, started, f"{len(rows)} row(s)")
@@ -76,7 +105,7 @@ class EsgSession:
 
     def execute(self, sql: str, params: Sequence[Any] | None = None) -> int:
         started = time.monotonic()
-        with self.conn.cursor() as cur:
+        with self._cursor(sql) as cur:
             affected = cur.execute(sql, params)
         self._trace("execute", sql, params, started, f"{affected} row(s) affected")
         return affected
@@ -203,7 +232,7 @@ class EsgSession:
         if not _IDENTIFIER.match(proc):  # the name is also used in the @_<proc>_n variable names below
             raise ValueError(f"Invalid procedure name: {proc!r}")
         args = (int(batch_id), ",".join(claimable_codes), in_progress_code, owner, None, None)
-        with self.conn.cursor() as cur:
+        with self._cursor(f"CALL {proc}") as cur:
             cur.callproc(proc, args)
             while cur.nextset():
                 pass
@@ -225,7 +254,7 @@ class EsgSession:
         """CALL ClaimPendingBatches(...) (sql/ClaimBatches.sql): returns [(BatchId, PreviousCode), ...]."""
         args = (int(limit), ",".join(claimable_codes), in_progress_code, ",".join(sorted(map(str, exclude))),
                 owner)
-        with self.conn.cursor() as cur:
+        with self._cursor(f"CALL {proc}") as cur:
             cur.callproc(proc, args)
             rows = list(cur.fetchall())
             while cur.nextset():
@@ -276,7 +305,7 @@ class EsgSession:
         as [{BatchId, ClaimedBy, ClaimedAt}, ...]."""
         if not _IDENTIFIER.match(proc):
             raise ValueError(f"Invalid procedure name: {proc!r}")
-        with self.conn.cursor() as cur:
+        with self._cursor(f"CALL {proc}") as cur:
             cur.callproc(proc, (in_progress_code, int(stale_minutes), fallback_code))
             rows = list(cur.fetchall() or [])
             while cur.nextset():
@@ -344,7 +373,7 @@ class EsgSession:
         started = time.monotonic()
         chunk: list[Sequence[Any]] = []
         LOG.debug("Bulk insert into %s (%d column(s), chunks of %d)", table, len(columns), chunk_size)
-        with self.conn.cursor() as cur:
+        with self._cursor(f"INSERT INTO {table}") as cur:
             for row in rows:
                 chunk.append(row)
                 if len(chunk) >= chunk_size:
@@ -363,7 +392,7 @@ class EsgSession:
         args = list(in_args) + [None] * n_out
         LOG.info("Calling procedure %s(%s)", name, ", ".join(str(a) for a in in_args))
         started = time.monotonic()
-        with self.conn.cursor() as cur:
+        with self._cursor(f"CALL {name}") as cur:
             cur.callproc(name, args)
             LOG.debug("Procedure %s returned after %.1fs", name, time.monotonic() - started)
             while cur.nextset():  # drain any result sets before the next statement
@@ -454,6 +483,10 @@ class EsgDb:
             autocommit=True,
             connect_timeout=self.cfg.connect_timeout,
             cursorclass=DictCursor,
+            # esg_db.lock_wait_timeout_seconds: fail a write blocked by another session's lock sooner than
+            # the server default (innodb_lock_wait_timeout, normally 50s). 0 = server default.
+            init_command=(f"SET SESSION innodb_lock_wait_timeout = {int(self.cfg.lock_wait_timeout_seconds)}"
+                          if self.cfg.lock_wait_timeout_seconds > 0 else None),
         )
 
     # ------------------------------------------------------------------ slots (this process's cap)

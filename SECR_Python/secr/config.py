@@ -36,6 +36,7 @@ class DbConfig:
     password: str = ""
     connect_timeout: int = 30
     connect_retry_seconds: float = 5    # DB full (too many connections): try again this often until it accepts
+    lock_wait_timeout_seconds: int = 0  # innodb_lock_wait_timeout for our sessions (0 = server default, 50s)
 
 
 @dataclass
@@ -173,6 +174,7 @@ def load_config(path: str | Path) -> AppConfig:
         password=_env("SECR_DB_PASSWORD"),
         connect_timeout=int(db_raw.get("connect_timeout", 30)),
         connect_retry_seconds=float(db_raw.get("connect_retry_seconds", 5)),
+        lock_wait_timeout_seconds=int(db_raw.get("lock_wait_timeout_seconds", 0) or 0),
     )
 
     s3_raw = _section(raw, "s3")

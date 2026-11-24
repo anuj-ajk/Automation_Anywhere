@@ -147,9 +147,10 @@ def summarize(results: list[BatchResult]) -> str:
 
 
 def exit_code(results: list[BatchResult]) -> int:
-    """0 = all good, 1 = at least one batch failed, 2 = only file-level errors."""
+    """0 = all good, 1 = at least one batch failed, 2 = file-level errors or a batch skipped because its row
+    was locked (LOCKED: nothing done, run it again)."""
     if any(r.state == "FAILED" for r in results):
         return 1
-    if any(r.state == "COMPLETED_WITH_FILE_ERRORS" for r in results):
+    if any(r.state in ("COMPLETED_WITH_FILE_ERRORS", "LOCKED") for r in results):
         return 2
     return 0

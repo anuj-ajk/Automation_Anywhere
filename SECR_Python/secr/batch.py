@@ -14,7 +14,7 @@ from datetime import datetime
 
 from . import status as st
 from .daisy import DaisyFlow
-from .db import EsgDb
+from .db import EsgDb, is_lock_wait_timeout
 from .logging_setup import get_logger, log_context, timed_step
 from .models import BatchContext, BatchResult, FileOutcome
 from .normalize import NormalizeFlow
@@ -22,6 +22,9 @@ from .normalize import NormalizeFlow
 
 # _mark_batch_in_progress result: another system owns the batch, do not process it
 CLAIMED_ELSEWHERE = object()
+# The FileUploadBatch row is locked by another session (MySQL 1205, e.g. an uncommitted transaction):
+# the batch is skipped completely, nothing is read, sent to the AI or loaded.
+ROW_LOCKED = object()
 
 
 class BatchProcessor:
@@ -122,7 +125,9 @@ class BatchProcessor:
                 s.set_batch_status(batch_id, self.status_in_progress, **self._claim_kw(finished=False))
             log.info("Batch status %s -> %s", previous or "<none>", self.status_in_progress)
             return previous
-        except Exception as exc:  # a status write must never stop the batch
+        except Exception as exc:  # a status write must never stop the batch - unless its row is locked
+            if is_lock_wait_timeout(exc):
+                return ROW_LOCKED
             log.error("Could not set batch status %s: %s", self.status_in_progress, exc)
             return None
 
@@ -134,6 +139,8 @@ class BatchProcessor:
             previous = s.claim_batch(batch_id, self.claimable_statuses, self.status_in_progress, owner,
                                      procedure=self.claim_batch_procedure)
         except Exception as exc:
+            if is_lock_wait_timeout(exc):  # setting the status directly would only wait for the same lock
+                return ROW_LOCKED
             log.error("%s failed (%s); setting %s directly", self.claim_batch_procedure, exc,
                       self.status_in_progress)
             return None
@@ -217,6 +224,12 @@ class BatchProcessor:
         previous_status = self._mark_batch_in_progress(batch_id, log)
         if previous_status is CLAIMED_ELSEWHERE:
             return BatchResult(batch_id, "SKIPPED", error="already IN_PROGRESS (claimed elsewhere)")
+        if previous_status is ROW_LOCKED:
+            log.error("Batch skipped: its FileUploadBatch row is locked by another database session (most "
+                      "likely a transaction that was never committed, e.g. a Workbench tab). Nothing was "
+                      "processed; COMMIT or ROLLBACK that session and run the batch again")
+            return BatchResult(batch_id, "LOCKED", error="batch row locked by another DB session (uncommitted "
+                                                         "transaction?); skipped, nothing processed")
         try:
             with timed_step(log, "Read batch files from ESG DB"), self.db.session() as s:
                 rows = s.fetch_batch_files(batch_id)

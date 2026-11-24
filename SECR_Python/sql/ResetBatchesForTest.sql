@@ -10,7 +10,11 @@
 --   Staging_* rows   for these files    -> deleted when @clear_staging = 1
 --                    (the Python run also deletes them before each load, this just leaves the tables clean)
 --
--- Usage: set @batch_ids, run the whole script, check the SELECT at the end, then COMMIT (or ROLLBACK).
+-- Usage: set @batch_ids and run the WHOLE script (it ends with COMMIT).
+--   The changes run in one transaction that the script commits itself. Do not stop it half way: an
+--   uncommitted transaction keeps these rows locked, and every SECR run then fails its status updates with
+--   "Lock wait timeout exceeded" (1205). If a run stopped early, execute ROLLBACK; in the same tab, or close it.
+--   To try it without changing anything, replace the COMMIT at the end with ROLLBACK.
 -- =====================================================================================================
 
 SET @batch_ids     = '40,41';        -- comma separated BatchIds, no spaces
@@ -65,7 +69,12 @@ UPDATE FileUploadBatch
 SET    ClaimedAt = NULL, ClaimedBy = NULL, ClaimPreviousStatusId = NULL
 WHERE  FIND_IN_SET(BatchId, @batch_ids);
 
--- 4. Check the result, then COMMIT (or ROLLBACK to undo everything above)
+-- 4. Commit: releases the row locks, so the SECR process can update these batches and files again
+COMMIT;
+
+SET SQL_SAFE_UPDATES = @saved_safe_updates;
+
+-- 5. Result (committed)
 SELECT FB.BatchId, B.Code AS BatchStatus, UF.FileId, UF.FileName, PS.Code AS FileStatus
 FROM   FileUploadBatch FB
 LEFT JOIN RefBatchStatus B           ON B.BatchStatusId = FB.BatchStatusId
@@ -74,7 +83,6 @@ LEFT JOIN RefFileProcessingStatus PS ON PS.FileProcessingStatusId = UF.Processin
 WHERE  FIND_IN_SET(FB.BatchId, @batch_ids)
 ORDER BY FB.BatchId, UF.FileId;
 
--- COMMIT;
--- ROLLBACK;
-
-SET SQL_SAFE_UPDATES = @saved_safe_updates;
+-- Still getting "Lock wait timeout exceeded" in the SECR log? Look for a transaction left open:
+--   SELECT trx_id, trx_started, trx_mysql_thread_id, trx_rows_locked FROM information_schema.innodb_trx;
+--   KILL <trx_mysql_thread_id>;   -- ends (rolls back) that session's open transaction
