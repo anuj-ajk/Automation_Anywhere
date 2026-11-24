@@ -54,6 +54,12 @@ SET    BatchStatusId = @batch_status_id
 WHERE  FIND_IN_SET(BatchId, @batch_ids)
   AND  @batch_status_id IS NOT NULL;
 
+-- Only if sql/AddSheetResultsColumn.sql was run (otherwise remove it): forget which sheets completed, so the
+-- next run processes every sheet again instead of only the failed ones.
+UPDATE UploadedFile
+SET    SheetResults = NULL
+WHERE  FIND_IN_SET(BatchId, @batch_ids);
+
 -- Only if sql/AddClaimColumns.sql was run (otherwise this statement fails: remove it, nothing else changes):
 UPDATE FileUploadBatch
 SET    ClaimedAt = NULL, ClaimedBy = NULL, ClaimPreviousStatusId = NULL

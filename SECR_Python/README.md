@@ -252,9 +252,22 @@ must be missed before a batch counts as stale.
   If `PARTIAL_FAILURE` is not in `RefBatchStatus`, the batch gets `COMPLETE` and a warning is logged.
   Set `batch_status_on_file_errors: COMPLETE` to keep the bot's behaviour. A batch status code is always looked
   up first, so an unknown code never sets `BatchStatusId` to NULL.
-* **Note on `PARTIAL_FAILURE`:** the whole file is processed again, including the sheets that already loaded.
-  Whether this creates duplicates in the final tables depends on the `Load*` procedures (whether they replace
-  or append the file's rows).
+* **Only the failed sheets of a file are retried** (needs `sql/AddSheetResultsColumn.sql`). After every
+  Normalize run, `UploadedFile.SheetResults` holds a JSON list of the file's sheets: `COMPLETED`, or `FAILED`
+  with the `stage` (`split`, `submit`, `ai`, `download`, `load`) and the `reason`, plus the number of attempts
+  and the result per category. When the file runs again (it is not `COMPLETED`, same `FileVersion`):
+  * sheets that are `COMPLETED` are not split, sent to the AI agent or loaded again;
+  * inside a retried sheet, a category that already loaded is not loaded twice;
+  * staging tables that completed sheets of this file loaded are **not** cleared before the retry, so their
+    rows stay. (If the failed sheet itself had inserted rows into such a table before its procedure failed,
+    those rows stay too; the log says "Earlier rows ... are kept".)
+  * the file becomes `COMPLETED` once every sheet is `COMPLETED`.
+
+  Every sheet is processed again when: `force` is set; the `FileVersion` changed (a new upload); the column is
+  empty or does not exist (then the log warns once and the old behaviour applies). `SET SheetResults = NULL` for
+  a file to redo all of its sheets; `sql/ResetBatchesForTest.sql` does this. Signed tokens (`?token=...`) are
+  removed from the stored reasons and from `StatusDescription`. A sheet that could not be split now also keeps
+  the file out of `COMPLETED`, so a rerun retries it.
 
 ## Logging
 

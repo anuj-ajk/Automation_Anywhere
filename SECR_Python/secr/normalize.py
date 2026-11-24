@@ -27,6 +27,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from . import sheet_results as sr
 from . import status as st
 from .ai_client import CATEGORY_DISPLAY_NAMES, OdinClient, is_real_link
 from .db import EsgDb
@@ -67,6 +68,10 @@ class NormalizeFlow:
         self._sleep = sleep
         self.submit_attempts = max(1, int(submit_attempts))
         self.submit_retry_backoff = float(submit_retry_backoff)
+        # Rerun: skip the sheets UploadedFile.SheetResults lists as COMPLETED (False = force: redo all).
+        self.resume_sheets = True
+        # None until the first read: False when UploadedFile.SheetResults does not exist (column not added).
+        self._sheet_results_available: bool | None = None
 
     # ------------------------------------------------------------------ concurrency helpers
     @contextlib.contextmanager
@@ -129,20 +134,41 @@ class NormalizeFlow:
             self._status(file_id, st.FAILED, msg, log=log)
             return FileOutcome(file_id, file_name, "normalize", st.FAILED, msg)
 
+        # Sheets an earlier run of this file version completed are not split, normalized or loaded again.
+        results = self._previous_results(file_id, row, log)
+        done = results.completed()
+        if done:
+            log.info("Rerun: %d sheet(s) already completed in an earlier run are skipped: %s", len(done),
+                     ", ".join(done))
+        # Staging tables an earlier run loaded for this file: their rows stay (no clear before the retry).
+        keep_tables = {NORMALIZED_SPECS[c.category].staging_table for r in results.sheets.values()
+                       for c in r.categories.values() if c.ok and c.category in NORMALIZED_SPECS}
+
         # 2. Split into one workbook per sheet (non-Excel files pass through)
         try:
             with timed_step(log, "Step 2/4 split workbook into sheets"):
-                split = split_workbook(local, work / "sheets")
+                split = split_workbook(local, work / "sheets", skip=done)
         except Exception as exc:
             msg = f"Unable to split the file: {exc}"
             log.error(msg)
             self._status(file_id, st.FAILED, msg, log=log)
             return FileOutcome(file_id, file_name, "normalize", st.FAILED, msg)
+        split_errors = ""
         for bad in (s for s in split if not s.ok):
             log.warning("Sheet '%s' could not be split: %s", bad.sheet_name, bad.error)
+            results.record(bad.sheet_name, "").fail(sr.STAGE_SPLIT, bad.error)
+            split_errors += f" {bad.sheet_name}: could not be split ({bad.error})."
+        split_failed = sum(1 for s in split if not s.ok)
         sheets = [_Sheet(s.sheet_name, s.file_path) for s in split if s.ok]
+        records = {s.name: results.record(s.name, s.path.name) for s in sheets}
         self._status(file_id, st.PARSED, log=log)
-        log.info("%d sheet(s) to normalize: %s", len(sheets), ", ".join(s.name for s in sheets))
+        log.info("%d sheet(s) to normalize: %s", len(sheets), ", ".join(s.name for s in sheets) or "none")
+        if not sheets:  # the data sheets were completed by earlier runs (or only failed to split)
+            self._save_results(file_id, results, log)
+            final = st.roll_up(len(done), split_failed, all_ok=st.COMPLETED, none_ok=st.FAILED)
+            self._status(file_id, final, split_errors or None, append=True, log=log)
+            return FileOutcome(file_id, file_name, "normalize", final,
+                               split_errors.strip() or f"all {len(done)} sheet(s) already completed")
 
         # 3. AI normalization: submit every sheet, then poll all chats together
         with timed_step(log, "Step 3/4 AI normalization (submit + poll)"):
@@ -151,7 +177,10 @@ class NormalizeFlow:
         ai_ok = [s for s in sheets if s.links]
         ai_failed = [s for s in sheets if not s.links]
         ai_errors = "".join(f" {s.name}: {s.error or 'no CSV link returned'}." for s in ai_failed)
-        ai_status = st.roll_up(len(ai_ok), len(ai_failed), all_ok=st.NORMALIZATION_COMPLETED,
+        for bad in ai_failed:
+            records[bad.name].fail(sr.STAGE_AI if bad.chat_id else sr.STAGE_SUBMIT,
+                                   bad.error or "no CSV link returned")
+        ai_status = st.roll_up(len(ai_ok) + len(done), len(ai_failed), all_ok=st.NORMALIZATION_COMPLETED,
                                none_ok=st.FAILED_WHILE_NORMALIZATION)
         self._status(file_id, ai_status, ai_errors or None, append=True, log=log)
         log.info("AI result: %d sheet(s) OK, %d failed -> %s", len(ai_ok), len(ai_failed), ai_status)
@@ -161,7 +190,19 @@ class NormalizeFlow:
             self._db(lambda s, k=key: s.add_recognized_category(file_id, CATEGORY_DISPLAY_NAMES[k]), log)
         if not ai_ok:
             log.warning("No sheet was normalized; nothing to load")
+            self._save_results(file_id, results, log)
             return FileOutcome(file_id, file_name, "normalize", ai_status, ai_errors.strip())
+
+        # A category of a retried sheet that was loaded in an earlier run is not loaded twice.
+        carried = 0
+        for sheet in ai_ok:
+            rec = records[sheet.name]  # the new answer decides: earlier failures it no longer returns are dropped
+            rec.categories = {k: c for k, c in rec.categories.items() if c.ok or k in sheet.links}
+            for key in [k for k in sheet.links if k in records[sheet.name].categories
+                        and records[sheet.name].categories[k].ok]:
+                log.info("Sheet %s: %s was already loaded in an earlier run; not loaded again", sheet.name, key)
+                del sheet.links[key]
+                carried += 1
 
         log.info("Step 4/4 download and load %d normalized CSV(s) - started",
                  sum(len(s.links) for s in ai_ok))
@@ -188,28 +229,42 @@ class NormalizeFlow:
         # 4b. Load them one after the other (staging tables are shared and locked per table)
         loaded, load_failed, load_errors = 0, 0, []
         for (sheet, key, _link, csv_path), error in zip(tasks, download_errors):
+            record = records[sheet.name]
+            stage = sr.STAGE_DOWNLOAD if error is not None else sr.STAGE_LOAD
             try:
                 if error is not None:
                     raise error
+                table = NORMALIZED_SPECS[key].staging_table
                 with self.db.session() as s:
                     result = self.loader.load(s, NORMALIZED_SPECS[key], csv_path, work / "cleaned",
-                                              file_id, ctx.report_id)
+                                              file_id, ctx.report_id, clear=table not in keep_tables)
                 loaded += 1
+                record.category_done(key, result.rows_inserted)
                 log.info("Loaded %s (%s): %d row(s)", sheet.name, key, result.rows_inserted)
             except Exception as exc:
                 load_failed += 1
-                load_errors.append(f" Error: {exc} while processing {sheet.name} ({key}).")
-                log.error("Load failed for %s (%s): %s", sheet.name, key, exc)
+                record.category_failed(key, stage, exc)
+                load_errors.append(f" Error: {sr.redact(exc)} while processing {sheet.name} ({key}).")
+                log.error("Load failed for %s (%s): %s", sheet.name, key, sr.redact(exc))
+        for sheet in ai_ok:
+            records[sheet.name].finish()
 
         log.info("Step 4/4 download and load - done in %.1fs (%d loaded, %d failed)",
                  time.monotonic() - step_started, loaded, load_failed)
+        self._save_results(file_id, results, log)
 
         # Unlike the bot, a sheet that already failed in the AI step keeps the file out of COMPLETED.
-        final = st.roll_up(loaded, load_failed + len(ai_failed), all_ok=st.COMPLETED, none_ok=st.FAILED)
-        description = "".join(load_errors) or None
+        # Sheets / categories completed by earlier runs count as loaded.
+        ok_total = loaded + carried + sum(max(1, len(r.categories)) for r in done.values())
+        # A sheet that could not be split also keeps the file out of COMPLETED, so a rerun retries it.
+        failed_total = load_failed + len(ai_failed) + split_failed
+        final = st.roll_up(ok_total, failed_total, all_ok=st.COMPLETED, none_ok=st.FAILED)
+        description = (split_errors + "".join(load_errors)) or None
         self._status(file_id, final, description, append=True, log=log)
-        log.info("Final status %s (loaded %d, failed %d)", final, loaded, load_failed + len(ai_failed))
-        return FileOutcome(file_id, file_name, "normalize", final, (ai_errors + "".join(load_errors)).strip())
+        log.info("Final status %s (loaded %d, failed %d%s)", final, loaded, failed_total,
+                 f", {ok_total - loaded} completed earlier" if ok_total > loaded else "")
+        return FileOutcome(file_id, file_name, "normalize", final,
+                           (split_errors + ai_errors + "".join(load_errors)).strip())
 
     def _submit(self, ctx: BatchContext, file_id: str, sheets: list[_Sheet], log) -> None:
         """Create a chat and upload the sheet for every sheet, in parallel."""
@@ -289,6 +344,47 @@ class NormalizeFlow:
         for sheet in pending:
             sheet.error = "timed out waiting for the AI response"
             log.warning("Chat %s for %s timed out", sheet.chat_id, sheet.name)
+
+    # ------------------------------------------------------------------ per-sheet results
+    def _previous_results(self, file_id: str, row: dict[str, Any], log) -> sr.FileSheetResults:
+        """UploadedFile.SheetResults of an earlier run of this file version (empty: process every sheet)."""
+        version = str(row.get("FileVersion") or "")
+        fresh = sr.FileSheetResults(file_version=version)
+        if self._sheet_results_available is False:
+            return fresh
+        try:
+            with self.db.session() as s:
+                text = s.get_sheet_results(file_id)
+            self._sheet_results_available = True
+        except Exception as exc:
+            if self._sheet_results_available is None:
+                log.warning("UploadedFile.SheetResults cannot be read (%s): sheet results are not kept and a "
+                            "rerun processes every sheet (run sql/AddSheetResultsColumn.sql)", exc)
+            self._sheet_results_available = False
+            return fresh
+        if not self.resume_sheets:
+            if text:
+                log.info("Force: earlier sheet results are ignored, every sheet is processed again")
+            return fresh
+        try:
+            previous = sr.FileSheetResults.parse(text)
+        except Exception as exc:
+            log.warning("UploadedFile.SheetResults is not valid JSON (%s); every sheet is processed", exc)
+            return fresh
+        if text and previous.file_version != version:
+            log.info("Sheet results are for file version %s, this is version %s; every sheet is processed",
+                     previous.file_version or "<none>", version or "<none>")
+            return fresh
+        previous.file_version = version
+        return previous
+
+    def _save_results(self, file_id: str, results: sr.FileSheetResults, log) -> None:
+        if not self._sheet_results_available:
+            return
+        failed = [r.sheet for r in results.sheets.values() if not r.ok]
+        log.info("Sheet results saved: %d completed, %d failed%s", len(results.sheets) - len(failed),
+                 len(failed), f" ({', '.join(failed)})" if failed else "")
+        self._db(lambda s: s.save_sheet_results(file_id, results.to_json()), log)
 
     # ------------------------------------------------------------------ db helpers
     def _status(self, file_id, code, description=None, *, append=False, log=None) -> None:

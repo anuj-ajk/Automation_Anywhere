@@ -82,6 +82,7 @@ def build(cfg: AppConfig, debug: bool = False) -> tuple[BatchProcessor, EsgDb, N
                                   cfg.odin.max_parallel_sheets, cfg.odin.max_parallel_requests,
                                   submit_attempts=cfg.odin.submit_attempts,
                                   submit_retry_backoff=cfg.odin.submit_retry_backoff_seconds)
+        normalize.resume_sheets = cfg.run.skip_completed_files  # force: every sheet again
     except Exception as exc:
         log.warning("Normalize flow disabled: %s", exc)
     try:

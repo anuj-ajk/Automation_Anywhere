@@ -65,6 +65,14 @@ class FakeSession:
     def batch_status_codes(self):
         return sorted(self.db.batch_codes)
 
+    def get_sheet_results(self, file_id):
+        return self.db.sheet_results.get(str(file_id))
+
+    def save_sheet_results(self, file_id, results_json):
+        with self.db.lock:
+            self.db.sheet_results[str(file_id)] = results_json
+        return 1
+
     def add_recognized_category(self, file_id, name):
         with self.db.lock:
             self.db.categories.setdefault(file_id, []).append(name)
@@ -115,6 +123,7 @@ class FakeDb:
         self.batch_codes = {"COMPLETE", "PROCESSING", "PARTIAL_FAILURE", "IN_PROGRESS"}
         self.batch_history = {}
         self.claim_calls, self.heartbeats = [], []
+        self.sheet_results = {}
 
     @contextlib.contextmanager
     def try_session(self):
@@ -1058,3 +1067,138 @@ def test_s3_download_does_not_retry_missing_key(tmp_path):
     with pytest.raises(ClientError):
         storage.download("k/a.xlsx", tmp_path / "a.xlsx")
     assert client.calls == 1 and storage.sleeps == []
+
+
+# ---------------------------------------------------------------- per-sheet results (UploadedFile.SheetResults)
+class SheetAI(FakeAI):
+    """Chat ids carry the sheet file name; sheets listed in ``broken`` get a link that cannot be downloaded."""
+
+    def __init__(self, csv_url, broken=()):
+        super().__init__(csv_url)
+        self.broken = set(broken)
+        self.created = []
+        self.lock = threading.Lock()
+
+    def create_chat(self, name):
+        with self.lock:
+            self.created.append(name)
+            return f"chat-{name}-{len(self.created)}"
+
+    def get_csv_links(self, chat_id):
+        links = super().get_csv_links(chat_id)
+        if links and any(f"Sheet_{b}.xlsx" in chat_id for b in self.broken):
+            return {"metrics": "https://fake.test/no/such/file.csv?token=SECRET-SIGNED-TOKEN"}
+        return links
+
+
+def _sheet_results(db, file_id):
+    import json
+
+    data = json.loads(db.sheet_results[str(file_id)])
+    return data, {s["sheet"]: s for s in data["sheets"]}
+
+
+def _ctx(tmp_path):
+    from secr.models import BatchContext
+
+    return BatchContext("52", "5", "ACME", "2024-04-01", "2025-03-31", tmp_path / "w")
+
+
+def test_failed_sheet_is_recorded_with_stage_and_reason(tmp_path):
+    ai = SheetAI(str(_metrics_csv(tmp_path / "m.csv")), broken={"S2"})
+    db, flow, _ = _flow(tmp_path, ai, sheets=3)
+    out = flow.run_file(_ctx(tmp_path), dict(_row("52", 77), FileVersion=1), get_logger())
+    assert out.status == st.PARTIAL_FAILURE
+    data, sheets = _sheet_results(db, 77)
+    assert data["file_version"] == "1"
+    assert [s["sheet"] for s in data["sheets"]] == ["S1", "S2", "S3"]
+    assert sheets["S1"]["status"] == "COMPLETED" and sheets["S1"]["file"] == "Sheet_S1.xlsx"
+    assert sheets["S1"]["categories"] == [{"category": "metrics", "status": "COMPLETED", "rows": 1}]
+    bad = sheets["S2"]
+    assert bad["status"] == "FAILED" and bad["stage"] == "download" and bad["attempts"] == 1
+    assert bad["reason"].startswith("metrics:") and "SECRET" not in db.sheet_results["77"]
+    assert "SECRET" not in out.detail                       # signed token never stored or returned
+
+
+def test_rerun_retries_only_the_failed_sheets(tmp_path):
+    ai = SheetAI(str(_metrics_csv(tmp_path / "m.csv")), broken={"S2"})
+    db, flow, _ = _flow(tmp_path, ai, sheets=3)
+    row = dict(_row("52", 77), FileVersion=1)
+    flow.run_file(_ctx(tmp_path), row, get_logger())
+    assert sorted(ai.created) == ["Sheet_S1.xlsx", "Sheet_S2.xlsx", "Sheet_S3.xlsx"]
+    assert db.deleted == [("Staging_Metrics", "77")]
+
+    ai.broken.clear()
+    ai.created.clear()
+    db.deleted.clear()
+    flow.loader._cleared.clear()  # a new run starts with a new loader
+    out = flow.run_file(_ctx(tmp_path), dict(row, StatusCode=st.PARTIAL_FAILURE), get_logger())
+
+    assert out.status == st.COMPLETED, out
+    assert ai.created == ["Sheet_S2.xlsx"]                  # only the failed sheet went to the AI again
+    assert db.deleted == []                                 # S1 / S3 rows in Staging_Metrics are kept
+    assert db.inserted["Staging_Metrics"] == 3              # 2 on the first run + 1 on the retry
+    _, sheets = _sheet_results(db, 77)
+    assert all(s["status"] == "COMPLETED" for s in sheets.values())
+    assert sheets["S2"]["attempts"] == 2 and sheets["S1"]["attempts"] == 1
+
+
+def test_all_sheets_completed_earlier_sets_completed_without_ai(tmp_path):
+    ai = SheetAI(str(_metrics_csv(tmp_path / "m.csv")))
+    db, flow, _ = _flow(tmp_path, ai, sheets=2)
+    row = dict(_row("52", 77), FileVersion=1)
+    flow.run_file(_ctx(tmp_path), row, get_logger())
+    ai.created.clear()
+    out = flow.run_file(_ctx(tmp_path), row, get_logger())
+    assert out.status == st.COMPLETED and "already completed" in out.detail
+    assert ai.created == []
+
+
+def test_force_or_new_file_version_processes_every_sheet(tmp_path):
+    ai = SheetAI(str(_metrics_csv(tmp_path / "m.csv")), broken={"S2"})
+    db, flow, _ = _flow(tmp_path, ai, sheets=2)
+    row = dict(_row("52", 77), FileVersion=1)
+    flow.run_file(_ctx(tmp_path), row, get_logger())
+
+    ai.broken.clear()
+    ai.created.clear()
+    flow.run_file(_ctx(tmp_path), dict(row, FileVersion=2), get_logger())    # a new upload of the file
+    assert sorted(ai.created) == ["Sheet_S1.xlsx", "Sheet_S2.xlsx"]
+    assert _sheet_results(db, 77)[0]["file_version"] == "2"
+
+    ai.created.clear()
+    flow.resume_sheets = False                                                 # force = true
+    flow.run_file(_ctx(tmp_path), dict(row, FileVersion=2), get_logger())
+    assert sorted(ai.created) == ["Sheet_S1.xlsx", "Sheet_S2.xlsx"]
+    assert all(s["attempts"] == 1 for s in _sheet_results(db, 77)[1].values())
+
+
+def test_without_the_sheet_results_column_every_sheet_is_processed(tmp_path):
+    ai = SheetAI(str(_metrics_csv(tmp_path / "m.csv")))
+    db, flow, _ = _flow(tmp_path, ai, sheets=2)
+
+    def missing(*_a):
+        raise RuntimeError("(1054, \"Unknown column 'SheetResults' in 'field list'\")")
+
+    FakeSession.get_sheet_results = missing
+    try:
+        out = flow.run_file(_ctx(tmp_path), _row("52", 77), get_logger())
+    finally:
+        del FakeSession.get_sheet_results
+    assert out.status == st.COMPLETED and db.sheet_results == {}
+    assert flow._sheet_results_available is False
+
+
+def test_sheet_results_json_round_trip():
+    from secr import sheet_results as sr
+
+    res = sr.FileSheetResults("3")
+    rec = res.record("TRANSPORT", "Sheet_TRANSPORT.xlsx")
+    rec.category_failed("transport", sr.STAGE_DOWNLOAD,
+                        "400 Client Error for url: https://api.getodin.ai/x/T.csv?token=abc.def.ghi")
+    rec.finish()
+    again = sr.FileSheetResults.parse(res.to_json())
+    back = again.sheets["TRANSPORT"]
+    assert again.file_version == "3" and back.status == sr.FAILED and back.stage == sr.STAGE_DOWNLOAD
+    assert back.reason == "transport: 400 Client Error for url: https://api.getodin.ai/x/T.csv"
+    assert again.completed() == {} and sr.FileSheetResults.parse(None).sheets == {}

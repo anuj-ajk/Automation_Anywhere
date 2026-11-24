@@ -132,6 +132,18 @@ class EsgSession:
             LOG.debug("Status %s for FileId %s changed no row (same value, unknown FileId or status code)",
                       code, file_id)
 
+    # ---------- per-sheet results (sql/AddSheetResultsColumn.sql) ----------
+    def get_sheet_results(self, file_id: str) -> str | None:
+        """UploadedFile.SheetResults JSON text (None when empty). Fails if the column does not exist."""
+        rows = self.query("SELECT SheetResults FROM UploadedFile WHERE FileId = %s", (file_id,))
+        value = rows[0].get("SheetResults") if rows else None
+        if isinstance(value, (bytes, bytearray)):
+            value = value.decode("utf-8")
+        return value or None
+
+    def save_sheet_results(self, file_id: str, results_json: str) -> int:
+        return self.execute("UPDATE UploadedFile SET SheetResults = %s WHERE FileId = %s", (results_json, file_id))
+
     def move_batch_files(self, batch_id: str, from_code: str, to_code: str, description: str) -> int:
         """Move every file of the batch still in ``from_code`` to ``to_code`` (used on fatal errors)."""
         sql = (

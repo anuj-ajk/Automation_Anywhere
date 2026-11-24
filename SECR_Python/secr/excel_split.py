@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Collection
 
 SPLITTABLE_EXTENSIONS = {".xlsx", ".xlsm"}
 # Sheets whose name contains one of these words are not data and are skipped (same list as the bot).
@@ -33,13 +34,20 @@ from .logging_setup import module_logger  # noqa: E402
 LOG = module_logger(__name__)
 
 
-def split_workbook(source_file: Path, output_dir: Path, prefix: str = "Sheet_") -> list[SheetResult]:
+def split_workbook(source_file: Path, output_dir: Path, prefix: str = "Sheet_",
+                   skip: Collection[str] = ()) -> list[SheetResult]:
     """Return one result per data sheet.
 
     Non-Excel files (e.g. CSV) are passed through unchanged as a single result.
+    ``skip``: sheet names already completed in an earlier run; they are not split again. When every data
+    sheet is in ``skip`` the result is an empty list.
     Raises SplitError when the workbook cannot be opened or no sheet could be split.
     """
+    skip = set(skip or ())
     if source_file.suffix.lower() not in SPLITTABLE_EXTENSIONS:
+        if source_file.name in skip:
+            LOG.info("%s was already completed in an earlier run; skipped", source_file.name)
+            return []
         LOG.info("%s is not an Excel workbook; sent to the AI as it is", source_file.name)
         return [SheetResult(sheet_name=source_file.name, file_path=source_file)]
 
@@ -55,10 +63,14 @@ def split_workbook(source_file: Path, output_dir: Path, prefix: str = "Sheet_") 
 
     results: list[SheetResult] = []
     used_names: set[str] = set()
+    already_done: list[str] = []
     try:
         for sheet_name in source_wb.sheetnames:
             if any(k in sheet_name.lower() for k in SKIP_SHEET_KEYWORDS):
                 LOG.info("Sheet '%s' skipped (instruction / lookup sheet)", sheet_name)
+                continue
+            if sheet_name in skip:
+                already_done.append(sheet_name)
                 continue
             try:
                 target_wb = Workbook(write_only=True)
@@ -85,9 +97,14 @@ def split_workbook(source_file: Path, output_dir: Path, prefix: str = "Sheet_") 
     finally:
         source_wb.close()
 
+    if already_done:
+        LOG.info("%d sheet(s) already completed in an earlier run, not split again: %s", len(already_done),
+                 ", ".join(already_done))
     if not results:
+        if already_done:
+            return []
         raise SplitError(f"Workbook {source_file.name} has no data sheets")
-    if not any(r.ok for r in results):
+    if not any(r.ok for r in results) and not already_done:
         last = results[-1]
         raise SplitError(
             f"All sheets failed to split for {source_file.name}. Last sheet error: {last.sheet_name} - {last.error}"

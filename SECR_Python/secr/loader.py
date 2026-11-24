@@ -199,8 +199,11 @@ class StagingLoader:
         self._cleared_lock = threading.Lock()
 
     def load(
-        self, session: EsgSession, spec: LoadSpec, raw_csv: Path, work_dir: Path, file_id: str, report_id: str
+        self, session: EsgSession, spec: LoadSpec, raw_csv: Path, work_dir: Path, file_id: str, report_id: str,
+        clear: bool = True,
     ) -> LoadResult:
+        """``clear=False``: keep this file's earlier rows in the staging table (a sheet retry must not delete
+        the rows of sheets of the same file that were loaded in an earlier run)."""
         self.log.info("Loading %s into %s (procedures: %s)", raw_csv.name, spec.staging_table,
                       ", ".join(p.name for p in spec.procs))
         cleaned = clean_csv(raw_csv, work_dir / f"Cleaned_{raw_csv.stem}.csv", file_id=file_id)
@@ -227,9 +230,9 @@ class StagingLoader:
         if self.serialize:
             self.log.debug("Waiting for staging lock %s (only one load per staging table at a time)", lock_name)
             with session.named_lock(lock_name, self.lock_timeout):
-                inserted, messages = self._insert_and_call(session, spec, columns, rows, args, file_procs)
+                inserted, messages = self._insert_and_call(session, spec, columns, rows, args, file_procs, clear)
         else:
-            inserted, messages = self._insert_and_call(session, spec, columns, rows, args, file_procs)
+            inserted, messages = self._insert_and_call(session, spec, columns, rows, args, file_procs, clear)
 
         # 2. Report-level procedures (UpdatePortfolioDerivedFields, CalculateInvoiceData) do not read the staging
         #    table, so they run AFTER the staging lock is released: other batches can load the same table
@@ -256,8 +259,12 @@ class StagingLoader:
         else:
             self.log.info("No earlier rows in %s for FileId %s", table, file_id)
 
-    def _insert_and_call(self, session, spec, columns, rows, args, procs) -> tuple[int, list[str]]:
-        self._clear_previous_rows(session, spec.staging_table, str(args["file_id"]))
+    def _insert_and_call(self, session, spec, columns, rows, args, procs, clear=True) -> tuple[int, list[str]]:
+        if clear:
+            self._clear_previous_rows(session, spec.staging_table, str(args["file_id"]))
+        else:
+            self.log.info("Earlier rows in %s for FileId %s are kept (other sheets of this file loaded them)",
+                          spec.staging_table, args["file_id"])
         inserted = self._bulk_insert(session, spec.staging_table, columns, rows)
         self.log.info("Inserted %d row(s) into %s", inserted, spec.staging_table)
         return inserted, [self._call(session, proc, args, inserted, spec) for proc in procs]
