@@ -14,7 +14,7 @@ from pathlib import Path
 
 from .config import load_config
 from .db import EsgDb
-from .runner import apply_overrides, build, execute
+from .runner import apply_overrides, build, execute, pending_batch_ids
 
 
 def _parse(argv):
@@ -41,11 +41,10 @@ def _batch_ids(args, cfg, db: EsgDb) -> list[str]:
     if args.batch_file:
         return [ln.strip() for ln in args.batch_file.read_text(encoding="utf-8").splitlines()
                 if ln.strip() and not ln.startswith("#")]
-    if not cfg.run.pending_batches_query:
-        raise SystemExit("--pending needs run.pending_batches_query in the config")
-    with db.session() as s:
-        rows = s.query(cfg.run.pending_batches_query)
-    return [str(r.get("BatchId") or next(iter(r.values()))) for r in rows]
+    try:
+        return pending_batch_ids(cfg, db)
+    except ValueError as exc:
+        raise SystemExit(f"--pending: {exc}")
 
 
 def main(argv=None) -> int:

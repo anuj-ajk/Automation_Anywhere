@@ -100,6 +100,21 @@ def _log_settings(cfg: AppConfig, log) -> None:
     log.info("Secrets: %s", ", ".join(f"{v}={'set' if os.environ.get(v) else 'NOT SET'}" for v in _SECRET_VARS))
 
 
+def pending_batch_ids(cfg: AppConfig, db: EsgDb, limit: int | None = None) -> list[str]:
+    """Batch ids returned by run.pending_batches_query (first column, or the BatchId column)."""
+    log = get_logger(__name__)
+    if not cfg.run.pending_batches_query:
+        raise ValueError("run.pending_batches_query is not set in config.yaml")
+    with db.session() as s:
+        rows = s.query(cfg.run.pending_batches_query)
+    ids = [str(r.get("BatchId") or next(iter(r.values()))) for r in rows]
+    if limit and len(ids) > limit:
+        log.info("%d pending batch(es) found; taking the first %d", len(ids), limit)
+        ids = ids[:limit]
+    log.info("Pending batches: %s", ", ".join(ids) or "none")
+    return ids
+
+
 def execute(processor: BatchProcessor, notifier: Notifier, batch_ids: Iterable, max_parallel_batches: int
             ) -> tuple[list[BatchResult], int, str]:
     """Run the batches, send the start/end e-mails. Returns (results, exit code, summary text)."""

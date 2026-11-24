@@ -73,3 +73,53 @@ def test_unset_secrets_are_not_written_as_none(monkeypatch):
     assert aa_entry.os.environ["SECR_ODIN_API_KEY"] == "from-machine"
     assert "SECR_NAV_CONNECTION_STRING" not in aa_entry.os.environ
     assert aa_entry._secret_keys({"SECR_DB_USER": "u", "SECR_DB_PASSWORD": None}) == "SECR_DB_USER"
+
+
+def test_pending_batches_from_aa(tmp_path, monkeypatch):
+    monkeypatch.setenv("SECR_DB_USER", "u")
+    monkeypatch.setenv("SECR_DB_PASSWORD", "p")
+    _db, processor = _build(tmp_path, {"40": [_row("40", 1)], "41": [_row("41", 2)], "43": [_row("43", 3)]})
+    monkeypatch.setattr(runner, "build",
+                        lambda cfg, debug=False: (processor, "db", runner.Notifier(cfg.notify, runner.get_logger()), "x.log"))
+    asked = {}
+
+    def fake_pending(cfg, db, limit=None):
+        asked["limit"] = limit
+        return queue[:limit] if limit else list(queue)
+
+    monkeypatch.setattr(runner, "pending_batch_ids", fake_pending)
+    config = tmp_path / "config.yaml"
+    config.write_text("esg_db:\n  host: localhost\nrun:\n  pending_batches_query: SELECT 1\n", encoding="utf-8")
+
+    queue = ["41", "40"]
+    out = json.loads(aa_entry.run_batches({"pending": "true", "batch_ids": "43", "config_path": str(config)}))
+    assert out["status"] == "SUCCESS", out
+    assert [b["batch_id"] for b in out["batches"]] == ["43", "41", "40"]
+
+    out = json.loads(aa_entry.run_batches({"batch_ids": "pending", "pending_limit": "1", "config_path": str(config)}))
+    assert asked["limit"] == 1 and [b["batch_id"] for b in out["batches"]] == ["41"]
+
+    queue = []
+    out = json.loads(aa_entry.run_batches({"pending": True, "config_path": str(config)}))
+    assert out["status"] == "SUCCESS" and out["message"] == "No pending batches" and out["batches"] == []
+
+
+def test_pending_batch_ids_reads_the_query():
+    import contextlib
+
+    class S:
+        def query(self, sql):
+            assert sql == "SELECT BatchId FROM x"
+            return [{"BatchId": 52}, {"BatchId": 53}, {"BatchId": 54}]
+
+    class Db:
+        @contextlib.contextmanager
+        def session(self):
+            yield S()
+
+    class Cfg:
+        class run:
+            pending_batches_query = "SELECT BatchId FROM x"
+
+    assert runner.pending_batch_ids(Cfg, Db()) == ["52", "53", "54"]
+    assert runner.pending_batch_ids(Cfg, Db(), limit=2) == ["52", "53"]

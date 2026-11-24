@@ -71,6 +71,8 @@ Dictionary keys (all values may be text):
 | `max_batches` | no | `10` | batches processed at the same time |
 | `max_files` | no | `4` | files of one batch processed at the same time |
 | `debug` | no | `true` | verbose log |
+| `pending` | no | `true` | process the batches returned by `run.pending_batches_query` (then `batch_ids` is optional; ids given there are processed too). `batch_ids = pending` does the same. No pending batch → `status SUCCESS`, message "No pending batches" |
+| `pending_limit` | no | `20` | take at most this many pending batches in one call |
 | `force` | no | `true` | process every file again, also those already `COMPLETED` (see "Running a batch again") |
 | `secrets` | no | dictionary | `SECR_*` / `AWS_*` values, if the bot takes them from the Credential Vault instead of the machine's environment variables |
 

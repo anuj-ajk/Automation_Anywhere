@@ -15,6 +15,9 @@ Input dictionary keys (AA "Dictionary of String" is fine - every value may be te
     max_files     optional  files per batch in parallel (default from config, normally 4)
     debug         optional  "true" for verbose logging
     force         optional  "true" to process every file again, also those already COMPLETED
+    pending       optional  "true": process the batches returned by run.pending_batches_query in config.yaml
+                            (batch_ids is then optional; ids given in batch_ids are processed too)
+    pending_limit optional  take at most this many pending batches in one call
     secrets       optional  dictionary of the SECR_* / AWS_* environment variables, if the bot
                             reads them from the Credential Vault instead of the machine environment
 
@@ -114,20 +117,29 @@ def run_batches(args) -> str:
             args = json.loads(args) if args.strip().startswith("{") else {"batch_ids": args}
         args = dict(args or {})
 
+        if str(args.get("batch_ids") or "").strip().lower() == "pending":  # batch_ids = "pending" also works
+            args["pending"], args["batch_ids"] = "true", ""
+        pending = _as_bool(args.get("pending", "false"))
         batch_ids = parse_batch_ids(args.get("batch_ids"))
-        if not batch_ids:
-            return _result("FAILED", 1, "No batch ids were given (key 'batch_ids')")
+        if not batch_ids and not pending:
+            return _result("FAILED", 1, "No batch ids were given (key 'batch_ids', or pending = true)")
 
         _apply_secrets(args.get("secrets"))
 
         from secr.config import load_config
-        from secr.runner import apply_overrides, build, execute
+        from secr.runner import apply_overrides, build, execute, pending_batch_ids
 
         config_path = Path(args.get("config_path") or HERE / "config.yaml")
         cfg = load_config(config_path)
         apply_overrides(cfg, _as_int(args.get("max_batches")), _as_int(args.get("max_files")),
                         force=_as_bool(args.get("force", "false")))
-        processor, _db, notifier, log_file = build(cfg, debug=_as_bool(args.get("debug", "false")))
+        processor, db, notifier, log_file = build(cfg, debug=_as_bool(args.get("debug", "false")))
+        if pending:
+            for b in pending_batch_ids(cfg, db, _as_int(args.get("pending_limit"))):
+                if b not in batch_ids:
+                    batch_ids.append(b)
+            if not batch_ids:  # nothing waiting is a normal outcome for a scheduled bot, not a failure
+                return _result("SUCCESS", 0, "No pending batches", log_file)
 
         from secr.logging_setup import get_logger
 
@@ -172,10 +184,16 @@ def _result(status, code, message, log_file="", batches=None, trace="") -> str:
     return json.dumps(out, default=str)
 
 
-if __name__ == "__main__":  # manual test: python aa_entry.py 40,41  (same dictionary the AA bot passes)
+if __name__ == "__main__":
+    # Manual test with the same dictionary the AA bot passes:
+    #   python aa_entry.py          -> the pending batches (run.pending_batches_query in config.yaml)
+    #   python aa_entry.py 40,41    -> only these batch ids
+    given_ids = " ".join(sys.argv[1:])
     print(run_batches(
         {
-            "batch_ids": "52",
+            "batch_ids": given_ids,
+            "pending": not given_ids,       # no ids on the command line: take the pending batches
+            "pending_limit": 10,            # at most 10 pending batches per call ("" = all)
             "config_path": str(HERE / "config.yaml"),
             "max_batches": 10,
             "max_files": 4,
