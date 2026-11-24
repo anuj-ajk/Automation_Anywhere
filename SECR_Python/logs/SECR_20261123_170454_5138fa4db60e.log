@@ -1,0 +1,321 @@
+2026-11-23 17:04:54,730 INFO    [run 5138fa4db60e] [MainThread] [secr] Log file: \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\logs\SECR_20261123_170454_5138fa4db60e.log (level DEBUG)
+2026-11-23 17:04:54,857 INFO    [run 5138fa4db60e] [MainThread] [secr.runner] Python 3.14.10 on MAN-RDS-V10 (pid 32928)
+2026-11-23 17:04:54,862 INFO    [run 5138fa4db60e] [MainThread] [secr.runner] Parallelism: 10 batch(es) x 4 file(s) per batch, max 60 DB connection(s)
+2026-11-23 17:04:54,863 INFO    [run 5138fa4db60e] [MainThread] [secr.runner] Work folder C:\Users\ANUJ~1.KUM\AppData\Local\Temp\3\SECR_work (keep files: False), serialize staging loads: True, created by: anuj.kumar
+2026-11-23 17:04:54,865 INFO    [run 5138fa4db60e] [MainThread] [secr.runner] Bulk insert: chunks of 1000, files with >= 20000 rows split over up to 4 connection(s)
+2026-11-23 17:04:54,866 INFO    [run 5138fa4db60e] [MainThread] [secr.runner] Rerun: skip files already in COMPLETED/DATA_NOT_AVAILABLE: True; clear earlier staging rows before load: True
+2026-11-23 17:04:54,866 INFO    [run 5138fa4db60e] [MainThread] [secr.runner] Odin polling: every 40s, up to 15 attempts; up to 6 sheet(s) per file in parallel, max 20 Odin call(s) in flight; source environment: DEV
+2026-11-23 17:04:54,869 INFO    [run 5138fa4db60e] [MainThread] [secr.runner] Secrets: SECR_DB_USER=set, SECR_DB_PASSWORD=set, SECR_S3_BUCKET=set, AWS_ACCESS_KEY_ID=set, AWS_SECRET_ACCESS_KEY=set, SECR_ODIN_API_KEY=set, SECR_ODIN_API_SECRET=set, SECR_EM_CONNECTION_STRING=set, SECR_NAV_CONNECTION_STRING=set
+2026-11-23 17:04:54,869 INFO    [run 5138fa4db60e] [MainThread] [secr.db] ESG DB esg-instance.cm18ojbg8cjx.eu-west-2.rds.amazonaws.com:3306/esgdb, max 60 connection(s)
+2026-11-23 17:04:56,327 INFO    [run 5138fa4db60e] [MainThread] [secr.storage] S3 storage ready: bucket appsmith-client-docs-ins-main-raw, region eu-west-2
+2026-11-23 17:04:56,329 INFO    [run 5138fa4db60e] [MainThread] [secr.ai_client] Odin AI client ready: https://api.getodin.ai, project 356316e20dcb48658ce127, agent 63622
+2026-11-23 17:04:56,329 INFO    [run 5138fa4db60e] [MainThread] [secr.source_systems] Source systems ready: environment DEV, EM query folder \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\queries, EM configured, NAV configured
+2026-11-23 17:04:56,330 INFO    [run 5138fa4db60e] [MainThread] [secr.runner] Flows enabled: Normalize=True, Daisy=True
+2026-11-23 17:04:56,331 INFO    [run 5138fa4db60e] [MainThread] [secr.aa_entry] Called from Automation Anywhere: config \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\config.yaml, batch ids 52, max_batches=10, max_files=4, debug=True, secrets passed: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, SECR_DB_PASSWORD, SECR_DB_USER, SECR_EM_CONNECTION_STRING, SECR_NAV_CONNECTION_STRING, SECR_ODIN_API_KEY, SECR_ODIN_API_SECRET, SECR_S3_BUCKET
+2026-11-23 17:04:56,335 INFO    [run 5138fa4db60e] [MainThread] [secr.runner] Run started for 1 batch id(s): 52
+2026-11-23 17:04:56,335 DEBUG   [run 5138fa4db60e] [MainThread] [secr.runner] E-mail 'SECR normalizer started' not sent (notifications disabled)
+2026-11-23 17:04:56,336 INFO    [run 5138fa4db60e] [MainThread] [secr.orchestrator] Processing 1 batch(es), up to 1 in parallel
+2026-11-23 17:04:56,339 INFO    [run 5138fa4db60e] [batch_0] [secr.batch] [batch 52] Batch started
+2026-11-23 17:04:56,689 DEBUG   [run 5138fa4db60e] [batch_0] [secr.db] [batch 52] DB connection opened (1/60 in use)
+2026-11-23 17:04:56,690 DEBUG   [run 5138fa4db60e] [batch_0] [secr.batch] [batch 52] Trying DB lock secr_batch_52
+2026-11-23 17:04:56,701 DEBUG   [run 5138fa4db60e] [batch_0] [secr.db] [batch 52] SQL query (0.01s, 1 row(s)): SELECT GET_LOCK(%s, %s) AS got | params=('secr_batch_52', 0)
+2026-11-23 17:04:56,702 DEBUG   [run 5138fa4db60e] [batch_0] [secr.db] [batch 52] Got DB lock secr_batch_52 after 0.0s
+2026-11-23 17:04:56,704 DEBUG   [run 5138fa4db60e] [batch_0] [secr.batch] [batch 52] Got DB lock secr_batch_52; work folder C:\Users\ANUJ~1.KUM\AppData\Local\Temp\3\SECR_work\b52_170456343454
+2026-11-23 17:04:56,705 INFO    [run 5138fa4db60e] [batch_0] [secr.batch] [batch 52] Read batch files from ESG DB - started
+2026-11-23 17:04:56,805 DEBUG   [run 5138fa4db60e] [batch_0] [secr.db] [batch 52] DB connection opened (2/60 in use)
+2026-11-23 17:04:56,817 DEBUG   [run 5138fa4db60e] [batch_0] [secr.db] [batch 52] SQL query (0.01s, 1 row(s)): SELECT FB.BatchId, FB.ReportId, R.ClientId, R.ReportStart, R.ReportEnd, BP.BusinessPartnerName, UF.CategorySelected, UF.FileId, UF.FileName, UF.StoragePath, UF. | params=('52',)
+2026-11-23 17:04:56,819 INFO    [run 5138fa4db60e] [batch_0] [secr.batch] [batch 52] Read batch files from ESG DB - done in 0.1s
+2026-11-23 17:04:56,820 INFO    [run 5138fa4db60e] [batch_0] [secr.batch] [batch 52] 1 valid SECR file row(s) found
+2026-11-23 17:04:56,821 DEBUG   [run 5138fa4db60e] [batch_0] [secr.batch] [batch 52]   FileId=77 Category=Auto-Detect FileName=Inspired ESG_SECR_DSF_Acorn Mobility_FY25_V1_20261103_161448552.xlsx StoragePath=B&M/Heron Foods Limited/SECR/FY24-25 Annual-2/Inspired ESG_SECR_DSF_Acorn Mobility_FY25_V1_20261103_161448552.xlsx
+2026-11-23 17:04:56,822 INFO    [run 5138fa4db60e] [batch_0] [secr.batch] [batch 52] Client Heron Foods, report 5 (2024-04-01 to 2025-03-31): 1 uploaded file(s), 0 Daisy file(s)
+2026-11-23 17:04:56,823 INFO    [run 5138fa4db60e] [batch_0] [secr.batch] [batch 52] Processing 1 file(s), up to 1 in parallel
+2026-11-23 17:04:56,826 INFO    [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] Normalize started for 'Inspired ESG_SECR_DSF_Acorn Mobility_FY25_V1_20261103_161448552.xlsx' (category selected: Auto-Detect)
+2026-11-23 17:04:56,827 INFO    [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] Status -> PARSING
+2026-11-23 17:04:56,924 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] DB connection opened (2/60 in use)
+2026-11-23 17:04:56,944 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL execute (0.02s, 1 row(s) affected): UPDATE UploadedFile SET ProcessingStatusId = (SELECT s.FileProcessingStatusId FROM RefFileProcessingStatus s WHERE s.Code = %s) WHERE FileId = %s | params=('PARSING', '77')
+2026-11-23 17:04:56,946 INFO    [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] Step 1/4 download from S3 - started
+2026-11-23 17:04:56,948 INFO    [run 5138fa4db60e] [b52-file_0] [secr.storage] [batch 52][file 77] Downloading s3://appsmith-client-docs-ins-main-raw/B&M/Heron Foods Limited/SECR/FY24-25 Annual-2/Inspired ESG_SECR_DSF_Acorn Mobility_FY25_V1_20261103_161448552.xlsx
+2026-11-23 17:04:57,300 INFO    [run 5138fa4db60e] [b52-file_0] [secr.storage] [batch 52][file 77] Downloaded s3://appsmith-client-docs-ins-main-raw/B&M/Heron Foods Limited/SECR/FY24-25 Annual-2/Inspired ESG_SECR_DSF_Acorn Mobility_FY25_V1_20261103_161448552.xlsx -> Inspired ESG_SECR_DSF_Acorn Mobility_FY2.xlsx (3906198 bytes, 0.3s)
+2026-11-23 17:04:57,304 INFO    [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] Step 1/4 download from S3 - done in 0.4s
+2026-11-23 17:04:57,306 INFO    [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] Downloaded B&M/Heron Foods Limited/SECR/FY24-25 Annual-2/Inspired ESG_SECR_DSF_Acorn Mobility_FY25_V1_20261103_161448552.xlsx (3906198 bytes)
+2026-11-23 17:04:57,307 INFO    [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] Step 2/4 split workbook into sheets - started
+2026-11-23 17:04:58,381 INFO    [run 5138fa4db60e] [b52-file_0] [secr.excel_split] [batch 52][file 77] Workbook Inspired ESG_SECR_DSF_Acorn Mobility_FY2.xlsx has 12 sheet(s): START, INSTRUCTIONS & GLOSSARY, PORTFOLIO, LANDLORD DATA, TRANSPORT, OTHER FUELS, METRICS, ENERGY EFFICIENCY NARRATIVE, OM QA Actions, ORIGINAL PORTFOLIO, PORTFOLIO COMPARISON, LOOKUP
+2026-11-23 17:04:58,382 INFO    [run 5138fa4db60e] [b52-file_0] [secr.excel_split] [batch 52][file 77] Sheet 'START' skipped (instruction / lookup sheet)
+2026-11-23 17:04:58,383 INFO    [run 5138fa4db60e] [b52-file_0] [secr.excel_split] [batch 52][file 77] Sheet 'INSTRUCTIONS & GLOSSARY' skipped (instruction / lookup sheet)
+2026-11-23 17:05:00,448 INFO    [run 5138fa4db60e] [b52-file_0] [secr.excel_split] [batch 52][file 77] Sheet 'PORTFOLIO' -> Sheet_PORTFOLIO.xlsx (5002 row(s))
+2026-11-23 17:05:01,658 INFO    [run 5138fa4db60e] [b52-file_0] [secr.excel_split] [batch 52][file 77] Sheet 'LANDLORD DATA' -> Sheet_LANDLORD DATA.xlsx (5002 row(s))
+2026-11-23 17:05:01,862 INFO    [run 5138fa4db60e] [b52-file_0] [secr.excel_split] [batch 52][file 77] Sheet 'TRANSPORT' -> Sheet_TRANSPORT.xlsx (252 row(s))
+2026-11-23 17:05:02,000 INFO    [run 5138fa4db60e] [b52-file_0] [secr.excel_split] [batch 52][file 77] Sheet 'OTHER FUELS' -> Sheet_OTHER FUELS.xlsx (252 row(s))
+2026-11-23 17:05:02,077 INFO    [run 5138fa4db60e] [b52-file_0] [secr.excel_split] [batch 52][file 77] Sheet 'METRICS' -> Sheet_METRICS.xlsx (511 row(s))
+2026-11-23 17:05:02,099 INFO    [run 5138fa4db60e] [b52-file_0] [secr.excel_split] [batch 52][file 77] Sheet 'ENERGY EFFICIENCY NARRATIVE' -> Sheet_ENERGY EFFICIENCY NARRATIVE.xlsx (19 row(s))
+2026-11-23 17:05:02,100 INFO    [run 5138fa4db60e] [b52-file_0] [secr.excel_split] [batch 52][file 77] Sheet 'OM QA Actions' skipped (instruction / lookup sheet)
+2026-11-23 17:05:02,100 INFO    [run 5138fa4db60e] [b52-file_0] [secr.excel_split] [batch 52][file 77] Sheet 'ORIGINAL PORTFOLIO' skipped (instruction / lookup sheet)
+2026-11-23 17:05:02,104 INFO    [run 5138fa4db60e] [b52-file_0] [secr.excel_split] [batch 52][file 77] Sheet 'PORTFOLIO COMPARISON' skipped (instruction / lookup sheet)
+2026-11-23 17:05:02,105 INFO    [run 5138fa4db60e] [b52-file_0] [secr.excel_split] [batch 52][file 77] Sheet 'LOOKUP' skipped (instruction / lookup sheet)
+2026-11-23 17:05:02,106 INFO    [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] Step 2/4 split workbook into sheets - done in 4.8s
+2026-11-23 17:05:02,116 INFO    [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] Status -> PARSED
+2026-11-23 17:05:02,319 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] DB connection opened (2/60 in use)
+2026-11-23 17:05:02,391 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL execute (0.07s, 1 row(s) affected): UPDATE UploadedFile SET ProcessingStatusId = (SELECT s.FileProcessingStatusId FROM RefFileProcessingStatus s WHERE s.Code = %s) WHERE FileId = %s | params=('PARSED', '77')
+2026-11-23 17:05:02,392 INFO    [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] 6 sheet(s) to normalize: PORTFOLIO, LANDLORD DATA, TRANSPORT, OTHER FUELS, METRICS, ENERGY EFFICIENCY NARRATIVE
+2026-11-23 17:05:02,394 INFO    [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] Step 3/4 AI normalization (submit + poll) - started
+2026-11-23 17:05:02,394 INFO    [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] Submitting 6 sheet(s), up to 6 at a time
+2026-11-23 17:05:02,395 INFO    [run 5138fa4db60e] [b52-f77-ai_0] [secr.normalize] [batch 52][file 77] Submitting sheet 'PORTFOLIO' (Sheet_PORTFOLIO.xlsx) to the AI agent
+2026-11-23 17:05:02,396 INFO    [run 5138fa4db60e] [b52-f77-ai_1] [secr.normalize] [batch 52][file 77] Submitting sheet 'LANDLORD DATA' (Sheet_LANDLORD DATA.xlsx) to the AI agent
+2026-11-23 17:05:02,397 INFO    [run 5138fa4db60e] [b52-f77-ai_2] [secr.normalize] [batch 52][file 77] Submitting sheet 'TRANSPORT' (Sheet_TRANSPORT.xlsx) to the AI agent
+2026-11-23 17:05:02,397 INFO    [run 5138fa4db60e] [b52-f77-ai_3] [secr.normalize] [batch 52][file 77] Submitting sheet 'OTHER FUELS' (Sheet_OTHER FUELS.xlsx) to the AI agent
+2026-11-23 17:05:02,398 INFO    [run 5138fa4db60e] [b52-f77-ai_4] [secr.normalize] [batch 52][file 77] Submitting sheet 'METRICS' (Sheet_METRICS.xlsx) to the AI agent
+2026-11-23 17:05:02,398 INFO    [run 5138fa4db60e] [b52-f77-ai_5] [secr.normalize] [batch 52][file 77] Submitting sheet 'ENERGY EFFICIENCY NARRATIVE' (Sheet_ENERGY EFFICIENCY NARRATIVE.xlsx) to the AI agent
+2026-11-23 17:05:03,092 DEBUG   [run 5138fa4db60e] [b52-f77-ai_0] [secr.ai_client] [batch 52][file 77] Odin POST /chat/create -> HTTP 200 in 0.7s
+2026-11-23 17:05:03,094 INFO    [run 5138fa4db60e] [b52-f77-ai_0] [secr.ai_client] [batch 52][file 77] Chat 1d67eb535af54a9ca4b19f created for Sheet_PORTFOLIO.xlsx
+2026-11-23 17:05:03,094 DEBUG   [run 5138fa4db60e] [b52-f77-ai_4] [secr.ai_client] [batch 52][file 77] Odin POST /chat/create -> HTTP 200 in 0.7s
+2026-11-23 17:05:03,095 INFO    [run 5138fa4db60e] [b52-f77-ai_0] [secr.ai_client] [batch 52][file 77] Uploading Sheet_PORTFOLIO.xlsx (58726 bytes) to chat 1d67eb535af54a9ca4b19f
+2026-11-23 17:05:03,095 INFO    [run 5138fa4db60e] [b52-f77-ai_4] [secr.ai_client] [batch 52][file 77] Chat ef5977f642c3417fb5c17d created for Sheet_METRICS.xlsx
+2026-11-23 17:05:03,097 INFO    [run 5138fa4db60e] [b52-f77-ai_4] [secr.ai_client] [batch 52][file 77] Uploading Sheet_METRICS.xlsx (10657 bytes) to chat ef5977f642c3417fb5c17d
+2026-11-23 17:05:03,119 DEBUG   [run 5138fa4db60e] [b52-f77-ai_5] [secr.ai_client] [batch 52][file 77] Odin POST /chat/create -> HTTP 200 in 0.7s
+2026-11-23 17:05:03,120 DEBUG   [run 5138fa4db60e] [b52-f77-ai_3] [secr.ai_client] [batch 52][file 77] Odin POST /chat/create -> HTTP 200 in 0.7s
+2026-11-23 17:05:03,120 DEBUG   [run 5138fa4db60e] [b52-f77-ai_2] [secr.ai_client] [batch 52][file 77] Odin POST /chat/create -> HTTP 200 in 0.7s
+2026-11-23 17:05:03,120 DEBUG   [run 5138fa4db60e] [b52-f77-ai_1] [secr.ai_client] [batch 52][file 77] Odin POST /chat/create -> HTTP 200 in 0.7s
+2026-11-23 17:05:03,127 INFO    [run 5138fa4db60e] [b52-f77-ai_5] [secr.ai_client] [batch 52][file 77] Chat f1da0d3a2bc3434284a21f created for Sheet_ENERGY EFFICIENCY NARRATIVE.xlsx
+2026-11-23 17:05:03,128 INFO    [run 5138fa4db60e] [b52-f77-ai_3] [secr.ai_client] [batch 52][file 77] Chat 9fb9de26cebe4b85b5ae6e created for Sheet_OTHER FUELS.xlsx
+2026-11-23 17:05:03,129 INFO    [run 5138fa4db60e] [b52-f77-ai_2] [secr.ai_client] [batch 52][file 77] Chat 80ffdc3264d44cf993939a created for Sheet_TRANSPORT.xlsx
+2026-11-23 17:05:03,130 INFO    [run 5138fa4db60e] [b52-f77-ai_1] [secr.ai_client] [batch 52][file 77] Chat a891b6cbb9b64429b58883 created for Sheet_LANDLORD DATA.xlsx
+2026-11-23 17:05:03,131 INFO    [run 5138fa4db60e] [b52-f77-ai_5] [secr.ai_client] [batch 52][file 77] Uploading Sheet_ENERGY EFFICIENCY NARRATIVE.xlsx (5369 bytes) to chat f1da0d3a2bc3434284a21f
+2026-11-23 17:05:03,132 INFO    [run 5138fa4db60e] [b52-f77-ai_3] [secr.ai_client] [batch 52][file 77] Uploading Sheet_OTHER FUELS.xlsx (20118 bytes) to chat 9fb9de26cebe4b85b5ae6e
+2026-11-23 17:05:03,133 INFO    [run 5138fa4db60e] [b52-f77-ai_2] [secr.ai_client] [batch 52][file 77] Uploading Sheet_TRANSPORT.xlsx (35083 bytes) to chat 80ffdc3264d44cf993939a
+2026-11-23 17:05:03,134 INFO    [run 5138fa4db60e] [b52-f77-ai_1] [secr.ai_client] [batch 52][file 77] Uploading Sheet_LANDLORD DATA.xlsx (123553 bytes) to chat a891b6cbb9b64429b58883
+2026-11-23 17:06:49,826 DEBUG   [run 5138fa4db60e] [b52-f77-ai_5] [secr.ai_client] [batch 52][file 77] Odin POST /v4/chat/message -> HTTP 200 in 106.7s
+2026-11-23 17:06:49,828 INFO    [run 5138fa4db60e] [b52-f77-ai_5] [secr.ai_client] [batch 52][file 77] Upload to chat f1da0d3a2bc3434284a21f accepted in 106.7s
+2026-11-23 17:06:49,830 INFO    [run 5138fa4db60e] [b52-f77-ai_5] [secr.normalize] [batch 52][file 77] Sheet ENERGY EFFICIENCY NARRATIVE submitted, chat id f1da0d3a2bc3434284a21f
+2026-11-23 17:06:55,386 DEBUG   [run 5138fa4db60e] [b52-f77-ai_4] [secr.ai_client] [batch 52][file 77] Odin POST /v4/chat/message -> HTTP 200 in 112.3s
+2026-11-23 17:06:55,387 INFO    [run 5138fa4db60e] [b52-f77-ai_4] [secr.ai_client] [batch 52][file 77] Upload to chat ef5977f642c3417fb5c17d accepted in 112.3s
+2026-11-23 17:06:55,388 INFO    [run 5138fa4db60e] [b52-f77-ai_4] [secr.normalize] [batch 52][file 77] Sheet METRICS submitted, chat id ef5977f642c3417fb5c17d
+2026-11-23 17:07:41,203 DEBUG   [run 5138fa4db60e] [b52-f77-ai_3] [secr.ai_client] [batch 52][file 77] Odin POST /v4/chat/message -> HTTP 200 in 158.1s
+2026-11-23 17:07:41,204 INFO    [run 5138fa4db60e] [b52-f77-ai_3] [secr.ai_client] [batch 52][file 77] Upload to chat 9fb9de26cebe4b85b5ae6e accepted in 158.1s
+2026-11-23 17:07:41,205 INFO    [run 5138fa4db60e] [b52-f77-ai_3] [secr.normalize] [batch 52][file 77] Sheet OTHER FUELS submitted, chat id 9fb9de26cebe4b85b5ae6e
+2026-11-23 17:08:36,615 DEBUG   [run 5138fa4db60e] [b52-f77-ai_1] [secr.ai_client] [batch 52][file 77] Odin POST /v4/chat/message -> HTTP 200 in 213.5s
+2026-11-23 17:08:36,616 INFO    [run 5138fa4db60e] [b52-f77-ai_1] [secr.ai_client] [batch 52][file 77] Upload to chat a891b6cbb9b64429b58883 accepted in 213.5s
+2026-11-23 17:08:36,617 INFO    [run 5138fa4db60e] [b52-f77-ai_1] [secr.normalize] [batch 52][file 77] Sheet LANDLORD DATA submitted, chat id a891b6cbb9b64429b58883
+2026-11-23 17:09:06,812 DEBUG   [run 5138fa4db60e] [b52-f77-ai_2] [secr.ai_client] [batch 52][file 77] Odin POST /v4/chat/message -> HTTP 200 in 243.7s
+2026-11-23 17:09:06,813 INFO    [run 5138fa4db60e] [b52-f77-ai_2] [secr.ai_client] [batch 52][file 77] Upload to chat 80ffdc3264d44cf993939a accepted in 243.7s
+2026-11-23 17:09:06,814 INFO    [run 5138fa4db60e] [b52-f77-ai_2] [secr.normalize] [batch 52][file 77] Sheet TRANSPORT submitted, chat id 80ffdc3264d44cf993939a
+2026-11-23 17:09:33,669 DEBUG   [run 5138fa4db60e] [b52-f77-ai_0] [secr.ai_client] [batch 52][file 77] Odin POST /v4/chat/message -> HTTP 200 in 270.6s
+2026-11-23 17:09:33,670 INFO    [run 5138fa4db60e] [b52-f77-ai_0] [secr.ai_client] [batch 52][file 77] Upload to chat 1d67eb535af54a9ca4b19f accepted in 270.6s
+2026-11-23 17:09:33,672 INFO    [run 5138fa4db60e] [b52-f77-ai_0] [secr.normalize] [batch 52][file 77] Sheet PORTFOLIO submitted, chat id 1d67eb535af54a9ca4b19f
+2026-11-23 17:09:33,687 INFO    [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] Status -> NORMALIZING
+2026-11-23 17:09:33,842 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] DB connection opened (2/60 in use)
+2026-11-23 17:09:33,897 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL execute (0.05s, 1 row(s) affected): UPDATE UploadedFile SET ProcessingStatusId = (SELECT s.FileProcessingStatusId FROM RefFileProcessingStatus s WHERE s.Code = %s) WHERE FileId = %s | params=('NORMALIZING', '77')
+2026-11-23 17:09:33,906 INFO    [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] Polling 6 chat(s) every 40s, up to 15 attempts
+2026-11-23 17:09:33,908 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] Poll attempt 1/15, waiting for: PORTFOLIO, LANDLORD DATA, TRANSPORT, OTHER FUELS, METRICS, ENERGY EFFICIENCY NARRATIVE
+2026-11-23 17:09:34,285 DEBUG   [run 5138fa4db60e] [b52-f77-poll_1] [secr.ai_client] [batch 52][file 77] Odin GET /chat/a891b6cbb9b64429b58883 -> HTTP 200 in 0.4s
+2026-11-23 17:09:34,288 INFO    [run 5138fa4db60e] [b52-f77-poll_1] [secr.ai_client] [batch 52][file 77] Chat a891b6cbb9b64429b58883 answered with 1 CSV link(s): landlord
+2026-11-23 17:09:34,289 INFO    [run 5138fa4db60e] [b52-f77-poll_1] [secr.normalize] [batch 52][file 77] Sheet LANDLORD DATA normalized after poll 1: landlord
+2026-11-23 17:09:34,330 DEBUG   [run 5138fa4db60e] [b52-f77-poll_2] [secr.ai_client] [batch 52][file 77] Odin GET /chat/80ffdc3264d44cf993939a -> HTTP 200 in 0.4s
+2026-11-23 17:09:34,342 DEBUG   [run 5138fa4db60e] [b52-f77-poll_2] [secr.ai_client] [batch 52][file 77] Categories without a CSV link (NA), left out: invoice, metrics, landlord, portfolio, other_fuels, half_hourly_data, energy_efficiency_narrative
+2026-11-23 17:09:34,343 DEBUG   [run 5138fa4db60e] [b52-f77-poll_3] [secr.ai_client] [batch 52][file 77] Odin GET /chat/9fb9de26cebe4b85b5ae6e -> HTTP 200 in 0.4s
+2026-11-23 17:09:34,344 DEBUG   [run 5138fa4db60e] [b52-f77-poll_0] [secr.ai_client] [batch 52][file 77] Odin GET /chat/1d67eb535af54a9ca4b19f -> HTTP 200 in 0.4s
+2026-11-23 17:09:34,345 INFO    [run 5138fa4db60e] [b52-f77-poll_2] [secr.ai_client] [batch 52][file 77] Chat 80ffdc3264d44cf993939a answered with 1 CSV link(s): transport
+2026-11-23 17:09:34,347 DEBUG   [run 5138fa4db60e] [b52-f77-poll_3] [secr.ai_client] [batch 52][file 77] Categories without a CSV link (NA), left out: invoice, metrics, landlord, portfolio, transport, half_hourly_data, energy_efficiency_narrative
+2026-11-23 17:09:34,348 DEBUG   [run 5138fa4db60e] [b52-f77-poll_4] [secr.ai_client] [batch 52][file 77] Odin GET /chat/ef5977f642c3417fb5c17d -> HTTP 200 in 0.4s
+2026-11-23 17:09:34,352 DEBUG   [run 5138fa4db60e] [b52-f77-poll_0] [secr.ai_client] [batch 52][file 77] Categories without a CSV link (NA), left out: invoice, metrics, landlord, transport, other_fuels, half_hourly_data, energy_efficiency_narrative
+2026-11-23 17:09:34,359 INFO    [run 5138fa4db60e] [b52-f77-poll_2] [secr.normalize] [batch 52][file 77] Sheet TRANSPORT normalized after poll 1: transport
+2026-11-23 17:09:34,363 INFO    [run 5138fa4db60e] [b52-f77-poll_3] [secr.ai_client] [batch 52][file 77] Chat 9fb9de26cebe4b85b5ae6e answered with 1 CSV link(s): other_fuels
+2026-11-23 17:09:34,377 DEBUG   [run 5138fa4db60e] [b52-f77-poll_4] [secr.ai_client] [batch 52][file 77] Categories without a CSV link (NA), left out: invoice, landlord, portfolio, transport, other_fuels, half_hourly_data, energy_efficiency_narrative
+2026-11-23 17:09:34,378 INFO    [run 5138fa4db60e] [b52-f77-poll_0] [secr.ai_client] [batch 52][file 77] Chat 1d67eb535af54a9ca4b19f answered with 1 CSV link(s): portfolio
+2026-11-23 17:09:34,381 INFO    [run 5138fa4db60e] [b52-f77-poll_3] [secr.normalize] [batch 52][file 77] Sheet OTHER FUELS normalized after poll 1: other_fuels
+2026-11-23 17:09:34,382 INFO    [run 5138fa4db60e] [b52-f77-poll_4] [secr.ai_client] [batch 52][file 77] Chat ef5977f642c3417fb5c17d answered with 1 CSV link(s): metrics
+2026-11-23 17:09:34,383 INFO    [run 5138fa4db60e] [b52-f77-poll_0] [secr.normalize] [batch 52][file 77] Sheet PORTFOLIO normalized after poll 1: portfolio
+2026-11-23 17:09:34,385 INFO    [run 5138fa4db60e] [b52-f77-poll_4] [secr.normalize] [batch 52][file 77] Sheet METRICS normalized after poll 1: metrics
+2026-11-23 17:09:34,822 DEBUG   [run 5138fa4db60e] [b52-f77-poll_5] [secr.ai_client] [batch 52][file 77] Odin GET /chat/f1da0d3a2bc3434284a21f -> HTTP 200 in 0.9s
+2026-11-23 17:09:34,831 DEBUG   [run 5138fa4db60e] [b52-f77-poll_5] [secr.ai_client] [batch 52][file 77] Categories without a CSV link (NA), left out: invoice, metrics, landlord, portfolio, transport, other_fuels, half_hourly_data
+2026-11-23 17:09:34,832 INFO    [run 5138fa4db60e] [b52-f77-poll_5] [secr.ai_client] [batch 52][file 77] Chat f1da0d3a2bc3434284a21f answered with 1 CSV link(s): energy_efficiency_narrative
+2026-11-23 17:09:34,846 INFO    [run 5138fa4db60e] [b52-f77-poll_5] [secr.normalize] [batch 52][file 77] Sheet ENERGY EFFICIENCY NARRATIVE normalized after poll 1: energy_efficiency_narrative
+2026-11-23 17:09:34,872 INFO    [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] Step 3/4 AI normalization (submit + poll) - done in 272.5s
+2026-11-23 17:09:34,875 INFO    [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] Status -> NORMALIZATION_COMPLETED
+2026-11-23 17:09:34,995 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] DB connection opened (2/60 in use)
+2026-11-23 17:09:35,043 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL execute (0.04s, 1 row(s) affected): UPDATE UploadedFile SET ProcessingStatusId = (SELECT s.FileProcessingStatusId FROM RefFileProcessingStatus s WHERE s.Code = %s) WHERE FileId = %s | params=('NORMALIZATION_COMPLETED', '77')
+2026-11-23 17:09:35,053 INFO    [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] AI result: 6 sheet(s) OK, 0 failed -> NORMALIZATION_COMPLETED
+2026-11-23 17:09:35,159 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] DB connection opened (2/60 in use)
+2026-11-23 17:09:35,171 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL execute (0.01s, 0 row(s) affected): UPDATE UploadedFile SET CategoryRecognized = CASE WHEN CategoryRecognized IS NULL OR CategoryRecognized = '' THEN %s WHEN FIND_IN_SET(%s, CategoryRecognized) >  | params=('Energy Efficiency Narrative', 'Energy Efficiency Narrative', 'Energy Efficiency Narrative', '77')
+2026-11-23 17:09:35,268 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] DB connection opened (2/60 in use)
+2026-11-23 17:09:35,284 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL execute (0.02s, 0 row(s) affected): UPDATE UploadedFile SET CategoryRecognized = CASE WHEN CategoryRecognized IS NULL OR CategoryRecognized = '' THEN %s WHEN FIND_IN_SET(%s, CategoryRecognized) >  | params=('Landlord', 'Landlord', 'Landlord', '77')
+2026-11-23 17:09:35,387 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] DB connection opened (2/60 in use)
+2026-11-23 17:09:35,396 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL execute (0.01s, 0 row(s) affected): UPDATE UploadedFile SET CategoryRecognized = CASE WHEN CategoryRecognized IS NULL OR CategoryRecognized = '' THEN %s WHEN FIND_IN_SET(%s, CategoryRecognized) >  | params=('Metrics', 'Metrics', 'Metrics', '77')
+2026-11-23 17:09:35,507 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] DB connection opened (2/60 in use)
+2026-11-23 17:09:35,516 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL execute (0.01s, 0 row(s) affected): UPDATE UploadedFile SET CategoryRecognized = CASE WHEN CategoryRecognized IS NULL OR CategoryRecognized = '' THEN %s WHEN FIND_IN_SET(%s, CategoryRecognized) >  | params=('Other Fuels', 'Other Fuels', 'Other Fuels', '77')
+2026-11-23 17:09:35,614 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] DB connection opened (2/60 in use)
+2026-11-23 17:09:35,625 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL execute (0.01s, 0 row(s) affected): UPDATE UploadedFile SET CategoryRecognized = CASE WHEN CategoryRecognized IS NULL OR CategoryRecognized = '' THEN %s WHEN FIND_IN_SET(%s, CategoryRecognized) >  | params=('Portfolio', 'Portfolio', 'Portfolio', '77')
+2026-11-23 17:09:35,726 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] DB connection opened (2/60 in use)
+2026-11-23 17:09:35,735 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL execute (0.01s, 0 row(s) affected): UPDATE UploadedFile SET CategoryRecognized = CASE WHEN CategoryRecognized IS NULL OR CategoryRecognized = '' THEN %s WHEN FIND_IN_SET(%s, CategoryRecognized) >  | params=('Transport', 'Transport', 'Transport', '77')
+2026-11-23 17:09:35,738 INFO    [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] Step 4/4 download and load 6 normalized CSV(s) - started
+2026-11-23 17:09:35,740 INFO    [run 5138fa4db60e] [b52-f77-dl_0] [secr.normalize] [batch 52][file 77] Downloading portfolio CSV for sheet 'PORTFOLIO': Portfolio_ESG_Normalized_Data_20261123_170851.csv
+2026-11-23 17:09:35,741 INFO    [run 5138fa4db60e] [b52-f77-dl_1] [secr.normalize] [batch 52][file 77] Downloading landlord CSV for sheet 'LANDLORD DATA': ...
+2026-11-23 17:09:35,741 INFO    [run 5138fa4db60e] [b52-f77-dl_2] [secr.normalize] [batch 52][file 77] Downloading transport CSV for sheet 'TRANSPORT': Transport_ESG_Normalized_Data_20261123_170824.csv
+2026-11-23 17:09:35,742 DEBUG   [run 5138fa4db60e] [b52-f77-dl_0] [secr.downloader] [batch 52][file 77] Downloading https://api.getodin.ai/sandbox-download/sandbox_downloads/iyz7z9ey2uv55j29ktj5k/code/356316e20dcb48658ce127/Portfolio_ESG_Normalized_Data_20261123_170851.csv
+2026-11-23 17:09:35,742 INFO    [run 5138fa4db60e] [b52-f77-dl_3] [secr.normalize] [batch 52][file 77] Downloading other_fuels CSV for sheet 'OTHER FUELS': Other_Fuels_ESG_Normalized_Data_20261123_170708.csv
+2026-11-23 17:09:35,743 DEBUG   [run 5138fa4db60e] [b52-f77-dl_1] [secr.downloader] [batch 52][file 77] Downloading https://api.getodin.ai/sandbox-download/...
+2026-11-23 17:09:35,743 INFO    [run 5138fa4db60e] [b52-f77-dl_4] [secr.normalize] [batch 52][file 77] Downloading metrics CSV for sheet 'METRICS': Metrics_ESG_Normalized_Data_20261123_170621.csv
+2026-11-23 17:09:35,744 INFO    [run 5138fa4db60e] [b52-f77-dl_5] [secr.normalize] [batch 52][file 77] Downloading energy_efficiency_narrative CSV for sheet 'ENERGY EFFICIENCY NARRATIVE': Energy_Efficiency_Narrative_ESG_Normalized_Data_20261123_170617.csv
+2026-11-23 17:09:35,744 DEBUG   [run 5138fa4db60e] [b52-f77-dl_2] [secr.downloader] [batch 52][file 77] Downloading https://api.getodin.ai/sandbox-download/sandbox_downloads/ijrui8m6lwm3ghs1rzqd1/code/356316e20dcb48658ce127/Transport_ESG_Normalized_Data_20261123_170824.csv
+2026-11-23 17:09:35,746 DEBUG   [run 5138fa4db60e] [b52-f77-dl_3] [secr.downloader] [batch 52][file 77] Downloading https://api.getodin.ai/sandbox-download/sandbox_downloads/ifyd10qclx2c72n0xstla/code/356316e20dcb48658ce127/Other_Fuels_ESG_Normalized_Data_20261123_170708.csv
+2026-11-23 17:09:35,752 DEBUG   [run 5138fa4db60e] [b52-f77-dl_4] [secr.downloader] [batch 52][file 77] Downloading https://api.getodin.ai/sandbox-download/sandbox_downloads/ibokh6y4sn4i6ljs0euu9/code/356316e20dcb48658ce127/Metrics_ESG_Normalized_Data_20261123_170621.csv
+2026-11-23 17:09:35,752 DEBUG   [run 5138fa4db60e] [b52-f77-dl_5] [secr.downloader] [batch 52][file 77] Downloading https://api.getodin.ai/sandbox-download/sandbox_downloads/ingcsmhf3nc0agydjnaps/code/356316e20dcb48658ce127/Energy_Efficiency_Narrative_ESG_Normalized_Data_20261123_170617.csv
+2026-11-23 17:09:36,008 ERROR   [run 5138fa4db60e] [b52-f77-dl_1] [secr.downloader] [batch 52][file 77] Download of https://api.getodin.ai/sandbox-download/... failed: HTTP 422
+2026-11-23 17:09:36,010 ERROR   [run 5138fa4db60e] [b52-f77-dl_1] [secr.normalize] [batch 52][file 77] Download failed for LANDLORD DATA (landlord): 422 Client Error:  for url: https://api.getodin.ai/sandbox-download/...
+2026-11-23 17:09:36,404 INFO    [run 5138fa4db60e] [b52-f77-dl_2] [secr.downloader] [batch 52][file 77] Downloaded 03_transport.csv (2568 bytes, 0.7s)
+2026-11-23 17:09:36,407 DEBUG   [run 5138fa4db60e] [b52-f77-dl_2] [secr.normalize] [batch 52][file 77] Saved C:\Users\ANUJ~1.KUM\AppData\Local\Temp\3\SECR_work\b52_170456343454\f77\csv\03_transport.csv (2568 bytes)
+2026-11-23 17:09:36,439 INFO    [run 5138fa4db60e] [b52-f77-dl_4] [secr.downloader] [batch 52][file 77] Downloaded 05_metrics.csv (3403 bytes, 0.7s)
+2026-11-23 17:09:36,443 DEBUG   [run 5138fa4db60e] [b52-f77-dl_4] [secr.normalize] [batch 52][file 77] Saved C:\Users\ANUJ~1.KUM\AppData\Local\Temp\3\SECR_work\b52_170456343454\f77\csv\05_metrics.csv (3403 bytes)
+2026-11-23 17:09:36,502 INFO    [run 5138fa4db60e] [b52-f77-dl_5] [secr.downloader] [batch 52][file 77] Downloaded 06_energy_efficiency_narrative.csv (2283 bytes, 0.7s)
+2026-11-23 17:09:36,507 DEBUG   [run 5138fa4db60e] [b52-f77-dl_5] [secr.normalize] [batch 52][file 77] Saved C:\Users\ANUJ~1.KUM\AppData\Local\Temp\3\SECR_work\b52_170456343454\f77\csv\06_energy_efficiency_narrative.csv (2283 bytes)
+2026-11-23 17:09:39,665 INFO    [run 5138fa4db60e] [b52-f77-dl_3] [secr.downloader] [batch 52][file 77] Downloaded 04_other_fuels.csv (398 bytes, 3.9s)
+2026-11-23 17:09:39,668 DEBUG   [run 5138fa4db60e] [b52-f77-dl_3] [secr.normalize] [batch 52][file 77] Saved C:\Users\ANUJ~1.KUM\AppData\Local\Temp\3\SECR_work\b52_170456343454\f77\csv\04_other_fuels.csv (398 bytes)
+2026-11-23 17:09:39,732 INFO    [run 5138fa4db60e] [b52-f77-dl_0] [secr.downloader] [batch 52][file 77] Downloaded 01_portfolio.csv (4013 bytes, 4.0s)
+2026-11-23 17:09:39,757 DEBUG   [run 5138fa4db60e] [b52-f77-dl_0] [secr.normalize] [batch 52][file 77] Saved C:\Users\ANUJ~1.KUM\AppData\Local\Temp\3\SECR_work\b52_170456343454\f77\csv\01_portfolio.csv (4013 bytes)
+2026-11-23 17:09:39,907 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] DB connection opened (2/60 in use)
+2026-11-23 17:09:39,908 INFO    [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Loading 01_portfolio.csv into Staging_Portfolio (procedures: LoadPortfolioData, UpdatePortfolioDerivedFields)
+2026-11-23 17:09:44,188 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.csv_clean] [batch 52][file 77] Cleaned 01_portfolio.csv -> Cleaned_01_portfolio.csv: 9 line(s) incl. header, 62 blank(s) filled, 0 newline(s), 0 quote(s) removed
+2026-11-23 17:09:44,200 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Cleaned 01_portfolio.csv: 9 rows, 62 blanks filled
+2026-11-23 17:09:44,244 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Cleaned_01_portfolio.csv header: ['Supply_ID', 'Site_Code', 'Site_Name', 'Street_Address_Line_1', 'Street_Address_Line_2', 'Building_Type', 'Town_or_City', 'Post_Code', 'Country', 'Subsidiary_Company', 'Utility_Type', 'Utility_Supplier_Landlord', 'MPAN_MPRN_or_Reference', 'MPAN_Top_Line', 'Supplier_name', 'Supplier_Contract_Start_Date', 'Supplier_Contract_End_Date', 'Date_Supply_Held_From', 'Date_Supply_Held_To', 'Normalization_Confidence', 'Reason_for_Confidence', 'Error_Code', 'Error_Field', 'Error_Value', 'Error_Message', 'FileId']
+2026-11-23 17:09:44,263 INFO    [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] 8 data row(s), 26 mapped column(s)
+2026-11-23 17:09:44,268 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Waiting for staging lock secr_load_Staging_Portfolio (only one load per staging table at a time)
+2026-11-23 17:09:44,272 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Waiting up to 900s for DB lock secr_load_Staging_Portfolio
+2026-11-23 17:09:44,293 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL query (0.01s, 1 row(s)): SELECT GET_LOCK(%s, %s) AS got | params=('secr_load_Staging_Portfolio', 900)
+2026-11-23 17:09:44,306 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Got DB lock secr_load_Staging_Portfolio after 0.0s
+2026-11-23 17:09:44,338 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL execute (0.03s, 9 row(s) affected): DELETE FROM `Staging_Portfolio` WHERE FileId = %s | params=('77',)
+2026-11-23 17:09:44,344 WARNING [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Deleted 9 row(s) left in Staging_Portfolio for FileId 77 by an earlier run
+2026-11-23 17:09:44,362 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Bulk insert into Staging_Portfolio (26 column(s), chunks of 1000)
+2026-11-23 17:09:44,384 INFO    [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Bulk insert into Staging_Portfolio: 8 row(s) in 0.0s
+2026-11-23 17:09:44,399 INFO    [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Inserted 8 row(s) into Staging_Portfolio
+2026-11-23 17:09:44,401 INFO    [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Calling procedure LoadPortfolioData(77, 5)
+2026-11-23 17:09:44,558 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Procedure LoadPortfolioData returned after 0.2s
+2026-11-23 17:09:44,567 INFO    [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Procedure LoadPortfolioData finished in 0.2s, OUT=['LoadPortfolioData completed successfully']
+2026-11-23 17:09:44,572 INFO    [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] LoadPortfolioData -> message='LoadPortfolioData completed successfully'
+2026-11-23 17:09:44,582 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL query (0.01s, 1 row(s)): SELECT RELEASE_LOCK(%s) AS released | params=('secr_load_Staging_Portfolio',)
+2026-11-23 17:09:44,584 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Released DB lock secr_load_Staging_Portfolio
+2026-11-23 17:09:44,585 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Waiting up to 900s for DB lock secr_report_5_UpdatePortfolioDerivedFields
+2026-11-23 17:09:44,595 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL query (0.01s, 1 row(s)): SELECT GET_LOCK(%s, %s) AS got | params=('secr_report_5_UpdatePortfolioDerivedFields', 900)
+2026-11-23 17:09:44,596 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Got DB lock secr_report_5_UpdatePortfolioDerivedFields after 0.0s
+2026-11-23 17:09:44,597 INFO    [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Calling procedure UpdatePortfolioDerivedFields(5)
+2026-11-23 17:09:44,646 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Procedure UpdatePortfolioDerivedFields returned after 0.0s
+2026-11-23 17:09:44,657 INFO    [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Procedure UpdatePortfolioDerivedFields finished in 0.1s, OUT=['UpdatePortfolioDerivedFields completed successfully. Rows updated: 8']
+2026-11-23 17:09:44,662 INFO    [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] UpdatePortfolioDerivedFields -> message='UpdatePortfolioDerivedFields completed successfully. Rows updated: 8'
+2026-11-23 17:09:44,688 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL query (0.01s, 1 row(s)): SELECT RELEASE_LOCK(%s) AS released | params=('secr_report_5_UpdatePortfolioDerivedFields',)
+2026-11-23 17:09:44,689 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Released DB lock secr_report_5_UpdatePortfolioDerivedFields
+2026-11-23 17:09:44,690 INFO    [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] Loaded PORTFOLIO (portfolio): 8 row(s)
+2026-11-23 17:09:44,691 ERROR   [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] Load failed for LANDLORD DATA (landlord): 422 Client Error:  for url: https://api.getodin.ai/sandbox-download/...
+2026-11-23 17:09:44,804 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] DB connection opened (2/60 in use)
+2026-11-23 17:09:44,805 INFO    [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Loading 03_transport.csv into Staging_Transport (procedures: LoadTransportData)
+2026-11-23 17:09:44,824 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.csv_clean] [batch 52][file 77] Cleaned 03_transport.csv -> Cleaned_03_transport.csv: 11 line(s) incl. header, 146 blank(s) filled, 0 newline(s), 8 quote(s) removed
+2026-11-23 17:09:44,829 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Cleaned 03_transport.csv: 11 rows, 146 blanks filled
+2026-11-23 17:09:44,862 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Cleaned_03_transport.csv header: ['Site_Name_or_Reference', 'Transport_Category_Emission_Source', 'Vehicle', 'Fuel', 'Measurement_Unit_Type_1', 'Units_1', 'Measurement_Unit_1', 'Measurement_Unit_Type_2', 'Units_2', 'Measurement_Unit_2', 'Measurement_Unit_Type_3', 'Units_3', 'Measurement_Unit_3', 'Measurement_Unit_Type_4', 'Units_4', 'Measurement_Unit_4', 'Vehicle_Class', 'Date_From', 'Date_To', 'Non_UK_Data', 'Subsidiary_Data', 'Job_Type', 'Vehicle_Registration', 'Normalization_Confidence', 'Reason_for_Confidence', 'Error_Code', 'Error_Field', 'Error_Value', 'Error_Message', 'FileId']
+2026-11-23 17:09:44,910 INFO    [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] 10 data row(s), 30 mapped column(s)
+2026-11-23 17:09:44,935 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Waiting for staging lock secr_load_Staging_Transport (only one load per staging table at a time)
+2026-11-23 17:09:44,939 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Waiting up to 900s for DB lock secr_load_Staging_Transport
+2026-11-23 17:09:44,951 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL query (0.01s, 1 row(s)): SELECT GET_LOCK(%s, %s) AS got | params=('secr_load_Staging_Transport', 900)
+2026-11-23 17:09:44,963 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Got DB lock secr_load_Staging_Transport after 0.0s
+2026-11-23 17:09:44,981 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL execute (0.02s, 10 row(s) affected): DELETE FROM `Staging_Transport` WHERE FileId = %s | params=('77',)
+2026-11-23 17:09:44,994 WARNING [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Deleted 10 row(s) left in Staging_Transport for FileId 77 by an earlier run
+2026-11-23 17:09:45,002 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Bulk insert into Staging_Transport (30 column(s), chunks of 1000)
+2026-11-23 17:09:45,026 INFO    [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Bulk insert into Staging_Transport: 10 row(s) in 0.0s
+2026-11-23 17:09:45,027 INFO    [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Inserted 10 row(s) into Staging_Transport
+2026-11-23 17:09:45,028 INFO    [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Calling procedure LoadTransportData(77, 5)
+2026-11-23 17:09:45,079 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Procedure LoadTransportData returned after 0.0s
+2026-11-23 17:09:45,088 INFO    [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Procedure LoadTransportData finished in 0.1s, OUT=['LoadTransportData completed successfully']
+2026-11-23 17:09:45,090 INFO    [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] LoadTransportData -> message='LoadTransportData completed successfully'
+2026-11-23 17:09:45,100 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL query (0.01s, 1 row(s)): SELECT RELEASE_LOCK(%s) AS released | params=('secr_load_Staging_Transport',)
+2026-11-23 17:09:45,101 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Released DB lock secr_load_Staging_Transport
+2026-11-23 17:09:45,103 INFO    [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] Loaded TRANSPORT (transport): 10 row(s)
+2026-11-23 17:09:45,199 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] DB connection opened (2/60 in use)
+2026-11-23 17:09:45,205 INFO    [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Loading 04_other_fuels.csv into Staging_Other_Fuels (procedures: LoadOtherFuelData)
+2026-11-23 17:09:45,239 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.csv_clean] [batch 52][file 77] Cleaned 04_other_fuels.csv -> Cleaned_04_other_fuels.csv: 2 line(s) incl. header, 7 blank(s) filled, 0 newline(s), 0 quote(s) removed
+2026-11-23 17:09:45,248 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Cleaned 04_other_fuels.csv: 2 rows, 7 blanks filled
+2026-11-23 17:09:45,263 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Cleaned_04_other_fuels.csv header: ['Site_Name_or_Reference', 'Emission_Source', 'Fuel', 'Measurement_Unit_Type', 'Date_From', 'Date_To', 'Units', 'Measurement_Unit', 'Non_UK_Data', 'Subsidiary_Data', 'Job_Type', 'Normalization_Confidence', 'Reason_for_Confidence', 'Error_Code', 'Error_Field', 'Error_Value', 'Error_Message', 'FileId']
+2026-11-23 17:09:45,273 INFO    [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] 1 data row(s), 18 mapped column(s)
+2026-11-23 17:09:45,274 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Waiting for staging lock secr_load_Staging_Other_Fuels (only one load per staging table at a time)
+2026-11-23 17:09:45,275 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Waiting up to 900s for DB lock secr_load_Staging_Other_Fuels
+2026-11-23 17:09:45,287 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL query (0.01s, 1 row(s)): SELECT GET_LOCK(%s, %s) AS got | params=('secr_load_Staging_Other_Fuels', 900)
+2026-11-23 17:09:45,293 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Got DB lock secr_load_Staging_Other_Fuels after 0.0s
+2026-11-23 17:09:45,315 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL execute (0.02s, 1 row(s) affected): DELETE FROM `Staging_Other_Fuels` WHERE FileId = %s | params=('77',)
+2026-11-23 17:09:45,317 WARNING [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Deleted 1 row(s) left in Staging_Other_Fuels for FileId 77 by an earlier run
+2026-11-23 17:09:45,320 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Bulk insert into Staging_Other_Fuels (18 column(s), chunks of 1000)
+2026-11-23 17:09:45,336 INFO    [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Bulk insert into Staging_Other_Fuels: 1 row(s) in 0.0s
+2026-11-23 17:09:45,337 INFO    [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Inserted 1 row(s) into Staging_Other_Fuels
+2026-11-23 17:09:45,340 INFO    [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Calling procedure LoadOtherFuelData(77, 5)
+2026-11-23 17:09:45,379 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Procedure LoadOtherFuelData returned after 0.0s
+2026-11-23 17:09:45,401 INFO    [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Procedure LoadOtherFuelData finished in 0.1s, OUT=['LoadOtherFuelData completed successfully']
+2026-11-23 17:09:45,411 INFO    [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] LoadOtherFuelData -> message='LoadOtherFuelData completed successfully'
+2026-11-23 17:09:45,421 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL query (0.01s, 1 row(s)): SELECT RELEASE_LOCK(%s) AS released | params=('secr_load_Staging_Other_Fuels',)
+2026-11-23 17:09:45,427 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Released DB lock secr_load_Staging_Other_Fuels
+2026-11-23 17:09:45,430 INFO    [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] Loaded OTHER FUELS (other_fuels): 1 row(s)
+2026-11-23 17:09:45,521 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] DB connection opened (2/60 in use)
+2026-11-23 17:09:45,523 INFO    [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Loading 05_metrics.csv into Staging_Metrics (procedures: LoadMetricInputData)
+2026-11-23 17:09:45,554 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.csv_clean] [batch 52][file 77] Cleaned 05_metrics.csv -> Cleaned_05_metrics.csv: 10 line(s) incl. header, 39 blank(s) filled, 0 newline(s), 12 quote(s) removed
+2026-11-23 17:09:45,556 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Cleaned 05_metrics.csv: 10 rows, 39 blanks filled
+2026-11-23 17:09:45,576 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Cleaned_05_metrics.csv header: ['Company_Level_Metric_Type', 'Units', 'Date_From', 'Date_To', 'Measurement_Unit', 'Normalization_Confidence', 'Reason_for_Confidence', 'Error_Code', 'Error_Field', 'Error_Value', 'Error_Message', 'FileId']
+2026-11-23 17:09:45,588 INFO    [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] 9 data row(s), 12 mapped column(s)
+2026-11-23 17:09:45,589 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Waiting for staging lock secr_load_Staging_Metrics (only one load per staging table at a time)
+2026-11-23 17:09:45,593 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Waiting up to 900s for DB lock secr_load_Staging_Metrics
+2026-11-23 17:09:45,602 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL query (0.01s, 1 row(s)): SELECT GET_LOCK(%s, %s) AS got | params=('secr_load_Staging_Metrics', 900)
+2026-11-23 17:09:45,606 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Got DB lock secr_load_Staging_Metrics after 0.0s
+2026-11-23 17:09:45,625 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL execute (0.02s, 9 row(s) affected): DELETE FROM `Staging_Metrics` WHERE FileId = %s | params=('77',)
+2026-11-23 17:09:45,630 WARNING [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Deleted 9 row(s) left in Staging_Metrics for FileId 77 by an earlier run
+2026-11-23 17:09:45,634 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Bulk insert into Staging_Metrics (12 column(s), chunks of 1000)
+2026-11-23 17:09:45,653 INFO    [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Bulk insert into Staging_Metrics: 9 row(s) in 0.0s
+2026-11-23 17:09:45,667 INFO    [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Inserted 9 row(s) into Staging_Metrics
+2026-11-23 17:09:45,669 INFO    [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Calling procedure LoadMetricInputData(77, 5)
+2026-11-23 17:09:45,733 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Procedure LoadMetricInputData returned after 0.1s
+2026-11-23 17:09:45,746 INFO    [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Procedure LoadMetricInputData finished in 0.1s, OUT=['LoadMetricInputData completed successfully']
+2026-11-23 17:09:45,753 INFO    [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] LoadMetricInputData -> message='LoadMetricInputData completed successfully'
+2026-11-23 17:09:45,763 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL query (0.01s, 1 row(s)): SELECT RELEASE_LOCK(%s) AS released | params=('secr_load_Staging_Metrics',)
+2026-11-23 17:09:45,764 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Released DB lock secr_load_Staging_Metrics
+2026-11-23 17:09:45,766 INFO    [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] Loaded METRICS (metrics): 9 row(s)
+2026-11-23 17:09:45,878 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] DB connection opened (2/60 in use)
+2026-11-23 17:09:45,879 INFO    [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Loading 06_energy_efficiency_narrative.csv into Staging_Energy_Efficiency_Narrative (procedures: LoadEnergyEfficiencyNarrativeData)
+2026-11-23 17:09:45,909 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.csv_clean] [batch 52][file 77] Cleaned 06_energy_efficiency_narrative.csv -> Cleaned_06_energy_efficiency_narrative.csv: 9 line(s) incl. header, 18 blank(s) filled, 0 newline(s), 4 quote(s) removed
+2026-11-23 17:09:45,910 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Cleaned 06_energy_efficiency_narrative.csv: 9 rows, 18 blanks filled
+2026-11-23 17:09:45,936 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Cleaned_06_energy_efficiency_narrative.csv header: ['Reporting_Year', 'Project_Title', 'Brief_Description', 'Impact_on_Business_Operations', 'Initiative_Type', 'Normalization_Confidence', 'Reason_for_Confidence', 'Error_Code', 'Error_Field', 'Error_Value', 'Error_Message', 'FileId']
+2026-11-23 17:09:45,950 INFO    [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] 8 data row(s), 12 mapped column(s)
+2026-11-23 17:09:45,951 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Waiting for staging lock secr_load_Staging_Energy_Efficiency_Narrative (only one load per staging table at a time)
+2026-11-23 17:09:45,954 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Waiting up to 900s for DB lock secr_load_Staging_Energy_Efficiency_Narrative
+2026-11-23 17:09:45,964 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL query (0.01s, 1 row(s)): SELECT GET_LOCK(%s, %s) AS got | params=('secr_load_Staging_Energy_Efficiency_Narrative', 900)
+2026-11-23 17:09:45,989 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Got DB lock secr_load_Staging_Energy_Efficiency_Narrative after 0.0s
+2026-11-23 17:09:46,019 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL execute (0.03s, 0 row(s) affected): DELETE FROM `Staging_Energy_Efficiency_Narrative` WHERE FileId = %s | params=('77',)
+2026-11-23 17:09:46,020 INFO    [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] No earlier rows in Staging_Energy_Efficiency_Narrative for FileId 77
+2026-11-23 17:09:46,021 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Bulk insert into Staging_Energy_Efficiency_Narrative (12 column(s), chunks of 1000)
+2026-11-23 17:09:46,037 INFO    [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Bulk insert into Staging_Energy_Efficiency_Narrative: 8 row(s) in 0.0s
+2026-11-23 17:09:46,038 INFO    [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] Inserted 8 row(s) into Staging_Energy_Efficiency_Narrative
+2026-11-23 17:09:46,039 INFO    [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Calling procedure LoadEnergyEfficiencyNarrativeData(77, 5)
+2026-11-23 17:09:46,138 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Procedure LoadEnergyEfficiencyNarrativeData returned after 0.1s
+2026-11-23 17:09:46,146 INFO    [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Procedure LoadEnergyEfficiencyNarrativeData finished in 0.1s, OUT=['LoadEnergyEfficiencyNarrativeData completed successfully']
+2026-11-23 17:09:46,147 INFO    [run 5138fa4db60e] [b52-file_0] [secr.runner] [batch 52][file 77] LoadEnergyEfficiencyNarrativeData -> message='LoadEnergyEfficiencyNarrativeData completed successfully'
+2026-11-23 17:09:46,156 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL query (0.01s, 1 row(s)): SELECT RELEASE_LOCK(%s) AS released | params=('secr_load_Staging_Energy_Efficiency_Narrative',)
+2026-11-23 17:09:46,158 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] Released DB lock secr_load_Staging_Energy_Efficiency_Narrative
+2026-11-23 17:09:46,159 INFO    [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] Loaded ENERGY EFFICIENCY NARRATIVE (energy_efficiency_narrative): 8 row(s)
+2026-11-23 17:09:46,162 INFO    [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] Step 4/4 download and load - done in 10.4s (5 loaded, 1 failed)
+2026-11-23 17:09:46,164 INFO    [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] Status -> PARTIAL_FAILURE (Error: 422 Client Error:  for url: https://api.getodin.ai/sandbox-download/... while processing LANDLORD DATA (landlord).)
+2026-11-23 17:09:46,263 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] DB connection opened (2/60 in use)
+2026-11-23 17:09:46,286 DEBUG   [run 5138fa4db60e] [b52-file_0] [secr.db] [batch 52][file 77] SQL execute (0.02s, 1 row(s) affected): UPDATE UploadedFile SET ProcessingStatusId = (SELECT s.FileProcessingStatusId FROM RefFileProcessingStatus s WHERE s.Code = %s), StatusDescription = LEFT(CONCAT | params=('PARTIAL_FAILURE', ' Error: 422 Client Error:  for url: https://api.getodin.ai/sandbox-download/... while processing LANDLORD DATA (landlord).', '77')
+2026-11-23 17:09:46,288 INFO    [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] Final status PARTIAL_FAILURE (loaded 5, failed 1)
+2026-11-23 17:09:46,289 INFO    [run 5138fa4db60e] [b52-file_0] [secr.normalize] [batch 52][file 77] Normalize finished for 'Inspired ESG_SECR_DSF_Acorn Mobility_FY25_V1_20261103_161448552.xlsx': PARTIAL_FAILURE in 289.5s
+2026-11-23 17:09:46,291 INFO    [run 5138fa4db60e] [batch_0] [secr.batch] [batch 52] All files done: 0 OK, 1 with errors
+2026-11-23 17:09:46,395 DEBUG   [run 5138fa4db60e] [batch_0] [secr.db] [batch 52] DB connection opened (2/60 in use)
+2026-11-23 17:09:46,456 DEBUG   [run 5138fa4db60e] [batch_0] [secr.db] [batch 52] SQL query (0.06s, 1 row(s)): SELECT 1 FROM RefBatchStatus WHERE Code = %s | params=('PARTIAL_FAILURE',)
+2026-11-23 17:09:46,541 DEBUG   [run 5138fa4db60e] [batch_0] [secr.db] [batch 52] DB connection opened (2/60 in use)
+2026-11-23 17:09:46,552 DEBUG   [run 5138fa4db60e] [batch_0] [secr.db] [batch 52] SQL query (0.01s, 1 row(s)): SELECT BatchStatusId FROM RefBatchStatus WHERE Code = %s | params=('PARTIAL_FAILURE',)
+2026-11-23 17:09:46,553 DEBUG   [run 5138fa4db60e] [batch_0] [secr.db] [batch 52] Setting batch 52 status to PARTIAL_FAILURE
+2026-11-23 17:09:46,568 DEBUG   [run 5138fa4db60e] [batch_0] [secr.db] [batch 52] SQL execute (0.01s, 1 row(s) affected): UPDATE FileUploadBatch SET BatchStatusId = %s WHERE BatchId = %s | params=(7, '52')
+2026-11-23 17:09:46,573 INFO    [run 5138fa4db60e] [batch_0] [secr.batch] [batch 52] Batch status set to PARTIAL_FAILURE
+2026-11-23 17:09:46,581 WARNING [run 5138fa4db60e] [batch_0] [secr.batch] [batch 52] File 77 [normalize] Inspired ESG_SECR_DSF_Acorn Mobility_FY25_V1_20261103_161448552.xlsx -> PARTIAL_FAILURE Error: 422 Client Error:  for url: https://api.getodin.ai/sandbox-download/... while processing LANDLORD DATA (landlord).
+2026-11-23 17:09:46,607 DEBUG   [run 5138fa4db60e] [batch_0] [secr.db] [batch 52] SQL query (0.01s, 1 row(s)): SELECT RELEASE_LOCK(%s) AS released | params=('secr_batch_52',)
+2026-11-23 17:09:46,609 DEBUG   [run 5138fa4db60e] [batch_0] [secr.db] [batch 52] Released DB lock secr_batch_52
+2026-11-23 17:09:46,610 DEBUG   [run 5138fa4db60e] [batch_0] [secr.batch] [batch 52] Released DB lock secr_batch_52
+2026-11-23 17:09:46,625 DEBUG   [run 5138fa4db60e] [batch_0] [secr.batch] [batch 52] Removed work folder C:\Users\ANUJ~1.KUM\AppData\Local\Temp\3\SECR_work\b52_170456343454
+2026-11-23 17:09:46,629 INFO    [run 5138fa4db60e] [batch_0] [secr.batch] [batch 52] Batch finished: COMPLETED_WITH_FILE_ERRORS in 290.3s (1 file(s))
+2026-11-23 17:09:46,634 INFO    [run 5138fa4db60e] [MainThread] [secr.orchestrator] Progress: 1/1 batch(es) done (batch 52: COMPLETED_WITH_FILE_ERRORS, 290.3s); 0 still running or queued
+2026-11-23 17:09:46,638 INFO    [run 5138fa4db60e] [MainThread] [secr.orchestrator] All batches done in 290.3s
+2026-11-23 17:09:46,641 INFO    [run 5138fa4db60e] [MainThread] [secr.runner] Summary
+   Batch  State                       Files   OK    Secs  Error
+      52  COMPLETED_WITH_FILE_ERRORS      1    0   290.3  
+2026-11-23 17:09:46,644 INFO    [run 5138fa4db60e] [MainThread] [secr.runner] Run finished with exit code 2 (0 = all OK, 2 = some files failed, 1 = a batch failed)
+2026-11-23 17:09:46,645 DEBUG   [run 5138fa4db60e] [MainThread] [secr.runner] E-mail 'SECR normalizer finished with errors' not sent (notifications disabled)
+2026-11-23 17:09:46,646 INFO    [run 5138fa4db60e] [MainThread] [secr.aa_entry] Returning status PARTIAL to Automation Anywhere
