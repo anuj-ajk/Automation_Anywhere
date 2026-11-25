@@ -1,0 +1,31 @@
+2026-11-24 13:26:24,588 INFO    [run fb5143429cfb] [MainThread] [secr] Log file: \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\logs\SECR_20261124_132624_fb5143429cfb.log (level DEBUG)
+2026-11-24 13:26:24,701 INFO    [run fb5143429cfb] [MainThread] [secr.runner] Python 3.14.10 on MAN-RDS-V10 (pid 34164)
+2026-11-24 13:26:24,702 INFO    [run fb5143429cfb] [MainThread] [secr.runner] Parallelism: 10 batch(es) x 4 file(s) per batch, max 20 DB connection(s) from this process
+2026-11-24 13:26:24,703 INFO    [run fb5143429cfb] [MainThread] [secr.runner] Work folder C:\Users\anuj.kumar\AppData\Local\Temp\3\SECR_work (keep files: False), serialize staging loads: True, created by: anuj.kumar
+2026-11-24 13:26:24,705 INFO    [run fb5143429cfb] [MainThread] [secr.runner] Bulk insert: chunks of 1000, files with >= 20000 rows split over up to 4 connection(s)
+2026-11-24 13:26:24,708 INFO    [run fb5143429cfb] [MainThread] [secr.runner] Rerun: skip files already in COMPLETED/DATA_NOT_AVAILABLE: True; clear earlier staging rows before load: True
+2026-11-24 13:26:24,709 INFO    [run fb5143429cfb] [MainThread] [secr.runner] Odin polling: every 40s, up to 15 attempts; up to 6 sheet(s) per file in parallel, max 20 Odin call(s) in flight; source environment: DEV
+2026-11-24 13:26:24,711 INFO    [run fb5143429cfb] [MainThread] [secr.runner] Secrets: SECR_DB_USER=set, SECR_DB_PASSWORD=set, SECR_S3_BUCKET=set, AWS_ACCESS_KEY_ID=set, AWS_SECRET_ACCESS_KEY=set, SECR_ODIN_API_KEY=set, SECR_ODIN_API_SECRET=set, SECR_EM_CONNECTION_STRING=set, SECR_NAV_CONNECTION_STRING=set
+2026-11-24 13:26:24,713 INFO    [run fb5143429cfb] [MainThread] [secr.db] ESG DB esg-instance.cm18ojbg8cjx.eu-west-2.rds.amazonaws.com:3306/esgdb, max 20 connection(s) from this process; retry every 5s when the DB is full
+2026-11-24 13:26:25,317 DEBUG   [run fb5143429cfb] [MainThread] [secr.db] DB connection opened (1/20 in use)
+2026-11-24 13:26:25,331 DEBUG   [run fb5143429cfb] [MainThread] [secr.db] SQL query (0.01s, 1 row(s)): SELECT @@max_connections AS max_connections, @@max_user_connections AS max_user_connections | params=None
+2026-11-24 13:26:25,357 DEBUG   [run fb5143429cfb] [MainThread] [secr.db] SQL query (0.03s, 1 row(s)): SHOW GLOBAL STATUS LIKE 'Threads_connected' | params=None
+2026-11-24 13:26:25,359 INFO    [run fb5143429cfb] [MainThread] [secr.db] ESG DB connections: 7 in use, server max_connections 61, max_user_connections 0 (0 = no limit)
+2026-11-24 13:26:27,129 INFO    [run fb5143429cfb] [MainThread] [secr.storage] S3 storage ready: bucket appsmith-client-docs-ins-main-raw, region eu-west-2
+2026-11-24 13:26:27,130 INFO    [run fb5143429cfb] [MainThread] [secr.ai_client] Odin AI client ready: https://api.getodin.ai, project 356316e20dcb48658ce127, agent 63622
+2026-11-24 13:26:27,131 INFO    [run fb5143429cfb] [MainThread] [secr.source_systems] Source systems ready: environment DEV, EM query folder \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\queries, EM configured, NAV configured
+2026-11-24 13:26:27,132 INFO    [run fb5143429cfb] [MainThread] [secr.runner] Flows enabled: Normalize=True, Daisy=True
+2026-11-24 13:26:27,249 DEBUG   [run fb5143429cfb] [MainThread] [secr.db] DB connection opened (1/20 in use)
+2026-11-24 13:26:27,318 DEBUG   [run fb5143429cfb] [MainThread] [secr.db] SQL query (0.07s, 1 row(s)): SELECT COUNT(*) AS n FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'FileUploadBatch' AND COLUMN_NAME IN ('ClaimedAt', 'Claime | params=None
+2026-11-24 13:26:27,322 INFO    [run fb5143429cfb] [MainThread] [secr.runner] Claim tracking on: owner MAN-RDS-V10:34164:bc4a14e5, heartbeat every 60s, stale after 30 min
+2026-11-24 13:26:27,429 DEBUG   [run fb5143429cfb] [MainThread] [secr.db] DB connection opened (1/20 in use)
+2026-11-24 13:26:27,533 INFO    [run fb5143429cfb] [MainThread] [secr.aa_entry] Called from Automation Anywhere: config \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\config.yaml, batch ids none, pending=True, max_batches=10, max_files=4, debug=True, test_process=False, secrets passed: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, SECR_DB_PASSWORD, SECR_DB_USER, SECR_EM_CONNECTION_STRING, SECR_NAV_CONNECTION_STRING, SECR_ODIN_API_KEY, SECR_ODIN_API_SECRET, SECR_S3_BUCKET
+2026-11-24 13:26:27,535 INFO    [run fb5143429cfb] [MainThread] [secr.runner] Run started in pending mode
+2026-11-24 13:26:27,540 INFO    [run fb5143429cfb] [MainThread] [secr.orchestrator] Pending mode: up to 10 batch(es) at a time, looking for new ones every 60s, at most 10 batch(es)
+2026-11-24 13:26:27,642 DEBUG   [run fb5143429cfb] [MainThread] [secr.db] DB connection opened (1/20 in use)
+2026-11-24 13:26:27,778 DEBUG   [run fb5143429cfb] [MainThread] [secr.db] DB connection opened (1/20 in use)
+2026-11-24 13:26:27,817 INFO    [run fb5143429cfb] [MainThread] [secr.db] ClaimPendingBatches claimed 0 batch(es): none
+2026-11-24 13:26:27,820 INFO    [run fb5143429cfb] [MainThread] [secr.orchestrator] Pending mode done: 0 batch(es) in 0.3s
+2026-11-24 13:26:27,820 INFO    [run fb5143429cfb] [MainThread] [secr.runner] Summary
+   Batch  State                       Files   OK    Secs  Error
+2026-11-24 13:26:27,821 INFO    [run fb5143429cfb] [MainThread] [secr.runner] Run finished with exit code 0 (0 = all OK, 2 = some files failed, 1 = a batch failed)

@@ -1,0 +1,13 @@
+2026-11-24 13:33:27,987 INFO    [run b5c89fd7744b] [MainThread] [secr] Log file: \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\logs\SECR_20261124_133327_b5c89fd7744b.log (level DEBUG)
+2026-11-24 13:33:28,103 INFO    [run b5c89fd7744b] [MainThread] [secr.runner] Python 3.14.10 on MAN-RDS-V10 (pid 33532)
+2026-11-24 13:33:28,104 INFO    [run b5c89fd7744b] [MainThread] [secr.runner] Parallelism: 10 batch(es) x 4 file(s) per batch, max 20 DB connection(s) from this process
+2026-11-24 13:33:28,106 INFO    [run b5c89fd7744b] [MainThread] [secr.runner] Work folder C:\Users\anuj.kumar\AppData\Local\Temp\3\SECR_work (keep files: False), serialize staging loads: True, created by: anuj.kumar
+2026-11-24 13:33:28,107 INFO    [run b5c89fd7744b] [MainThread] [secr.runner] Bulk insert: chunks of 1000, files with >= 20000 rows split over up to 4 connection(s)
+2026-11-24 13:33:28,107 INFO    [run b5c89fd7744b] [MainThread] [secr.runner] Rerun: skip files already in COMPLETED/DATA_NOT_AVAILABLE: True; clear earlier staging rows before load: True
+2026-11-24 13:33:28,108 INFO    [run b5c89fd7744b] [MainThread] [secr.runner] Odin polling: every 40s, up to 15 attempts; up to 6 sheet(s) per file in parallel, max 20 Odin call(s) in flight; source environment: DEV
+2026-11-24 13:33:28,109 INFO    [run b5c89fd7744b] [MainThread] [secr.runner] Secrets: SECR_DB_USER=set, SECR_DB_PASSWORD=set, SECR_S3_BUCKET=set, AWS_ACCESS_KEY_ID=set, AWS_SECRET_ACCESS_KEY=set, SECR_ODIN_API_KEY=set, SECR_ODIN_API_SECRET=set, SECR_EM_CONNECTION_STRING=set, SECR_NAV_CONNECTION_STRING=set
+2026-11-24 13:33:28,109 INFO    [run b5c89fd7744b] [MainThread] [secr.db] ESG DB esg-instance.cm18ojbg8cjx.eu-west-2.rds.amazonaws.com:3306/esgdb, max 20 connection(s) from this process; retry every 5s when the DB is full
+2026-11-24 13:33:28,519 DEBUG   [run b5c89fd7744b] [MainThread] [secr.db] DB connection opened (1/20 in use)
+2026-11-24 13:33:28,531 DEBUG   [run b5c89fd7744b] [MainThread] [secr.db] SQL query (0.01s, 1 row(s)): SELECT @@max_connections AS max_connections, @@max_user_connections AS max_user_connections | params=None
+2026-11-24 13:33:28,576 DEBUG   [run b5c89fd7744b] [MainThread] [secr.db] SQL query (0.04s, 1 row(s)): SHOW GLOBAL STATUS LIKE 'Threads_connected' | params=None
+2026-11-24 13:33:28,577 INFO    [run b5c89fd7744b] [MainThread] [secr.db] ESG DB connections: 7 in use, server max_connections 61, max_user_connections 0 (0 = no limit)

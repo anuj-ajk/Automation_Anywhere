@@ -1,0 +1,48 @@
+2026-11-24 13:00:30,161 INFO    [run 1dc8b7f2e65b] [MainThread] [secr] Log file: \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\logs\SECR_20261124_130030_1dc8b7f2e65b.log (level DEBUG)
+2026-11-24 13:00:30,295 INFO    [run 1dc8b7f2e65b] [MainThread] [secr.runner] Python 3.14.10 on MAN-RDS-V10 (pid 30612)
+2026-11-24 13:00:30,312 INFO    [run 1dc8b7f2e65b] [MainThread] [secr.runner] Parallelism: 10 batch(es) x 4 file(s) per batch, max 20 DB connection(s) from this process
+2026-11-24 13:00:30,327 INFO    [run 1dc8b7f2e65b] [MainThread] [secr.runner] Work folder C:\Users\anuj.kumar\AppData\Local\Temp\3\SECR_work (keep files: False), serialize staging loads: True, created by: anuj.kumar
+2026-11-24 13:00:30,334 INFO    [run 1dc8b7f2e65b] [MainThread] [secr.runner] Bulk insert: chunks of 1000, files with >= 20000 rows split over up to 4 connection(s)
+2026-11-24 13:00:30,373 INFO    [run 1dc8b7f2e65b] [MainThread] [secr.runner] Rerun: skip files already in COMPLETED/DATA_NOT_AVAILABLE: True; clear earlier staging rows before load: True
+2026-11-24 13:00:30,412 INFO    [run 1dc8b7f2e65b] [MainThread] [secr.runner] Odin polling: every 40s, up to 15 attempts; up to 6 sheet(s) per file in parallel, max 20 Odin call(s) in flight; source environment: DEV
+2026-11-24 13:00:30,416 INFO    [run 1dc8b7f2e65b] [MainThread] [secr.runner] Secrets: SECR_DB_USER=set, SECR_DB_PASSWORD=set, SECR_S3_BUCKET=set, AWS_ACCESS_KEY_ID=set, AWS_SECRET_ACCESS_KEY=set, SECR_ODIN_API_KEY=set, SECR_ODIN_API_SECRET=set, SECR_EM_CONNECTION_STRING=set, SECR_NAV_CONNECTION_STRING=set
+2026-11-24 13:00:30,417 INFO    [run 1dc8b7f2e65b] [MainThread] [secr.db] ESG DB esg-instance.cm18ojbg8cjx.eu-west-2.rds.amazonaws.com:3306/esgdb, max 20 connection(s) from this process; retry every 5s when the DB is full
+2026-11-24 13:00:31,099 DEBUG   [run 1dc8b7f2e65b] [MainThread] [secr.db] DB connection opened (1/20 in use)
+2026-11-24 13:00:31,116 DEBUG   [run 1dc8b7f2e65b] [MainThread] [secr.db] SQL query (0.01s, 1 row(s)): SELECT @@max_connections AS max_connections, @@max_user_connections AS max_user_connections | params=None
+2026-11-24 13:00:31,153 DEBUG   [run 1dc8b7f2e65b] [MainThread] [secr.db] SQL query (0.03s, 1 row(s)): SHOW GLOBAL STATUS LIKE 'Threads_connected' | params=None
+2026-11-24 13:00:31,155 INFO    [run 1dc8b7f2e65b] [MainThread] [secr.db] ESG DB connections: 7 in use, server max_connections 61, max_user_connections 0 (0 = no limit)
+2026-11-24 13:00:32,808 INFO    [run 1dc8b7f2e65b] [MainThread] [secr.storage] S3 storage ready: bucket appsmith-client-docs-ins-main-raw, region eu-west-2
+2026-11-24 13:00:32,813 INFO    [run 1dc8b7f2e65b] [MainThread] [secr.ai_client] Odin AI client ready: https://api.getodin.ai, project 356316e20dcb48658ce127, agent 63622
+2026-11-24 13:00:32,814 INFO    [run 1dc8b7f2e65b] [MainThread] [secr.source_systems] Source systems ready: environment DEV, EM query folder \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\queries, EM configured, NAV configured
+2026-11-24 13:00:32,814 INFO    [run 1dc8b7f2e65b] [MainThread] [secr.runner] Flows enabled: Normalize=True, Daisy=True
+2026-11-24 13:00:32,914 DEBUG   [run 1dc8b7f2e65b] [MainThread] [secr.db] DB connection opened (1/20 in use)
+2026-11-24 13:00:32,991 DEBUG   [run 1dc8b7f2e65b] [MainThread] [secr.db] SQL query (0.08s, 1 row(s)): SELECT COUNT(*) AS n FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'FileUploadBatch' AND COLUMN_NAME IN ('ClaimedAt', 'Claime | params=None
+2026-11-24 13:00:32,994 INFO    [run 1dc8b7f2e65b] [MainThread] [secr.runner] Claim tracking on: owner MAN-RDS-V10:30612:42674cf4, heartbeat every 60s, stale after 30 min
+2026-11-24 13:00:33,090 DEBUG   [run 1dc8b7f2e65b] [MainThread] [secr.db] DB connection opened (1/20 in use)
+2026-11-24 13:00:33,170 INFO    [run 1dc8b7f2e65b] [MainThread] [secr.aa_entry] Called from Automation Anywhere: config \\man-fs-v02\Public\!CC\Automation Anywhere\Automation Processes\Environmental Social and Governance\Automation_Anywhere\SECR_Python\config.yaml, batch ids 52, pending=False, max_batches=10, max_files=4, debug=True, test_process=False, secrets passed: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, SECR_DB_PASSWORD, SECR_DB_USER, SECR_EM_CONNECTION_STRING, SECR_NAV_CONNECTION_STRING, SECR_ODIN_API_KEY, SECR_ODIN_API_SECRET, SECR_S3_BUCKET
+2026-11-24 13:00:33,171 INFO    [run 1dc8b7f2e65b] [MainThread] [secr.runner] Run started for 1 batch id(s): 52
+2026-11-24 13:00:33,171 DEBUG   [run 1dc8b7f2e65b] [MainThread] [secr.runner] E-mail 'SECR normalizer started' not sent (notifications disabled)
+2026-11-24 13:00:33,172 INFO    [run 1dc8b7f2e65b] [MainThread] [secr.orchestrator] Processing 1 batch(es), up to 1 in parallel
+2026-11-24 13:00:33,175 INFO    [run 1dc8b7f2e65b] [batch_0] [secr.batch] [batch 52] Batch started
+2026-11-24 13:00:33,286 DEBUG   [run 1dc8b7f2e65b] [batch_0] [secr.db] [batch 52] DB connection opened (1/20 in use)
+2026-11-24 13:00:33,287 DEBUG   [run 1dc8b7f2e65b] [batch_0] [secr.batch] [batch 52] Trying DB lock secr_batch_52
+2026-11-24 13:00:33,297 DEBUG   [run 1dc8b7f2e65b] [batch_0] [secr.db] [batch 52] SQL query (0.01s, 1 row(s)): SELECT GET_LOCK(%s, %s) AS got | params=('secr_batch_52', 0)
+2026-11-24 13:00:33,298 DEBUG   [run 1dc8b7f2e65b] [batch_0] [secr.db] [batch 52] Got DB lock secr_batch_52 after 0.0s
+2026-11-24 13:00:33,299 DEBUG   [run 1dc8b7f2e65b] [batch_0] [secr.batch] [batch 52] Got DB lock secr_batch_52; work folder C:\Users\anuj.kumar\AppData\Local\Temp\3\SECR_work\b52_130033176409
+2026-11-24 13:00:33,390 DEBUG   [run 1dc8b7f2e65b] [batch_0] [secr.db] [batch 52] DB connection opened (2/20 in use)
+2026-11-24 13:00:33,401 DEBUG   [run 1dc8b7f2e65b] [batch_0] [secr.db] [batch 52] SQL query (0.01s, 1 row(s)): SELECT 1 FROM RefBatchStatus WHERE Code = %s | params=('IN_PROGRESS',)
+2026-11-24 13:01:23,458 ERROR   [run 1dc8b7f2e65b] [batch_0] [secr.db] [batch 52] Lock wait timeout on CALL ClaimBatch: another database session holds a lock on these rows - most likely a transaction that was never committed (e.g. a MySQL Workbench tab that ran an UPDATE/DELETE without COMMIT). Run COMMIT or ROLLBACK in that session, or find it with SELECT * FROM information_schema.innodb_trx and KILL its trx_mysql_thread_id
+2026-11-24 13:01:23,460 ERROR   [run 1dc8b7f2e65b] [batch_0] [secr.batch] [batch 52] Batch skipped: its FileUploadBatch row is locked by another database session (most likely a transaction that was never committed, e.g. a Workbench tab). Nothing was processed; COMMIT or ROLLBACK that session and run the batch again
+2026-11-24 13:01:23,475 DEBUG   [run 1dc8b7f2e65b] [batch_0] [secr.db] [batch 52] SQL query (0.01s, 1 row(s)): SELECT RELEASE_LOCK(%s) AS released | params=('secr_batch_52',)
+2026-11-24 13:01:23,476 DEBUG   [run 1dc8b7f2e65b] [batch_0] [secr.db] [batch 52] Released DB lock secr_batch_52
+2026-11-24 13:01:23,477 DEBUG   [run 1dc8b7f2e65b] [batch_0] [secr.batch] [batch 52] Released DB lock secr_batch_52
+2026-11-24 13:01:23,478 DEBUG   [run 1dc8b7f2e65b] [batch_0] [secr.batch] [batch 52] Removed work folder C:\Users\anuj.kumar\AppData\Local\Temp\3\SECR_work\b52_130033176409
+2026-11-24 13:01:23,480 INFO    [run 1dc8b7f2e65b] [batch_0] [secr.batch] [batch 52] Batch finished: LOCKED in 50.3s (0 file(s))
+2026-11-24 13:01:23,481 INFO    [run 1dc8b7f2e65b] [MainThread] [secr.orchestrator] Progress: 1/1 batch(es) done (batch 52: LOCKED, 50.3s); 0 still running or queued
+2026-11-24 13:01:23,482 INFO    [run 1dc8b7f2e65b] [MainThread] [secr.orchestrator] All batches done in 50.3s
+2026-11-24 13:01:23,483 INFO    [run 1dc8b7f2e65b] [MainThread] [secr.runner] Summary
+   Batch  State                       Files   OK    Secs  Error
+      52  LOCKED                          0    0    50.3  batch row locked by another DB session (uncommitted transaction?); skipped, nothing processed
+2026-11-24 13:01:23,487 INFO    [run 1dc8b7f2e65b] [MainThread] [secr.runner] Run finished with exit code 2 (0 = all OK, 2 = some files failed, 1 = a batch failed)
+2026-11-24 13:01:23,489 DEBUG   [run 1dc8b7f2e65b] [MainThread] [secr.runner] E-mail 'SECR normalizer finished with errors' not sent (notifications disabled)
+2026-11-24 13:01:23,489 INFO    [run 1dc8b7f2e65b] [MainThread] [secr.aa_entry] Returning status PARTIAL to Automation Anywhere
