@@ -91,6 +91,9 @@ class RunConfig:
     insert_connections: int = 4
     parallel_insert_min_rows: int = 20000
     pending_batches_query: str = ""
+    # Who uploaded a batch, for e-mailing the result to that person only (aa_entry output "recipients").
+    # One %s = the BatchId; the first column of the first row is used. "" = no lookup.
+    batch_owner_query: str = "SELECT CreatedBy FROM FileUploadBatch WHERE BatchId = %s"
     # Rerun: files already in one of completed_statuses are not processed again (force / --force overrides).
     skip_completed_files: bool = True
     completed_statuses: tuple = ("COMPLETED", "DATA_NOT_AVAILABLE")
@@ -227,6 +230,8 @@ def load_config(path: str | Path) -> AppConfig:
         insert_connections=int(r.get("insert_connections", 4)),
         parallel_insert_min_rows=int(r.get("parallel_insert_min_rows", 20000)),
         pending_batches_query=r.get("pending_batches_query", "") or "",
+        batch_owner_query=(r["batch_owner_query"] or "") if "batch_owner_query" in r
+        else RunConfig.batch_owner_query,
         skip_completed_files=bool(r.get("skip_completed_files", True)),
         completed_statuses=tuple(str(c).strip().upper() for c in
                                  (r.get("completed_statuses") or ("COMPLETED", "DATA_NOT_AVAILABLE"))),

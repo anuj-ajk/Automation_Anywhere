@@ -30,6 +30,12 @@ run:
   # Optional, used by "run --pending". Must return a BatchId column. Example only - adjust to
   # however new batches are flagged in your DB:
   pending_batches_query: "SELECT FB.BatchId FROM FileUploadBatch FB JOIN RefBatchStatus B ON B.BatchStatusId = FB.BatchStatusId WHERE B.Code = 'PROCESSING' OR B.Code = 'PARTIAL_FAILURE' ORDER BY FB.BatchId"
+  # Who uploaded each batch, so AA can e-mail the result to that person only (output "recipients").
+  # One %s = BatchId; the first column must be the uploader's e-mail address. If CreatedBy holds a user
+  # name / id instead, join the users table here, e.g.
+  #   "SELECT U.Email FROM FileUploadBatch FB JOIN Users U ON U.UserId = FB.CreatedBy WHERE FB.BatchId = %s"
+  # "" = no lookup.
+  batch_owner_query: "SELECT CreatedBy FROM FileUploadBatch WHERE BatchId = %s"
 
 
 esg_db:

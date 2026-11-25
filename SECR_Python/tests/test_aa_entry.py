@@ -282,3 +282,65 @@ def test_claimer_skips_batches_taken_elsewhere(tmp_path):
     finally:
         runner.pending_batch_ids = original
     assert processor._claimed == {"42": "PROCESSING", "43": "PROCESSING"}
+
+
+class _OwnerDb:
+    """Fake DB for the uploader lookup (run.batch_owner_query)."""
+
+    def __init__(self, owners, fail=False):
+        self.owners, self.fail, self.calls = owners, fail, []
+
+    def session(self):
+        import contextlib
+
+        db = self
+
+        class S:
+            def query(self, sql, params):
+                if db.fail:
+                    raise RuntimeError("db down")
+                db.calls.append((sql, params))
+                bid = params[0]
+                return [{"CreatedBy": db.owners[bid]}] if bid in db.owners else []
+
+        return contextlib.nullcontext(S())
+
+
+def test_batch_owner_lookup_and_recipients():
+    import logging
+
+    log = logging.getLogger("test")
+    db = _OwnerDb({"40": "Ann@Example.com", "41": "ann@example.com", "42": "jsmith", "43": "bob@example.com"})
+    owners = aa_entry._lookup_owners(db, "SELECT CreatedBy FROM FileUploadBatch WHERE BatchId = %s",
+                                     ["40", "41", "42", "43", "44", "40"], log)
+    assert owners == {"40": "Ann@Example.com", "41": "ann@example.com", "42": "jsmith",
+                      "43": "bob@example.com", "44": ""}
+    assert len(db.calls) == 5  # each batch looked up once
+
+    def batch(bid, state, files, ok):
+        return {"batch_id": bid, "state": state, "files": files, "files_ok": ok, "seconds": 1.0, "error": "",
+                "created_by": owners[bid], "created_by_email": aa_entry._email_or_blank(owners[bid]),
+                "file_results": []}
+
+    out = json.loads(aa_entry._result("PARTIAL", 2, "x", "log", [
+        batch("40", "SUCCESS", 2, 2), batch("41", "COMPLETED_WITH_FILE_ERRORS", 3, 1),
+        batch("42", "SUCCESS", 1, 1), batch("43", "SUCCESS", 1, 1), batch("44", "FAILED", 0, 0)]))
+    assert out["batches"][2]["created_by"] == "jsmith" and out["batches"][2]["created_by_email"] == ""
+    ann, bob = out["recipients"]
+    assert ann["email"] == "Ann@Example.com" and ann["batch_ids"] == "40,41"  # same person, any case
+    assert (ann["status"], ann["exit_code"], ann["files_total"], ann["files_ok"]) == ("PARTIAL", 2, 5, 3)
+    assert "Batch 40" in ann["business_batches_html"] and "Batch 43" not in ann["business_batches_html"]
+    assert (bob["status"], bob["batch_ids"]) == ("SUCCESS", "43")
+    assert out["recipient_emails"] == "Ann@Example.com;bob@example.com"
+    assert out["batches_without_email"] == "42,44"
+
+
+def test_batch_owner_lookup_never_breaks_the_run():
+    import logging
+
+    log = logging.getLogger("test")
+    assert aa_entry._lookup_owners(_OwnerDb({}, fail=True), "SELECT 1", ["40"], log) == {}
+    assert aa_entry._lookup_owners(_OwnerDb({"40": "a@b.co"}), "", ["40"], log) == {}  # lookup switched off
+    assert aa_entry._lookup_owners(None, "SELECT 1", ["40"], log) == {}
+    out = json.loads(aa_entry.run_batches({"batch_ids": ""}))
+    assert out["recipients"] == [] and out["recipient_emails"] == "" and out["batches_without_email"] == ""

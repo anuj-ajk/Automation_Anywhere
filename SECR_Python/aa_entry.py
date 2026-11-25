@@ -35,9 +35,19 @@ Output: always a JSON string (never raises), e.g.
      "batches": [{"batch_id": "40", "state": "SUCCESS", "files": 3, "files_ok": 3,
                   "seconds": 512.4, "error": "", "file_results": [...]}]}
     status is SUCCESS (all files OK), PARTIAL (some files failed) or FAILED.
+    E-mail helpers (for the Python_<status>_Technical / Python_<status>_Business templates in UserConfig.xlsx):
+    batch_count, files_total, files_ok, message_html and trace_html (HTML-escaped),
+    batches_html (technical table: states, errors, timings) and
+    business_batches_html (business table: plain status words, no technical details).
+    Per batch: created_by (FileUploadBatch.CreatedBy, via run.batch_owner_query) and created_by_email
+    ("" when it is not an e-mail address). recipients: one entry per uploader e-mail with that person's
+    status, exit_code, batch_ids, batch_count, files_total, files_ok and business_batches_html, so the bot
+    loops over it and sends each uploader the Business e-mail for their own batches only.
+    recipient_emails ("a@x;b@y") and batches_without_email ("42,43") are summaries of the same.
 """
 from __future__ import annotations
 
+import html
 import json
 import os
 import re
@@ -165,12 +175,15 @@ def run_batches(args) -> str:
         else:
             results, code, summary = execute(processor, notifier, batch_ids, cfg.run.max_parallel_batches)
         log.info("Returning status %s to Automation Anywhere", _STATUS_BY_CODE.get(code, "FAILED"))
+        owners = _lookup_owners(db, cfg.run.batch_owner_query, [r.batch_id for r in results], log)
 
         return _result(
             _STATUS_BY_CODE.get(code, "FAILED"), code, summary, log_file,
             [
                 {
                     "batch_id": r.batch_id,
+                    "created_by": owners.get(str(r.batch_id), ""),
+                    "created_by_email": _email_or_blank(owners.get(str(r.batch_id), "")),
                     "state": r.state,
                     "files": len(r.files),
                     "files_ok": sum(1 for f in r.files if f.ok),
@@ -192,11 +205,176 @@ def run_batches(args) -> str:
         return _result("FAILED", 1, f"{type(exc).__name__}: {exc}", trace=traceback.format_exc())
 
 
+_STATE_COLOURS = {  # (text, background) for the state pills in batches_html
+    "SUCCESS": ("#1A7F37", "#E9F7EE"), "COMPLETED": ("#1A7F37", "#E9F7EE"),
+    "ALREADY_COMPLETED": ("#1A7F37", "#E9F7EE"),
+    "FAILED": ("#CF222E", "#FDECEC"), "ERROR": ("#CF222E", "#FDECEC"),
+    "COMPLETED_WITH_FILE_ERRORS": ("#9A6700", "#FFF8E1"), "PARTIAL_FAILURE": ("#9A6700", "#FFF8E1"),
+    "LOCKED": ("#9A6700", "#FFF8E1"),
+}
+_FONT = "'Segoe UI', Calibri, Arial, Helvetica, sans-serif"
+
+
+def _pill(state) -> str:
+    fg, bg = _STATE_COLOURS.get(str(state).upper(), ("#57606A", "#F2F4F6"))
+    return (f'<span style="display:inline-block;background:{bg};color:{fg};font-size:11px;font-weight:700;'
+            f'padding:2px 8px;border-radius:10px;white-space:nowrap;">{html.escape(str(state))}</span>')
+
+
+def _batches_html(batches) -> str:
+    """An e-mail-safe HTML table (inline styles) of every batch and its files, for the {BatchesHtml} placeholder."""
+    if not batches:
+        return (f'<p style="margin:0;font-family:{_FONT};font-size:13px;color:#656D76;">'
+                'No batches were processed in this run.</p>')
+    th = (f'style="padding:8px 10px;font-family:{_FONT};font-size:11px;font-weight:700;letter-spacing:.5px;'
+          'text-transform:uppercase;color:#656D76;text-align:left;border-bottom:1px solid #D0D7DE;"')
+    td = f'style="padding:7px 10px;font-family:{_FONT};font-size:13px;color:#24292F;border-bottom:1px solid #EAEEF2;"'
+    rows = []
+    for b in batches:
+        err = html.escape(str(b.get("error") or ""))
+        rows.append(
+            f'<tr style="background:#F6F8FA;"><td {td}><b>Batch {html.escape(str(b.get("batch_id")))}</b></td>'
+            f'<td {td}>{_pill(b.get("state"))}</td>'
+            f'<td {td}>{b.get("files_ok", 0)} / {b.get("files", 0)} files OK</td>'
+            f'<td {td}>{float(b.get("seconds") or 0):.1f} s</td></tr>')
+        if err:
+            rows.append(f'<tr><td {td} colspan="4"><span style="color:#CF222E;">{err}</span></td></tr>')
+        for f in b.get("file_results") or []:
+            detail = html.escape(str(f.get("detail") or ""))
+            rows.append(
+                f'<tr><td {td}>&nbsp;&nbsp;File {html.escape(str(f.get("file_id")))}</td>'
+                f'<td {td}>{_pill(f.get("status"))}</td>'
+                f'<td {td} colspan="2">{html.escape(str(f.get("file_name") or ""))}'
+                + (f'<br><span style="font-size:12px;color:#CF222E;">{detail}</span>' if detail else "")
+                + '</td></tr>')
+    return ('<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" '
+            'style="border-collapse:collapse;border:1px solid #D0D7DE;">'
+            f'<tr><th {th}>Batch / File</th><th {th}>State</th><th {th}>Files</th><th {th}>Time</th></tr>'
+            + "".join(rows) + "</table>")
+
+
+_BUSINESS_STATE = {  # plain words for the business e-mail (no technical state names)
+    "SUCCESS": "Completed", "COMPLETED": "Completed", "ALREADY_COMPLETED": "Already completed",
+    "COMPLETED_WITH_FILE_ERRORS": "Completed with issues", "PARTIAL_FAILURE": "Completed with issues",
+    "FAILED": "Not completed", "ERROR": "Not completed", "LOCKED": "Will retry", "SKIPPED": "Skipped",
+    "NO_FILES": "No files", "IN_PROGRESS": "In progress",
+}
+
+
+def _business_batches_html(batches) -> str:
+    """Like _batches_html but for business readers: plain status words, no error details or timings."""
+    if not batches:
+        return (f'<p style="margin:0;font-family:{_FONT};font-size:13px;color:#656D76;">'
+                'No batches were processed in this run.</p>')
+    th = (f'style="padding:8px 10px;font-family:{_FONT};font-size:11px;font-weight:700;letter-spacing:.5px;'
+          'text-transform:uppercase;color:#656D76;text-align:left;border-bottom:1px solid #D0D7DE;"')
+    td = f'style="padding:7px 10px;font-family:{_FONT};font-size:13px;color:#24292F;border-bottom:1px solid #EAEEF2;"'
+
+    def word(state):
+        key = str(state or "").upper()
+        fg, bg = _STATE_COLOURS.get(key, ("#57606A", "#F2F4F6"))
+        text = _BUSINESS_STATE.get(key, str(state or "").replace("_", " ").capitalize())
+        return (f'<span style="display:inline-block;background:{bg};color:{fg};font-size:11px;font-weight:700;'
+                f'padding:2px 8px;border-radius:10px;white-space:nowrap;">{html.escape(text)}</span>')
+
+    rows = []
+    for b in batches:
+        rows.append(
+            f'<tr style="background:#F6F8FA;"><td {td} colspan="2"><b>Batch {html.escape(str(b.get("batch_id")))}</b>'
+            f' &nbsp;<span style="color:#656D76;">({b.get("files_ok", 0)} of {b.get("files", 0)} files processed)</span></td>'
+            f'<td {td}>{word(b.get("state"))}</td></tr>')
+        for f in b.get("file_results") or []:
+            rows.append(f'<tr><td {td} width="8">&nbsp;</td><td {td}>{html.escape(str(f.get("file_name") or ""))}</td>'
+                        f'<td {td}>{word(f.get("status"))}</td></tr>')
+    return ('<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" '
+            'style="border-collapse:collapse;border:1px solid #D0D7DE;">'
+            f'<tr><th {th} colspan="2">Batch / File</th><th {th}>Status</th></tr>'
+            + "".join(rows) + "</table>")
+
+
+_EMAIL = re.compile(r"^[^@\s,;<>]+@[^@\s,;<>]+\.[^@\s,;<>]+$")
+
+
+def _email_or_blank(value) -> str:
+    """The value if it looks like one e-mail address, else "" (CreatedBy may hold a user name or id)."""
+    text = str(value or "").strip()
+    return text if _EMAIL.match(text) else ""
+
+
+def _lookup_owners(db, sql, batch_ids, log) -> dict[str, str]:
+    """BatchId -> uploader (first column of ``sql``, normally FileUploadBatch.CreatedBy).
+    Never raises: a failed lookup only means no per-user e-mail, the run result stays as it is."""
+    owners: dict[str, str] = {}
+    if not sql or db is None or not batch_ids:
+        return owners
+    try:
+        with db.session() as s:
+            for bid in dict.fromkeys(str(b) for b in batch_ids):
+                rows = s.query(sql, (bid,))
+                value = next(iter(rows[0].values()), None) if rows else None
+                owners[bid] = "" if value is None else str(value).strip()
+        missing = [b for b, v in owners.items() if not _email_or_blank(v)]
+        if missing:
+            log.warning("No valid uploader e-mail for batch(es) %s (run.batch_owner_query); they are left out of "
+                        "'recipients'", ", ".join(missing))
+    except Exception as exc:
+        log.warning("Could not look up the batch uploaders (run.batch_owner_query): %s: %s",
+                    type(exc).__name__, exc)
+    return owners
+
+
+def _overall(batches) -> tuple[str, int]:
+    """Status and exit code for a subset of batches, same rules as orchestrator.exit_code."""
+    states = {str(b.get("state")) for b in batches}
+    if "FAILED" in states:
+        return "FAILED", 1
+    if states & {"COMPLETED_WITH_FILE_ERRORS", "LOCKED"}:
+        return "PARTIAL", 2
+    return "SUCCESS", 0
+
+
+def _recipients(batches) -> list[dict]:
+    """One entry per uploader e-mail with only that person's batches, ready for the Business e-mail."""
+    by_email: dict[str, list[dict]] = {}
+    for b in batches:
+        email = b.get("created_by_email") or ""
+        if email:
+            by_email.setdefault(email.lower(), []).append(b)
+    out = []
+    for own in by_email.values():
+        status, code = _overall(own)
+        out.append({
+            "email": own[0]["created_by_email"],
+            "status": status,
+            "exit_code": code,
+            "batch_ids": ",".join(str(b.get("batch_id")) for b in own),
+            "batch_count": len(own),
+            "files_total": sum(int(b.get("files") or 0) for b in own),
+            "files_ok": sum(int(b.get("files_ok") or 0) for b in own),
+            "business_batches_html": _business_batches_html(own),
+        })
+    return out
+
+
 def _result(status, code, message, log_file="", batches=None, trace="") -> str:
+    batches = batches or []
     out = {"status": status, "exit_code": code, "message": message, "log_file": log_file,
-           "batches": batches or []}
+           "batches": batches}
     if trace:
         out["trace"] = trace
+    # Ready-made values for the Python_<status>_Technical / _Business e-mail templates in UserConfig.xlsx.
+    out["batch_count"] = len(batches)
+    out["files_total"] = sum(int(b.get("files") or 0) for b in batches)
+    out["files_ok"] = sum(int(b.get("files_ok") or 0) for b in batches)
+    out["message_html"] = html.escape(str(message or ""))
+    out["trace_html"] = html.escape(str(trace or "No stack trace (the run did not raise an exception)."))
+    out["batches_html"] = _batches_html(batches)                     # technical: states, errors, timings
+    out["business_batches_html"] = _business_batches_html(batches)   # business: plain words only
+    # Per uploader (FileUploadBatch.CreatedBy): send each person the Business e-mail for their batches only.
+    out["recipients"] = _recipients(batches)
+    out["recipient_emails"] = ";".join(r["email"] for r in out["recipients"])
+    out["batches_without_email"] = ",".join(str(b.get("batch_id")) for b in batches
+                                            if not b.get("created_by_email"))
     return json.dumps(out, default=str)
 
 
