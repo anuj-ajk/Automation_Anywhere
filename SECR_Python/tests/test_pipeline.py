@@ -503,6 +503,31 @@ def test_odin_calls_are_capped_across_files(tmp_path):
     assert ai.peak == 3                         # 4 files x 5 sheets, never more than 3 calls at once
 
 
+def test_same_sheet_names_of_different_files_split_into_own_file_id_folders(tmp_path):
+    from secr.models import BatchContext
+
+    class PathAI(CountingAI):
+        def __init__(self, csv_url):
+            super().__init__(csv_url, answer_after=1, delay=0)
+            self.sent: list[Path] = []
+
+        def send_file(self, chat_id, path):
+            with self.lock:
+                self.sent.append(Path(path))
+            return True
+
+    ai = PathAI(str(_metrics_csv(tmp_path / "m.csv")))
+    _db, flow, _ = _flow(tmp_path, ai, sheets=2, per_file=2)  # every file has sheets S1 and S2
+    ctx = BatchContext("40", "5", "ACME", "2024-04-01", "2025-03-31", tmp_path / "w")
+    with __import__("concurrent.futures").futures.ThreadPoolExecutor(2) as pool:
+        outs = list(pool.map(lambda i: flow.run_file(ctx, _row("40", i), get_logger()), (101, 202)))
+    assert all(o.status == st.COMPLETED for o in outs)
+    assert sorted(p.relative_to(ctx.work_dir).as_posix() for p in ai.sent) == [
+        "f101/sheets/Sheet_S1.xlsx", "f101/sheets/Sheet_S2.xlsx",
+        "f202/sheets/Sheet_S1.xlsx", "f202/sheets/Sheet_S2.xlsx",
+    ]
+
+
 class RecSession:
     """Records inserts, procedure calls and named locks in one shared event list."""
 
