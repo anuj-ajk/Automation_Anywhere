@@ -123,6 +123,12 @@ class RunConfig:
     # Optional stored procedure that releases stale claims (sql/ClaimBatches.sql), e.g. "ReleaseStaleClaims".
     # Empty: the same release from Python.
     release_stale_procedure: str = ""
+    # Retry limit (needs sql/AddAttemptCountColumn.sql): a batch that still has failed files is picked up
+    # again at most this many times after its first run (-1 = no limit). When the last allowed run does not
+    # complete, the batch gets batch_status_retries_exhausted, which pending mode does not take again.
+    max_batch_retries: int = 3
+    batch_status_retries_exhausted: str = "FAILED"
+    reset_retry_count: bool = False  # set by force / --force only: AttemptCount back to 0 first
     # Test process: only insert into the Staging_* tables; the Load* / Calculate* (and other post-load)
     # stored procedures are NOT called. Set from the AA dictionary key "test_process".
     test_process: bool = False
@@ -247,6 +253,8 @@ def load_config(path: str | Path) -> AppConfig:
         claim_heartbeat_seconds=int(r.get("claim_heartbeat_seconds", 60)),
         stale_claim_minutes=int(r.get("stale_claim_minutes", 30)),
         release_stale_procedure=str(r.get("release_stale_procedure") or "").strip(),
+        max_batch_retries=int(r.get("max_batch_retries", 3) if r.get("max_batch_retries", 3) is not None else -1),
+        batch_status_retries_exhausted=str(r.get("batch_status_retries_exhausted") or "FAILED").strip().upper(),
     )
 
     n = _section(raw, "notify")
@@ -292,6 +300,10 @@ def validate(cfg: AppConfig) -> None:
             f"run.max_db_connections ({cfg.run.max_db_connections}) must be at least "
             f"max_parallel_batches + 1 = {needed}"
         )
+    if cfg.run.max_batch_retries < -1:
+        problems.append("run.max_batch_retries must be >= 0 (or -1 for no limit)")
+    if cfg.run.batch_status_retries_exhausted.upper() in {c.upper() for c in cfg.run.claimable_statuses}:
+        problems.append("run.batch_status_retries_exhausted must not be one of run.claimable_statuses")
     if cfg.db.connect_retry_seconds <= 0:
         problems.append("esg_db.connect_retry_seconds must be > 0")
     if problems:

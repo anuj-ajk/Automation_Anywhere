@@ -6,6 +6,7 @@
 -- to the state they had before the first run:
 --   FileUploadBatch  BatchStatusId      -> @batch_status (PROCESSING: picked up by pending mode again)
 --                    ClaimedAt/By/Prev  -> NULL (only if sql/AddClaimColumns.sql was run, see step 3)
+--                    AttemptCount       -> 0    (only if sql/AddAttemptCountColumn.sql was run, see step 3)
 --   UploadedFile     ProcessingStatusId -> @file_status, StatusDescription / CategoryRecognized -> NULL
 --   Staging_* rows   for these files    -> deleted when @clear_staging = 1
 --                    (the Python run also deletes them before each load, this just leaves the tables clean)
@@ -72,6 +73,11 @@ WHERE  FIND_IN_SET(BatchId, @batch_ids);
 -- Only if sql/AddClaimColumns.sql was run (otherwise this statement fails: remove it, nothing else changes):
 UPDATE FileUploadBatch
 SET    ClaimedAt = NULL, ClaimedBy = NULL, ClaimPreviousStatusId = NULL
+WHERE  FIND_IN_SET(BatchId, @batch_ids);
+
+-- Only if sql/AddAttemptCountColumn.sql was run (otherwise remove it): the batch gets all its retries again.
+UPDATE FileUploadBatch
+SET    AttemptCount = 0
 WHERE  FIND_IN_SET(BatchId, @batch_ids);
 
 -- 4. Commit: releases the row locks, so the SECR process can update these batches and files again

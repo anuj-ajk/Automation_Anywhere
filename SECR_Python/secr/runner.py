@@ -40,6 +40,7 @@ def apply_overrides(cfg: AppConfig, max_batches: int | None = None, max_files: i
     if force:  # process every file of the batch again, also those already completed
         cfg.run.skip_completed_files = False
         cfg.run.take_in_progress_batches = True  # and take a batch even if it is IN_PROGRESS
+        cfg.run.reset_retry_count = True  # and give it its retries again (AttemptCount = 0)
     if max_batches:
         cfg.run.max_parallel_batches = int(max_batches)
     if max_files:
@@ -104,6 +105,7 @@ def build(cfg: AppConfig, debug: bool = False) -> tuple[BatchProcessor, EsgDb, N
     processor.claimable_statuses = tuple(cfg.run.claimable_statuses)
     processor.take_in_progress = cfg.run.take_in_progress_batches
     apply_claim_tracking(processor, cfg, db, log)  # ClaimedAt / ClaimedBy, if sql/AddClaimColumns.sql was run
+    apply_retry_limit(processor, cfg, db, log)  # AttemptCount, if sql/AddAttemptCountColumn.sql was run
     if processor.track_claims:  # a batch left IN_PROGRESS by a process that died must not block this run
         try:
             released = release_stale(processor, cfg, db)
@@ -165,6 +167,31 @@ def apply_claim_tracking(processor: BatchProcessor, cfg: AppConfig, db: EsgDb, l
                     "batches could be released", r.stale_claim_minutes, processor.heartbeat_seconds)
     log.info("Claim tracking on: owner %s, heartbeat every %ds, stale after %s", processor.claim_owner,
              processor.heartbeat_seconds, f"{r.stale_claim_minutes} min" if r.stale_claim_minutes else "never")
+    return True
+
+
+def apply_retry_limit(processor: BatchProcessor, cfg: AppConfig, db: EsgDb, log) -> bool:
+    """Switch on the retry limit when sql/AddAttemptCountColumn.sql has been run."""
+    r = cfg.run
+    if r.max_batch_retries < 0:
+        log.info("Retry limit off (max_batch_retries = %d): batches with failed files are retried on every run",
+                 r.max_batch_retries)
+        return False
+    try:
+        with db.session() as s:
+            available = s.has_attempt_column()
+    except Exception as exc:
+        log.warning("Could not check for the AttemptCount column: %s", exc)
+        available = False
+    if not available:
+        log.warning("FileUploadBatch has no AttemptCount column: batches with failed files are retried on every "
+                    "run without limit (run sql/AddAttemptCountColumn.sql)")
+        return False
+    processor.max_retries = r.max_batch_retries
+    processor.status_retries_exhausted = r.batch_status_retries_exhausted
+    processor.reset_attempts = r.reset_retry_count  # force / --force: count again from 0
+    log.info("Retry limit on: a batch is retried at most %d time(s), then set to %s", r.max_batch_retries,
+             r.batch_status_retries_exhausted)
     return True
 
 

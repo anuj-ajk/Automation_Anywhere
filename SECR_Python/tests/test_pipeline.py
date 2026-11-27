@@ -62,6 +62,18 @@ class FakeSession:
     def get_batch_status(self, batch_id):
         return self.db.batch_status.get(batch_id, "PROCESSING")
 
+    def get_attempt_count(self, batch_id):
+        return self.db.attempts.get(batch_id, 0)
+
+    def add_attempt(self, batch_id):
+        with self.db.lock:
+            self.db.attempts[batch_id] = self.db.attempts.get(batch_id, 0) + 1
+            return self.db.attempts[batch_id]
+
+    def reset_attempts(self, batch_id):
+        self.db.attempts[batch_id] = 0
+        return 1
+
     def batch_status_codes(self):
         return sorted(self.db.batch_codes)
 
@@ -125,11 +137,12 @@ class FakeDb:
         self.inserted, self.named_locks = {}, set()
         self.deleted = []
         self.categories = {}
-        self.batch_codes = {"COMPLETE", "PROCESSING", "PARTIAL_FAILURE", "IN_PROGRESS"}
+        self.batch_codes = {"COMPLETE", "PROCESSING", "PARTIAL_FAILURE", "IN_PROGRESS", "FAILED"}
         self.batch_history = {}
         self.claim_calls, self.heartbeats = [], []
         self.sheet_results = {}
         self.progress = {}
+        self.attempts = {}
 
     @contextlib.contextmanager
     def try_session(self):
@@ -308,6 +321,72 @@ def test_one_bad_file_does_not_fail_the_batch(tmp_path):
     assert result.state == "COMPLETED_WITH_FILE_ERRORS"
     assert db.status["1"] == st.COMPLETED and db.status["2"] == st.FAILED
     assert db.batch_status["9"] == st.BATCH_PARTIAL_FAILURE
+
+
+
+# ---------------------------------------------------------------- retry limit (FileUploadBatch.AttemptCount)
+def _always_failing_batch(tmp_path, max_retries=3):
+    batches = {"9": [_row("9", 1), _row("9", 2, st.DAISY_FILE_NAME, "Unknown Category")]}
+    db, processor = _build(tmp_path, batches)
+    processor.max_retries = max_retries
+    return db, processor
+
+
+def test_batch_is_retried_at_most_max_retries_times_then_failed(tmp_path):
+    db, processor = _always_failing_batch(tmp_path)
+    states = []
+    for _ in range(4):                                       # first run + 3 retries
+        db.batch_status["9"] = st.BATCH_PARTIAL_FAILURE if states else "PROCESSING"
+        r = processor.process("9")
+        states.append((r.state, db.batch_status["9"]))
+    assert states[:3] == [("COMPLETED_WITH_FILE_ERRORS", st.BATCH_PARTIAL_FAILURE)] * 3
+    assert states[3] == ("COMPLETED_WITH_FILE_ERRORS", st.FAILED)   # last retry failed: not claimable any more
+    assert db.attempts["9"] == 4
+    assert "retry limit reached" in r.error
+
+
+def test_batch_over_the_limit_is_not_processed_again(tmp_path):
+    db, processor = _always_failing_batch(tmp_path)
+    db.attempts["9"] = 4                                      # e.g. the last run died before setting FAILED
+    db.batch_status["9"] = st.BATCH_PARTIAL_FAILURE
+    r = processor.process("9")
+    assert r.state == "FAILED" and "retry limit" in r.error
+    assert db.batch_status["9"] == st.FAILED and db.attempts["9"] == 4
+    assert db.status == {}                                    # no file touched
+
+
+def test_batch_over_the_limit_without_failed_code_keeps_its_status(tmp_path):
+    db, processor = _always_failing_batch(tmp_path)
+    db.batch_codes.discard("FAILED")
+    db.attempts["9"] = 4
+    db.batch_status["9"] = st.BATCH_PARTIAL_FAILURE
+    r = processor.process("9")
+    assert r.state == "FAILED" and db.status == {}
+    assert db.batch_status["9"] == st.BATCH_PARTIAL_FAILURE  # put back, still skipped next time
+
+
+def test_retry_that_succeeds_completes_the_batch(tmp_path):
+    db, processor = _build(tmp_path, {"9": [_row("9", 1)]})
+    processor.max_retries = 3
+    db.attempts["9"] = 3                                      # last allowed run
+    assert processor.process("9").state == "SUCCESS"
+    assert db.batch_status["9"] == st.BATCH_COMPLETE
+
+
+def test_force_resets_the_retry_count(tmp_path):
+    db, processor = _always_failing_batch(tmp_path)
+    processor.reset_attempts = True
+    db.attempts["9"] = 4
+    r = processor.process("9")
+    assert r.state == "COMPLETED_WITH_FILE_ERRORS" and db.attempts["9"] == 1
+    assert db.batch_status["9"] == st.BATCH_PARTIAL_FAILURE
+
+
+def test_no_retry_limit_without_the_column(tmp_path):
+    db, processor = _always_failing_batch(tmp_path, max_retries=None)
+    for _ in range(6):
+        processor.process("9")
+    assert db.batch_status["9"] == st.BATCH_PARTIAL_FAILURE and db.attempts == {}
 
 
 if __name__ == "__main__":

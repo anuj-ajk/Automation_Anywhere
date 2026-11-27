@@ -298,6 +298,26 @@ class EsgSession:
         )
         return bool(rows) and int(rows[0]["n"]) == 3
 
+    # ---------- retry limit (sql/AddAttemptCountColumn.sql) ----------
+    def has_attempt_column(self) -> bool:
+        rows = self.query(
+            "SELECT COUNT(*) AS n FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() "
+            "AND TABLE_NAME = 'FileUploadBatch' AND COLUMN_NAME = 'AttemptCount'"
+        )
+        return bool(rows) and int(rows[0]["n"]) == 1
+
+    def get_attempt_count(self, batch_id: str) -> int:
+        rows = self.query("SELECT AttemptCount FROM FileUploadBatch WHERE BatchId = %s", (batch_id,))
+        return int(rows[0]["AttemptCount"] or 0) if rows else 0
+
+    def add_attempt(self, batch_id: str) -> int:
+        """AttemptCount + 1 for a run that starts processing the batch's files. Returns the new count."""
+        self.execute("UPDATE FileUploadBatch SET AttemptCount = AttemptCount + 1 WHERE BatchId = %s", (batch_id,))
+        return self.get_attempt_count(batch_id)
+
+    def reset_attempts(self, batch_id: str) -> int:
+        return self.execute("UPDATE FileUploadBatch SET AttemptCount = 0 WHERE BatchId = %s", (batch_id,))
+
     def heartbeat(self, batch_id: str, owner: str) -> int:
         """Refresh ClaimedAt while the batch runs, so it is not taken for a stale claim."""
         return self.execute("UPDATE FileUploadBatch SET ClaimedAt = NOW() WHERE BatchId = %s AND ClaimedBy = %s",

@@ -25,6 +25,8 @@ CLAIMED_ELSEWHERE = object()
 # The FileUploadBatch row is locked by another session (MySQL 1205, e.g. an uncommitted transaction):
 # the batch is skipped completely, nothing is read, sent to the AI or loaded.
 ROW_LOCKED = object()
+# _start_attempt result: the batch already had every run it is allowed (run.max_batch_retries)
+RETRIES_EXHAUSTED = object()
 
 
 class BatchProcessor:
@@ -59,6 +61,12 @@ class BatchProcessor:
         self.claim_batch_procedure = ""
         self.claimable_statuses: tuple = ()
         self.take_in_progress = False
+        # Retry limit (sql/AddAttemptCountColumn.sql), switched on by the runner when the column exists:
+        # a batch gets at most 1 + max_retries runs (None = no limit). When the last one does not complete,
+        # the batch is set to status_retries_exhausted, which is not claimable.
+        self.max_retries: int | None = None
+        self.status_retries_exhausted = st.FAILED
+        self.reset_attempts = False  # force: start counting again for the batches of this run
 
     def _claim_kw(self, finished: bool) -> dict:
         """Extra set_batch_status arguments: record the claim when it starts, clear it when the batch ends."""
@@ -157,6 +165,51 @@ class BatchProcessor:
                  current or "<none>", ", ".join(self.claimable_statuses) or "none", self.status_in_progress)
         return None
 
+    def _start_attempt(self, batch_id: str, log):
+        """Count this run in FileUploadBatch.AttemptCount. Returns the attempt number (1 = first run), None when
+        attempts are not counted, or RETRIES_EXHAUSTED when the batch already had every run it is allowed."""
+        if self.max_retries is None:
+            return None
+        allowed = self.max_retries + 1
+        try:
+            with self.db.session() as s:
+                if self.reset_attempts:
+                    s.reset_attempts(batch_id)
+                    log.info("Force: retry count reset")
+                done = s.get_attempt_count(batch_id)
+                if done >= allowed:
+                    return RETRIES_EXHAUSTED
+                attempt = s.add_attempt(batch_id)
+        except Exception as exc:  # counting must never stop the batch
+            log.error("Could not update the attempt count: %s", exc)
+            return None
+        if attempt > 1:
+            log.info("Retry %d of %d (attempt %d of %d)", attempt - 1, self.max_retries, attempt, allowed)
+        else:
+            log.info("First attempt (up to %d retries)", self.max_retries)
+        return attempt
+
+    def _is_last_attempt(self, attempt) -> bool:
+        return isinstance(attempt, int) and self.max_retries is not None and attempt >= self.max_retries + 1
+
+    def _give_up(self, batch_id: str, fallback: str | None, log) -> bool:
+        """No retries left: set status_retries_exhausted so the batch is not picked up again. Returns False (and
+        puts ``fallback`` back) when that code is not in RefBatchStatus."""
+        code = self.status_retries_exhausted
+        try:
+            with self.db.session() as s:
+                if s.batch_status_exists(code):
+                    s.set_batch_status(batch_id, code, **self._claim_kw(finished=True))
+                    log.error("Retry limit reached (%d retries): batch status set to %s; it is not retried "
+                              "again (rerun it with force to try again)", self.max_retries, code)
+                    return True
+            log.error("Retry limit reached, but batch status %s is not in RefBatchStatus: the batch keeps its "
+                      "status and is skipped on every run (add the code, see sql/AddAttemptCountColumn.sql)", code)
+        except Exception as exc:
+            log.error("Could not set batch status %s after the last retry: %s", code, exc)
+        self._restore_batch_status(batch_id, fallback, log)
+        return False
+
     def _restore_batch_status(self, batch_id: str, previous: str | None, log) -> None:
         """Put the status back when the batch did not run, so it is picked up again (e.g. by --pending)."""
         if not previous:
@@ -230,6 +283,7 @@ class BatchProcessor:
                       "processed; COMMIT or ROLLBACK that session and run the batch again")
             return BatchResult(batch_id, "LOCKED", error="batch row locked by another DB session (uncommitted "
                                                          "transaction?); skipped, nothing processed")
+        last_attempt = False
         try:
             with timed_step(log, "Read batch files from ESG DB"), self.db.session() as s:
                 rows = s.fetch_batch_files(batch_id)
@@ -280,6 +334,13 @@ class BatchProcessor:
                     s.set_batch_status(batch_id, st.BATCH_COMPLETE, **self._claim_kw(finished=True))
                 return BatchResult(batch_id, "ALREADY_COMPLETED", skipped)
 
+            attempt = self._start_attempt(batch_id, log)
+            if attempt is RETRIES_EXHAUSTED:
+                self._give_up(batch_id, previous_status, log)
+                return BatchResult(batch_id, "FAILED", skipped,
+                                   error=f"retry limit reached ({self.max_retries} retries); not processed again")
+            last_attempt = self._is_last_attempt(attempt)
+
             daisy_rows = [r for r in rows if is_daisy(r)]
             upload_rows = [r for r in rows if not is_daisy(r)]
             log.info("Client %s, report %s (%s to %s): %d uploaded file(s), %d Daisy file(s)",
@@ -304,15 +365,23 @@ class BatchProcessor:
             log.info("All files done: %d OK, %d with errors", sum(o.ok for o in outcomes),
                      sum(not o.ok for o in outcomes))
             state = "SUCCESS" if all(o.ok for o in outcomes) else "COMPLETED_WITH_FILE_ERRORS"
-            self._finish_batch_status(batch_id, state, log)
+            error = ""
+            if state != "SUCCESS" and last_attempt and self._give_up(batch_id, None, log):
+                error = (f"retry limit reached ({self.max_retries} retries): batch set to "
+                         f"{self.status_retries_exhausted}, not retried again")
+            else:
+                self._finish_batch_status(batch_id, state, log)
             for o in outcomes:
                 (log.info if o.ok else log.warning)("File %s [%s] %s -> %s %s", o.file_id, o.flow,
                                                    o.file_name, o.status, o.detail)
-            return BatchResult(batch_id, state, outcomes)
+            return BatchResult(batch_id, state, outcomes, error=error)
         except Exception as exc:
             log.exception("Batch failed")
             self._mark_in_progress_failed(batch_id, f"Batch {batch_id} failed: {exc}", log)
-            self._restore_batch_status(batch_id, previous_status, log)
+            if last_attempt:
+                self._give_up(batch_id, previous_status, log)
+            else:
+                self._restore_batch_status(batch_id, previous_status, log)
             if self.notifier:
                 self.notifier.send(f"SECR batch {batch_id} failed", f"Batch {batch_id} failed:\n{exc}")
             return BatchResult(batch_id, "FAILED", error=str(exc))

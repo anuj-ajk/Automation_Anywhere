@@ -27,6 +27,9 @@ run:
   claim_heartbeat_seconds: 60       # a running batch refreshes FileUploadBatch.ClaimedAt this often
   stale_claim_minutes: 30           # IN_PROGRESS without a refresh for this long = left behind -> released (0 = never)
   release_stale_procedure: ReleaseStaleClaims   # releases stale claims in the DB ("" = same release from Python)
+  # Retry limit: uses FileUploadBatch.AttemptCount (sql/AddAttemptCountColumn.sql)
+  max_batch_retries: 3              # a batch with failed files is retried at most 3 times after its first run (-1 = no limit)
+  batch_status_retries_exhausted: FAILED   # set when the last retry still fails; not claimable, so never picked up again
   # Optional, used by "run --pending". Must return a BatchId column. Example only - adjust to
   # however new batches are flagged in your DB:
   pending_batches_query: "SELECT FB.BatchId FROM FileUploadBatch FB JOIN RefBatchStatus B ON B.BatchStatusId = FB.BatchStatusId WHERE B.Code = 'PROCESSING' OR B.Code = 'PARTIAL_FAILURE' ORDER BY FB.BatchId"

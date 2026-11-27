@@ -223,6 +223,28 @@ The code checks for the columns at start-up. Without them it works as before, an
 claims cannot be detected. Keep `stale_claim_minutes` well above the heartbeat interval: at least 3 heartbeats
 must be missed before a batch counts as stale.
 
+### Retry limit (`AttemptCount`)
+
+A batch that ends `PARTIAL_FAILURE` is claimable, so pending mode picks it up again on the next run. Without a
+limit, a file that always fails would be retried on every run. `sql/AddAttemptCountColumn.sql` adds
+`FileUploadBatch.AttemptCount`, which caps this:
+
+* Each run that starts processing a batch's files adds 1 to `AttemptCount`. The first run makes it 1. A batch
+  with no files to process (`NO_FILES`, `ALREADY_COMPLETED`, skipped or locked) is not counted.
+* `max_batch_retries: 3` allows 1 first run + 3 retries = 4 runs at most.
+* When the last allowed run still has failed files (or fails outright), the batch is set to
+  `batch_status_retries_exhausted` (`FAILED`) instead of `PARTIAL_FAILURE`. That status is not in
+  `claimable_statuses`, so pending mode never takes it again. The batch error says `retry limit reached`.
+* A batch already at the limit (for example the last run died before it could set `FAILED`) is not processed:
+  it is set to `FAILED` at once, with no file touched.
+* A successful retry sets `COMPLETE` as usual.
+* `force` / `--force` sets `AttemptCount` back to 0 first, so a batch rerun on purpose gets its retries again.
+  `sql/ResetBatchesForTest.sql` resets it too.
+
+The exhausted code must exist in `RefBatchStatus`. If it does not, a batch over the limit keeps its status and
+is skipped (nothing processed) on every run, with an error in the log. Without the column, or with
+`max_batch_retries: -1`, there is no limit, as before, and a warning is logged at start-up.
+
 ## Running a batch again
 
 * **Only unfinished files are processed.** When a batch runs again, files already in `COMPLETED` or
@@ -388,6 +410,7 @@ All Odin calls and CSV downloads share one cap: odin.max_parallel_requests = 20
 | `run` | `claim_procedure`, `claim_batch_procedure`, `release_stale_procedure` | empty | stored procedure names; empty = Python runs the same SQL (the shipped `config.yaml` sets all three) |
 | `run` | `pending_poll_seconds`, `pending_max_runtime_minutes` | 60, 0 | pending-mode polling / stop taking new batches (0 = no limit) |
 | `run` | `claim_heartbeat_seconds`, `stale_claim_minutes` | 60, 30 | claim tracking (0 minutes = never release) |
+| `run` | `max_batch_retries`, `batch_status_retries_exhausted` | 3, `FAILED` | retries of a batch with failed files after its first run (-1 = no limit), then this status |
 | `esg_db` | `host`, `port`, `database`, `connect_timeout` | –, 3306, `esgdb`, 30 | user / password come from the environment |
 | `esg_db` | `connect_retry_seconds` | 5 | DB full (too many connections): wait and retry this often until it accepts |
 | `s3` | `region` | `eu-west-2` | bucket from `SECR_S3_BUCKET` |
